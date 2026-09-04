@@ -43,6 +43,26 @@ class AdministrativeStore:
                     digest BLOB NOT NULL,
                     changed_at TEXT NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS devices (
+                    device_id TEXT PRIMARY KEY,
+                    discovery_id TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    friendly_name TEXT,
+                    model TEXT NOT NULL,
+                    auto_reconnect INTEGER NOT NULL,
+                    desired_state TEXT NOT NULL,
+                    observed_state TEXT NOT NULL,
+                    created_at TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS operations (
+                    operation_id TEXT PRIMARY KEY,
+                    kind TEXT NOT NULL,
+                    device_id TEXT,
+                    status TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    error_code TEXT
+                );
                 """
             )
 
@@ -133,6 +153,93 @@ class AdministrativeStore:
                 digest = excluded.digest, changed_at = excluded.changed_at""",
                 (salt, digest, changed_at),
             )
+
+    def save_device(self, values: Mapping[str, object]) -> None:
+        with self.transaction() as connection:
+            connection.execute(
+                """INSERT INTO devices(
+                    device_id, discovery_id, name, friendly_name, model, auto_reconnect,
+                    desired_state, observed_state, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    values["device_id"],
+                    values["discovery_id"],
+                    values["name"],
+                    values["friendly_name"],
+                    values["model"],
+                    int(bool(values["auto_reconnect"])),
+                    values["desired_state"],
+                    values["observed_state"],
+                    values["created_at"],
+                ),
+            )
+
+    def devices(self) -> list[dict[str, object]]:
+        with self._lock:
+            rows = self._connection.execute("SELECT * FROM devices ORDER BY created_at").fetchall()
+        return [dict(row) for row in rows]
+
+    def update_device(self, device_id: str, values: Mapping[str, object]) -> bool:
+        allowed = {"friendly_name", "auto_reconnect", "desired_state", "observed_state"}
+        selected = {key: value for key, value in values.items() if key in allowed}
+        if not selected:
+            return self.device(device_id) is not None
+        assignments = ", ".join(f"{key} = ?" for key in selected)
+        parameters = [
+            (1 if bool(value) else 0) if key == "auto_reconnect" else value
+            for key, value in selected.items()
+        ]
+        with self.transaction() as connection:
+            cursor = connection.execute(
+                f"UPDATE devices SET {assignments} WHERE device_id = ?",
+                (*parameters, device_id),
+            )
+        return cursor.rowcount > 0
+
+    def device(self, device_id: str) -> dict[str, object] | None:
+        with self._lock:
+            row = self._connection.execute(
+                "SELECT * FROM devices WHERE device_id = ?", (device_id,)
+            ).fetchone()
+        return None if row is None else dict(row)
+
+    def delete_device(self, device_id: str) -> bool:
+        with self.transaction() as connection:
+            cursor = connection.execute("DELETE FROM devices WHERE device_id = ?", (device_id,))
+        return cursor.rowcount > 0
+
+    def save_operation(self, values: Mapping[str, object]) -> None:
+        with self.transaction() as connection:
+            connection.execute(
+                """INSERT INTO operations(
+                    operation_id, kind, device_id, status, created_at, updated_at, error_code
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(operation_id) DO UPDATE SET status = excluded.status,
+                updated_at = excluded.updated_at, error_code = excluded.error_code""",
+                (
+                    values["operation_id"],
+                    values["kind"],
+                    values.get("device_id"),
+                    values["status"],
+                    values["created_at"],
+                    values["updated_at"],
+                    values.get("error_code"),
+                ),
+            )
+
+    def operations(self) -> list[dict[str, object]]:
+        with self._lock:
+            rows = self._connection.execute(
+                "SELECT * FROM operations ORDER BY created_at DESC LIMIT 100"
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def operation(self, operation_id: str) -> dict[str, object] | None:
+        with self._lock:
+            row = self._connection.execute(
+                "SELECT * FROM operations WHERE operation_id = ?", (operation_id,)
+            ).fetchone()
+        return None if row is None else dict(row)
 
     def close(self) -> None:
         with self._lock:

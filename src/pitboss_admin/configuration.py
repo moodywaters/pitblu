@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import os
 from collections.abc import Mapping
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
@@ -13,6 +12,10 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from pitboss_admin.storage import AdministrativeStore
+
+
+class ConfigurationValueError(ValueError):
+    pass
 
 
 class _Section(BaseModel):
@@ -78,14 +81,6 @@ class AppConfig(_Section):
         return self
 
 
-@dataclass(frozen=True, slots=True)
-class SettingDefinition:
-    description: str
-    editable: bool = True
-    sensitive: bool = False
-    restart_required: bool = False
-
-
 _DESCRIPTIONS = {
     "server.bind": "API listen address; non-loopback requires token authentication.",
     "server.port": "API TCP port.",
@@ -113,6 +108,31 @@ _DESCRIPTIONS = {
     "mqtt.qos": "MQTT quality of service for version-one publications.",
     "simulation.enabled": "Use the simulated adapter; disabled by default.",
     "simulation.probe_count": "Number of simulated probes.",
+}
+
+_LIMITS: dict[str, tuple[float | int | None, float | int | None]] = {
+    "server.port": (1, 65535),
+    "bluetooth.scan_duration": (0, 60),
+    "bluetooth.missing_scan_interval": (0, 3600),
+    "bluetooth.connected_scan_interval": (0, 3600),
+    "bluetooth.connect_timeout": (0, 120),
+    "bluetooth.initialise_timeout": (0, 120),
+    "bluetooth.read_timeout": (0, 60),
+    "polling.probe_interval": (0, 300),
+    "polling.battery_interval": (0, 3600),
+    "polling.stale_after": (0, 3600),
+    "polling.degraded_after_failures": (1, 100),
+    "polling.forced_reconnect_after": (0, 3600),
+    "polling.availability_heartbeat": (0, 3600),
+    "polling.stable_backoff_reset": (0, 3600),
+    "mqtt.port": (1, 65535),
+    "simulation.probe_count": (1, 4),
+}
+
+_ALLOWED: dict[str, list[object]] = {
+    "server.bind": ["127.0.0.1", "0.0.0.0"],
+    "auth.mode": ["disabled", "token"],
+    "mqtt.qos": [1],
 }
 
 
@@ -153,7 +173,7 @@ class ConfigurationManager:
         if yaml_path is not None and yaml_path.exists():
             loaded = yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or {}
             if not isinstance(loaded, Mapping):
-                raise ValueError("configuration YAML must contain an object")
+                raise ConfigurationValueError("configuration YAML must contain an object")
             self._apply_layer(_flatten(loaded), "yaml")
         environment = os.environ if environ is None else environ
         env_values = {
@@ -170,7 +190,7 @@ class ConfigurationManager:
     def _apply_layer(self, values: Mapping[str, Any], source: str) -> None:
         unknown = set(values) - set(self._values)
         if unknown:
-            raise ValueError(f"unknown configuration setting: {sorted(unknown)[0]}")
+            raise ConfigurationValueError(f"unknown configuration setting: {sorted(unknown)[0]}")
         self._values.update(values)
         self._sources.update(dict.fromkeys(values, source))
 
@@ -193,6 +213,9 @@ class ConfigurationManager:
                     "type": type(defaults[key]).__name__,
                     "description": _DESCRIPTIONS[key],
                     "default": defaults[key],
+                    "minimum": _LIMITS.get(key, (None, None))[0],
+                    "maximum": _LIMITS.get(key, (None, None))[1],
+                    "allowed": _ALLOWED.get(key),
                     "editable": True,
                     "sensitive": False,
                     "restartRequired": key.startswith(("server.", "auth.")),
@@ -204,7 +227,7 @@ class ConfigurationManager:
     def validate_patch(self, values: Mapping[str, Any]) -> AppConfig:
         unknown = set(values) - set(self._values)
         if unknown:
-            raise ValueError(f"unknown configuration setting: {sorted(unknown)[0]}")
+            raise ConfigurationValueError(f"unknown configuration setting: {sorted(unknown)[0]}")
         candidate = self._values | dict(values)
         return AppConfig.model_validate(_inflate(candidate))
 

@@ -27,7 +27,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-  "httpx==0.28.1",
+  "httpx2==2.12.0",
   "mypy==2.3.1",
   "pytest==9.1.1",
   "pytest-cov==7.1.0",
@@ -38,6 +38,7 @@ dev = [
 [project.scripts]
 pitboss-ble-proof = "pitboss_admin.ble_spike:main"
 pitboss-v202-check = "pitboss_admin.physical_check:main"
+pitboss-api = "pitboss_admin.api:run"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/pitboss_admin"]

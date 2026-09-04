@@ -7,7 +7,7 @@ PyYAML 6.0.3 under the MIT Licence, and Uvicorn 0.52.4 under the BSD 3-Clause Li
 notices and complete licence texts remain in their installed distributions. Platform-specific and
 framework transitive dependencies are installed with those packages and retain their own notices.
 
-Development dependencies include Hatchling, HTTPX, mypy, pytest, pytest-cov and Ruff. HTTPX is
+Development dependencies include Hatchling, HTTPX2, mypy, pytest, pytest-cov and Ruff. HTTPX2 is
 under the BSD 3-Clause Licence; the other tools are under their licences recorded in
 `docs/provenance.md`. Development tooling is not distributed with the application.
 
