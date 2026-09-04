@@ -1,0 +1,32 @@
+# Provenance
+
+Review performed on 4 September 2026. No source code was copied or substantially adapted. The
+implementation is a clean expression of protocol facts that were compared across independent
+sources.
+
+| Source | Reviewed commit | Licence at commit | Use |
+| --- | --- | --- | --- |
+| `jaydenk/igrill-remote-server` | `7dd1b198cdcd3ef793b9908d7c24348f27c88940` | MIT, copyright 2022 Bendik Wang Andreassen and 2026 Jayden Kerr | Corroborated Bleak lifecycle, V202 service UUID and challenge sequence. No code copied or adapted. |
+| `bendikwa/esphome-igrill` | `b5edba3c87d16ff96d4aa2ee90a20a1921fb80ce` | MIT, copyright 2022 Bendik Wang Andreassen | Primary protocol research reference for UUIDs, model detection, challenge sequence, payload byte order and unplugged sentinel. No code copied or adapted. |
+| `pilot1981/weber-igrill-integration-HA` | `e89a7d87a541449b3593cad78ac7d93162b17ab5` | MIT, copyright 2016 Tore Birkeland and 2018 Bendik Wang Andreassen | Historical corroboration of authentication, probe and battery reads. No code copied or adapted. |
+| `1mckenna/esp32_iGrill` | `45c5f1d30e8b781f1c99640cf8088f95f5ed1719` | MIT, copyright 2021 Logan McKenna | Corroborated explicit V202 UUID and MQTT-related device behaviour. No code copied or adapted. |
+| `sanjay900/igrill` | `b85cf0962b74d3a652a295c53d27b6b3cf9f39fe` | No root licence file found | Read-only corroboration of Bleak pairing/authentication behaviour. No code copied, adapted or incorporated because permission was unclear. |
+
+## Dependencies
+
+| Dependency | Version | Licence | Purpose |
+| --- | --- | --- | --- |
+| Bleak | 3.0.2 | MIT | Async BLE discovery and GATT client. |
+| Hatchling | 1.32.0 | MIT | Build backend only. |
+| pytest | 9.1.1 | MIT | Development tests only. |
+| pytest-cov | 7.1.0 | MIT | Development coverage checks only. |
+| Ruff | 0.16.6 | MIT | Development formatting and linting only. |
+| mypy | 2.3.1 | MIT | Development type checking only. |
+
+Dependency licences were reviewed from their project metadata or licence distributions. Transitive
+dependencies will be captured in a lock or installation manifest before a distributable release.
+
+## Excluded source
+
+`elupus/togrill-bluetooth` was not researched or used because it targets ToGrill-branded hardware,
+not the Weber iGrill protocol.

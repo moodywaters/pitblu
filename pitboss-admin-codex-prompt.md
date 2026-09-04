@@ -1,0 +1,427 @@
+# Master Codex Prompt: Build `pitboss-admin`
+
+You are implementing a new open-source-ready project called `pitboss-admin`. Work as a careful senior engineer. Build incrementally, verify every milestone, and keep documentation, tests and provenance current in the same changes as the code.
+
+## Mission
+
+Create a headless, API-first service running natively on a Raspberry Pi. It discovers, registers, connects to and monitors a Weber iGrill V202/iGrill 2 over Bluetooth Low Energy. All administrative and operational control is exposed through a versioned REST API. Raw reusable telemetry is published through MQTT. Live API events are also exposed through Server-Sent Events.
+
+This is the hardware gateway only. A separate future web application will provide cook sessions, history, graphs, alarms and other user-facing features.
+
+## Working approach
+
+1. Inspect the current repository and connected GitHub state before changing anything.
+2. If the repository does not exist, create a private repository named `pitboss-admin` under my personal GitHub account. Do not make it public.
+3. Create a written implementation plan mapped to the milestones below.
+4. Begin with `v0.1.0`. Do not attempt to build every milestone in one pass.
+5. Complete code, tests, documentation and provenance for a milestone before advancing.
+6. Stop at any physical hardware validation point and ask me to run the required Raspberry Pi command.
+7. Give me exactly one Raspberry Pi command at a time. Wait for its output before giving the next command.
+8. Never request or display my MQTT password, API token or other secrets. Never put secrets, private Bluetooth addresses, LAN addresses or personal configuration in GitHub.
+9. Use British English in documentation. Do not use em dashes.
+10. Make small, reviewable commits aligned with milestones. Run relevant checks before committing or pushing. Do not merge failing work.
+
+## Confirmed target environment
+
+- Raspberry Pi 4 Model B Rev 1.4
+- Raspberry Pi OS build dated 18 June 2026
+- Debian GNU/Linux 13.5 Trixie base
+- 64-bit ARM (`aarch64`)
+- Python 3.13.5 installed
+- BlueZ 5.82 installed
+- Onboard adapter `hci0`, powered, active and unblocked
+- Hostname `pitboss`
+- Ethernet currently preferred, with Wi-Fi available
+- Native Python deployment managed by `systemd`
+- Docker is explicitly prohibited, including Dockerfiles and Compose files
+
+The physical thermometer advertises as `iGrill_V202-CD09`. Its private Bluetooth address must be discovered or supplied through protected local configuration and must never be committed.
+
+Manual validation already proved that the Pi can discover the device and establish a basic BlueZ connection. The device exposes Generic Access, Generic Attribute, Device Information, Battery Service and Weber vendor-specific services. A basic `bluetoothctl` connection closes when scanning stops, so the implementation must correctly perform the Weber-specific initialisation/authentication sequence.
+
+## Required technology and architecture
+
+- Python compatible with 3.11 through 3.13, tested on 3.13
+- `asyncio`
+- FastAPI and generated OpenAPI
+- Bleak for BLE access, behind an internal device-adapter interface
+- A maintained Python MQTT client with asyncio-safe integration
+- SQLite for administrative state only
+- Pydantic models and typed configuration
+- Structured logging suitable for `journald`
+- Native virtual environment and `systemd`
+- No containerisation
+
+Do not use `elupus/togrill-bluetooth`; it targets ToGrill-branded hardware and is not a Weber iGrill library.
+
+## Architectural boundary
+
+`pitboss-admin` owns:
+
+- BLE discovery and communication
+- Explicit device registration
+- Connection lifecycle, timeouts and recovery
+- Probe and battery acquisition
+- REST control and current state
+- SSE live events
+- MQTT publishing
+- Configuration, authentication, health and diagnostics
+- Administrative persistence and bounded operational events
+- Simulation and hardware-independent testing
+
+It must not contain:
+
+- Cook sessions or temperature history
+- Cook database
+- Graphs or browser dashboard
+- Food names or probe roles
+- Timers or target-temperature alarms
+- User notifications
+- Estimated completion times
+- MQTT administrative commands
+- Internet-facing deployment features
+
+## Device onboarding contract
+
+- Connect automatically only to explicitly registered devices.
+- A client starts discovery and receives supported discovered devices.
+- `POST /api/v1/devices` accepts a discovered Bluetooth address, optional friendly name, initial connect choice and automatic-reconnection choice.
+- Registration assigns a stable public identifier, for example `igrill-v202-cd09`.
+- Normal REST URLs, responses and MQTT topics use the stable identifier, never the Bluetooth address.
+- An add-and-connect request may register the device and begin an asynchronous connection operation.
+- Persist registered devices and desired connection state across restarts.
+- Nearby unregistered Weber devices may appear temporarily in discovery results but must never be connected automatically.
+
+## Connection state model
+
+Implement an explicit, testable per-device state machine with at least:
+
+- `discovered`
+- `connecting`
+- `initialising`
+- `connected`
+- `polling`
+- `degraded`
+- `backoff`
+- `disconnected`
+- `unsupported`
+
+Represent desired state separately from observed state. `connect` sets desired state to connected. Unexpected loss enters recovery while desired state remains connected. `disconnect` sets desired state to disconnected and cancels retries. A forced reconnect bypasses current backoff.
+
+## REST contract
+
+Use `/api/v1` for versioned resources.
+
+### Service
+
+- `GET /health`, minimal unauthenticated liveness only
+- `GET /ready`, authenticated readiness
+- `GET /api/v1/status`, authenticated operational summary
+
+### Bluetooth and discovery
+
+- `GET /api/v1/bluetooth`
+- `POST /api/v1/scans`
+- `GET /api/v1/scans/{scanId}`
+
+### Devices
+
+- `GET /api/v1/devices`
+- `POST /api/v1/devices`
+- `GET /api/v1/devices/{deviceId}`
+- `PATCH /api/v1/devices/{deviceId}`
+- `DELETE /api/v1/devices/{deviceId}`
+- `POST /api/v1/devices/{deviceId}/connect`
+- `POST /api/v1/devices/{deviceId}/disconnect`
+- `POST /api/v1/devices/{deviceId}/reconnect`
+- `GET /api/v1/devices/{deviceId}/probes`
+- `GET /api/v1/devices/{deviceId}/battery`
+
+### Operations and events
+
+- `GET /api/v1/operations`
+- `GET /api/v1/operations/{operationId}`
+- `GET /api/v1/events`
+- `GET /api/v1/events/stream`, using SSE
+
+### Configuration and secrets
+
+- `GET /api/v1/config`
+- `PATCH /api/v1/config`
+- `GET /api/v1/config/schema`
+- `POST /api/v1/config/validate`
+- `PUT /api/v1/config/secrets/{secretName}`
+- `DELETE /api/v1/config/secrets/{secretName}`
+
+Slow actions return `202 Accepted` plus an operation resource. Creation returns `201 Created`. Use `422` for validation errors, `409` for state conflicts and `401`/`403` for authentication/authorisation. Use one consistent safe JSON error envelope containing a stable error code, human-readable message, correlation identifier and optional details. Make reads and repeated connect/disconnect requests idempotent. Serialise conflicting operations per device.
+
+## Configuration contract
+
+Every application-level setting must be represented through REST so a future frontend can configure normal operation without SSH or direct file editing.
+
+For each setting expose:
+
+- Effective value
+- Source: default, YAML, environment or persisted override
+- Type and description
+- Default, minimum, maximum and allowed values
+- Editability
+- Sensitivity
+- Whether restart is required
+
+Use configuration versions or ETags for optimistic concurrency. Validate a proposed update as a whole and persist it transactionally. Never partially apply an invalid update. Record successful changes as safe operational events.
+
+Secrets are write-only. Responses expose only whether a secret is configured and when it changed. Never reveal secret values in responses, logs, events or diagnostics. Deployment-level settings such as filesystem paths and the Linux service account may be startup-only or read-only.
+
+MQTT must be configurable for a local, remote or hosted broker, optional TLS, authentication, base topic, port, QoS and disabled API-only operation.
+
+## API authentication and exposure
+
+- Default API port: 8080, configurable
+- Trusted-LAN installation binds to `0.0.0.0`
+- Loopback-only mode binds to `127.0.0.1`
+- Bearer-token authentication required for any non-loopback binding
+- `/health` is unauthenticated and reveals only minimal liveness
+- `/ready` and all `/api/v1/*` endpoints require authentication in trusted-LAN mode
+- Installation generates a cryptographically secure administrator token and displays it once
+- Persist only a secure token hash
+- Provide authenticated token rotation and return the replacement token once
+- Permit disabled authentication only with loopback binding
+- Reject unauthenticated non-loopback configuration
+- Do not implement built-in HTTPS in version one
+- Document plain HTTP as trusted-LAN only and never suitable for direct internet exposure
+
+## MQTT contract
+
+Default base topic is `pitboss`, configurable. MQTT schema version `v1` is independent of the REST API version.
+
+Publish:
+
+- `pitboss/v1/service/availability`
+- `pitboss/v1/devices/{deviceId}/availability`
+- `pitboss/v1/devices/{deviceId}/connection`
+- `pitboss/v1/devices/{deviceId}/battery`
+- `pitboss/v1/devices/{deviceId}/probes/{probeNumber}/availability`
+- `pitboss/v1/devices/{deviceId}/probes/{probeNumber}/temperature`
+
+All payloads are JSON. A temperature payload contains:
+
+```json
+{
+  "schemaVersion": 1,
+  "deviceId": "igrill-v202-cd09",
+  "probe": 1,
+  "temperatureC": 112.4,
+  "observedAt": "2026-09-04T10:15:32.481Z",
+  "sequence": 1842,
+  "source": "physical"
+}
+```
+
+Use one-based probe numbers. Use UTC ISO 8601 timestamps. All version-one publications use QoS 1, so consumers must tolerate duplicates and can use sequence numbers for deduplication.
+
+Retain service availability, device availability, connection state, battery and probe availability. Do not retain temperatures. Implement a retained MQTT Last Will for service availability. Do not accept commands over MQTT. Simulation uses identical topics with `source` set to `simulated`.
+
+## Timing defaults
+
+All are configurable through the configuration API:
+
+- BLE scan duration: 5 seconds
+- Missing-device scan interval: 15 seconds
+- Connected background scan interval: 60 seconds
+- Connection timeout: 10 seconds
+- GATT initialisation timeout: 15 seconds
+- Individual read timeout: 5 seconds
+- Probe polling: 5 seconds
+- Battery polling: 300 seconds
+- Reading stale threshold: 15 seconds
+- Degraded after 3 consecutive failed polling cycles
+- Forced reconnect after 30 seconds without a valid reading
+- Availability heartbeat: 60 seconds
+- Reset backoff after 60 seconds of stable connection
+- Reconnect delays: 2, 4, 8, 15, 30, then 60 seconds maximum
+- Backoff jitter: plus or minus 20 per cent
+
+Continuous discovery means an always-running discovery supervisor, not uninterrupted radio scanning. Avoid scanning behaviour that destabilises an active BLE connection.
+
+## Data integrity
+
+- Publish raw decoded Celsius values without smoothing.
+- Reject documented invalid and sentinel values.
+- Track observation time, sequence and fresh/stale status.
+- Separate service, device and probe availability.
+- Use UTC internally and report clock synchronisation health.
+- Do not interpret temperatures as food, pit or cook semantics.
+- Do not immediately declare the device disconnected after one probe read failure.
+
+## Simulation
+
+Implement a disabled-by-default simulated adapter using the same internal interface and event path as physical hardware. Support one to four probes, rising/falling/stable patterns, probe insertion/removal, battery changes, connection loss, stale readings and recovery. Simulated output must always say `source: simulated`.
+
+## Persistence and filesystem
+
+SQLite stores administrative state only: registered devices, friendly names, desired states, persisted runtime settings, operation metadata and bounded operational events. Do not store cook history or long-term temperature history.
+
+Target native layout:
+
+- `/opt/pitboss-admin/`, application and virtual environment
+- `/etc/pitboss-admin/config.yaml`, non-secret startup configuration
+- `/etc/pitboss-admin/environment`, protected environment secrets where required
+- `/var/lib/pitboss-admin/`, SQLite state
+
+Use a dedicated low-privilege service account. Provide secure permissions, a hardened but functional `systemd` unit, graceful termination, `journald` logging, and documented install, upgrade, backup, rollback and uninstall procedures.
+
+## Existing Mosquitto environment
+
+Mosquitto is already installed locally on the target Pi and listening on port 1883. Anonymous access is disabled. Password authentication is enabled. The `pitboss-admin` MQTT identity is restricted by ACL to `pitboss/#`. Local authenticated publish/subscribe and retained messaging have been verified.
+
+Treat local Mosquitto as the deployment default, not a hard-coded dependency. Do not overwrite or expose the existing password. Provide configuration examples and optional broker setup documentation. Additional consumers such as Node-RED should use separate least-privilege credentials.
+
+## Testing
+
+Include:
+
+- Unit tests for payload and temperature decoding
+- Recorded, sanitised BLE payload fixtures
+- State-machine tests
+- Timeout and backoff tests using controlled time, not real sleeps
+- MQTT publisher and failure tests using fakes or test doubles
+- API contract, authentication, idempotency and concurrency tests
+- Configuration validation, persistence and optimistic-concurrency tests
+- Secret-redaction tests
+- SSE tests
+- Graceful shutdown tests
+- Simulator tests
+- Formatting, linting, type checking and test workflows in GitHub Actions
+
+Hardware-dependent tests must be separate and must not make ordinary CI fail when no Bluetooth adapter or iGrill is present.
+
+## Documentation and public-source readiness
+
+Create and maintain:
+
+- `README.md`
+- `CHANGELOG.md`
+- `CONTRIBUTING.md`
+- `LICENSE`
+- `THIRD_PARTY_NOTICES.md`
+- `docs/architecture.md`
+- `docs/api.md`
+- `docs/configuration.md`
+- `docs/bluetooth.md`
+- `docs/mqtt.md`
+- `docs/installation.md`
+- `docs/upgrade-and-rollback.md`
+- `docs/troubleshooting.md`
+- `docs/development.md`
+- `docs/physical-acceptance.md`
+- `docs/provenance.md`
+- Architecture Decision Records for significant choices
+
+Use an MIT licence only after confirming compatibility with all incorporated code and dependencies.
+
+Before copying or substantially adapting third-party code, inspect its exact licence and relevant file history. In the same change, record repository URL, exact commit, licence, copyright, affected component, whether code was copied or adapted, and the nature of modifications. Distinguish dependencies, copied code, adapted code, protocol research and general architectural influence.
+
+Research these projects as references:
+
+- `jaydenk/igrill-remote-server`
+- `bendikwa/esphome-igrill`
+- `pilot1981/weber-igrill-integration-HA`
+- `1mckenna/esp32_iGrill`
+- `sanjay900/igrill`
+
+Prefer clean implementation from documented protocol understanding when practical. Do not copy code with an absent, unclear or incompatible licence. Do not claim inspiration, reuse or compatibility without evidence.
+
+## Milestones
+
+### `v0.1.0`: physical BLE proof
+
+- Repository scaffold
+- Dependency and licence review
+- CI and documentation structure
+- Focused Bleak-based BLE spike
+- Discover the physical V202
+- Perform required initialisation/authentication
+- Read at least one physical probe and battery percentage
+- Document findings and sanitised protocol evidence
+
+Do not proceed until the physical read succeeds or the blocker is accurately diagnosed and agreed with me.
+
+### `v0.2.0`: device foundation
+
+- Production iGrill adapter
+- Continuous discovery supervisor
+- Four probes and probe presence
+- Explicit connection state machine
+- Simulator
+- Sanitised recorded BLE fixtures
+
+### `v0.3.0`: API and configuration
+
+- REST contract
+- Asynchronous operations
+- Authentication and token rotation
+- Complete typed configuration API
+- Administrative persistence
+
+### `v0.4.0`: telemetry
+
+- MQTT contract and Last Will
+- SSE event stream
+- Stale-data handling
+- Canonical internal event schema
+
+### `v0.5.0`: resilience
+
+- Reconnection and backoff
+- Concurrency controls
+- Diagnostics and bounded events
+- Graceful shutdown
+
+### `v0.6.0`: native deployment
+
+- Installer
+- Dedicated account and permissions
+- `systemd`
+- Upgrade, backup, rollback and uninstall
+
+### `v0.9.0`: release candidate
+
+- Clean-Pi installation test
+- Security review
+- Documentation audit
+- Third-party provenance and licence audit
+
+### `v1.0.0`: physical release
+
+- Complete physical acceptance suite
+- Successful 12-hour soak test
+
+## Mandatory `v1.0.0` release gates
+
+- Discover the V202 within 20 seconds.
+- Register and connect entirely through REST.
+- Resolve correct Weber GATT services.
+- Detect all four inserted probe channels.
+- Match iGrill display temperatures within 1 degree Celsius.
+- Detect removal within 15 seconds.
+- Read battery percentage.
+- Reject invalid/sentinel temperatures.
+- Mark stale data and publish unavailability correctly.
+- Recover after iGrill power cycling, Bluetooth failure, Mosquitto restart and Pi reboot without manual service restart.
+- Complete a 12-hour physical soak without manual intervention; record and recover transient disconnects.
+- Verify REST, async operations, SSE, MQTT schema, Last Will, configuration persistence, authentication and secret redaction.
+- Verify clean native installation, automatic `systemd` startup, graceful shutdown, upgrade and rollback.
+- Pass CI and complete documentation, provenance and licence audits.
+
+## Start now
+
+Begin only with repository inspection and the `v0.1.0` implementation plan. Report:
+
+1. What currently exists.
+2. The exact third-party licences and commits you intend to reference for the BLE spike.
+3. The proposed minimal repository scaffold.
+4. The smallest sequence that will prove physical V202 probe and battery reads.
+5. Any decision you genuinely need from me.
+
+Then implement `v0.1.0` incrementally. Do not start later milestones until the physical BLE proof and milestone checks are complete.
