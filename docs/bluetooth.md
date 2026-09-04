@@ -9,15 +9,17 @@ device challenge from `64ac0003-4a4b-4b58-9f37-94d3c52ffdf7`, and writes that va
 device response `64ac0004-4a4b-4b58-9f37-94d3c52ffdf7`.
 
 Probe characteristics are `06ef0002`, `06ef0004`, `06ef0006` and `06ef0008` under the Weber UUID
-suffix `2e06-4b79-9e33-fce2c42805ec`. Values are unsigned 16-bit little-endian integers. Value
-63536 indicates an unplugged probe. The first byte of characteristic `06ef0001` reports 0 for
+suffix `2e06-4b79-9e33-fce2c42805ec`. The first two bytes are an unsigned 16-bit little-endian
+temperature. The physical V202 returned a third `0x80` status byte, which is preserved as evidence
+but is not part of the numeric value. Value 63536 indicates an unplugged probe. The first byte of characteristic `06ef0001` reports 0 for
 Fahrenheit or 1 for Celsius. The V202 may return trailing bytes, which are retained as sanitised
 evidence but do not alter the unit. The proof normalises a Fahrenheit-configured display value to Celsius. Battery level uses
 the standard Bluetooth characteristic `00002a19-0000-1000-8000-00805f9b34fb` and is a single
 percentage byte.
 
-These are research hypotheses until the target hardware evidence is recorded. The proof reads but
-does not change the device's unit or other configuration.
+The UUID and initialisation details remain research hypotheses until the complete target hardware
+evidence is recorded. The three-byte probe framing was observed directly on the target V202 on
+4 September 2026. The proof reads but does not change the device's unit or other configuration.
 
 The Bleak client requests pairing and wraps connection plus GATT service resolution in an explicit
 asyncio deadline. This outer deadline is required because the backend's constructor timeout did not

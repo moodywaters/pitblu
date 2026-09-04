@@ -45,10 +45,10 @@ def decode_temperature_unit(payload: bytes | bytearray) -> TemperatureUnit:
 
 
 def decode_probe_temperature_c(payload: bytes | bytearray, unit: TemperatureUnit) -> float | None:
-    """Decode a two-byte little-endian probe value and normalise it to Celsius."""
-    if len(payload) != 2:
-        raise ProtocolError("probe payload must contain exactly two bytes")
-    raw = int.from_bytes(payload, byteorder="little", signed=False)
+    """Decode the leading 16-bit probe value and normalise it to Celsius."""
+    if len(payload) < 2:
+        raise ProtocolError("probe payload must contain at least two bytes")
+    raw = int.from_bytes(payload[:2], byteorder="little", signed=False)
     if raw == UNPLUGGED_PROBE:
         return None
     value = float(raw)

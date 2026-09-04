@@ -14,8 +14,9 @@ from pitboss_admin.protocol import (
     ("payload", "unit", "expected"),
     [
         (bytes.fromhex("1900"), TemperatureUnit.CELSIUS, 25.0),
+        (bytes.fromhex("140080"), TemperatureUnit.CELSIUS, 20.0),
         (bytes.fromhex("4d00"), TemperatureUnit.FAHRENHEIT, 25.0),
-        (UNPLUGGED_PROBE.to_bytes(2, "little"), TemperatureUnit.CELSIUS, None),
+        (UNPLUGGED_PROBE.to_bytes(2, "little") + b"\x80", TemperatureUnit.CELSIUS, None),
     ],
 )
 def test_decode_probe_temperature(
@@ -24,7 +25,7 @@ def test_decode_probe_temperature(
     assert decode_probe_temperature_c(payload, unit) == expected
 
 
-@pytest.mark.parametrize("payload", [b"", b"\x01", b"\x01\x02\x03"])
+@pytest.mark.parametrize("payload", [b"", b"\x01"])
 def test_decode_probe_temperature_rejects_wrong_length(payload: bytes) -> None:
     with pytest.raises(ProtocolError):
         decode_probe_temperature_c(payload, TemperatureUnit.CELSIUS)
