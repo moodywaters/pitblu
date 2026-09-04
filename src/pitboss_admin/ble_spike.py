@@ -127,7 +127,6 @@ async def run_proof(
                         client.read_gatt_char(uuid), read_timeout, f"probe {number} read"
                     )
                 )
-                temperature_c = decode_probe_temperature_c(payload, unit)
             except Exception as exc:
                 probes.append(
                     {
@@ -138,21 +137,37 @@ async def run_proof(
                     }
                 )
             else:
-                probes.append(
-                    {
-                        "probe": number,
-                        "present": temperature_c is not None,
-                        "temperatureC": temperature_c,
-                        "rawPayloadHex": payload.hex(),
-                    }
-                )
+                try:
+                    temperature_c = decode_probe_temperature_c(payload, unit)
+                except Exception as exc:
+                    probes.append(
+                        {
+                            "probe": number,
+                            "present": False,
+                            "temperatureC": None,
+                            "rawPayloadHex": payload.hex(),
+                            "rawPayloadLength": len(payload),
+                            "diagnostic": redact_private_values(str(exc) or type(exc).__name__),
+                        }
+                    )
+                else:
+                    probes.append(
+                        {
+                            "probe": number,
+                            "present": temperature_c is not None,
+                            "temperatureC": temperature_c,
+                            "rawPayloadHex": payload.hex(),
+                            "rawPayloadLength": len(payload),
+                        }
+                    )
     finally:
         if client.is_connected:
             with contextlib.suppress(Exception):
                 await asyncio.wait_for(client.disconnect(), timeout=5.0)
 
     if not any(probe["present"] for probe in probes):
-        raise ProofError("no inserted probe produced a valid temperature")
+        diagnostics = json.dumps(probes, separators=(",", ":"))
+        raise ProofError(f"no inserted probe produced a valid temperature; probes={diagnostics}")
 
     return {
         "proofVersion": 1,

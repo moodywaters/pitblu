@@ -23,6 +23,9 @@ The Bleak client requests pairing and wraps connection plus GATT service resolut
 asyncio deadline. This outer deadline is required because the backend's constructor timeout did not
 bound service resolution during the first physical trial.
 
+If no probe can be decoded, the proof reports each read's exception type or sanitised raw payload
+length and hex value. This diagnostic contains protocol bytes only and never a Bluetooth address.
+
 ## Privacy
 
 The advertised name is not treated as the Bluetooth address. Conventional colon-separated

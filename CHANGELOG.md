@@ -11,6 +11,7 @@ All notable changes will be documented here.
 - Protocol decoding tests, documentation structure, licence review and provenance record.
 - Explicitly bounded Linux connection, GATT service resolution and disconnection in the proof.
 - V202 temperature-unit payload handling based on its first byte, retaining trailing bytes as evidence.
+- Sanitised per-probe payload diagnostics when no inserted probe can be decoded.
 
 ### Blocked
 

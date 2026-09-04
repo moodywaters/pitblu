@@ -111,6 +111,7 @@ def test_run_proof_returns_sanitised_physical_result(monkeypatch: pytest.MonkeyP
     probes = result["probes"]
     assert isinstance(probes, list)
     assert probes[0]["temperatureC"] == 25.0
+    assert probes[0]["rawPayloadLength"] == 2
     assert probes[1]["diagnostic"] == "RuntimeError"
     assert probes[2]["present"] is False
 
