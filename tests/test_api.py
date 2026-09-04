@@ -136,3 +136,31 @@ def test_configuration_concurrency_validation_and_secret_redaction() -> None:
         assert rejected.status_code == 422
         assert echoed_secret not in rejected.text
     store.close()
+
+
+def test_openapi_contains_the_v03_contract() -> None:
+    api, store = client()
+    paths = api.get("/openapi.json").json()["paths"]
+    expected = {
+        "/health",
+        "/ready",
+        "/api/v1/status",
+        "/api/v1/bluetooth",
+        "/api/v1/scans",
+        "/api/v1/scans/{scan_id}",
+        "/api/v1/devices",
+        "/api/v1/devices/{device_id}",
+        "/api/v1/devices/{device_id}/{action}",
+        "/api/v1/devices/{device_id}/probes",
+        "/api/v1/devices/{device_id}/battery",
+        "/api/v1/operations",
+        "/api/v1/operations/{operation_id}",
+        "/api/v1/events",
+        "/api/v1/config",
+        "/api/v1/config/schema",
+        "/api/v1/config/validate",
+        "/api/v1/config/secrets/{secret_name}",
+        "/api/v1/auth/token/rotate",
+    }
+    assert expected <= set(paths)
+    store.close()

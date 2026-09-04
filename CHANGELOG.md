@@ -4,7 +4,14 @@ All notable changes will be documented here.
 
 ## [Unreleased]
 
-No changes yet.
+### Added
+
+- Versioned FastAPI administrative resources and generated OpenAPI.
+- Persistent asynchronous scan and connection operation metadata.
+- SQLite persistence for registered devices, desired state and configuration overrides.
+- Layered typed configuration with whole-update validation and ETag concurrency.
+- Bearer-token authentication, salted scrypt hashing and one-time token rotation responses.
+- Write-only MQTT password resource with redacted validation errors.
 
 ## [0.2.0] - 2026-09-04
 

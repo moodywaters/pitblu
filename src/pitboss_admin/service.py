@@ -203,6 +203,8 @@ class AdministrationService:
     ) -> dict[str, object]:
         if self.store.device(device_id) is None:
             raise ResourceNotFoundError("device not found")
+        desired = "disconnected" if action == "disconnect" else "connected"
+        self.store.update_device(device_id, {"desired_state": desired})
         operation = self._new_operation(action, device_id)
         self._schedule(self._execute_connection(operation, device_id, action))
         return _operation_view(operation)
@@ -248,6 +250,8 @@ class AdministrationService:
                     {"desired_state": "connected", "observed_state": machine.observed.value},
                 )
         except Exception as exc:
+            observed = "disconnected" if action == "disconnect" else "backoff"
+            self.store.update_device(device_id, {"observed_state": observed})
             self._finish(operation, exc)
             return
         self._finish(operation)
