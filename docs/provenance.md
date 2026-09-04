@@ -17,7 +17,12 @@ sources.
 | Dependency | Version | Licence | Purpose |
 | --- | --- | --- | --- |
 | Bleak | 3.0.2 | MIT | Async BLE discovery and GATT client. |
+| FastAPI | 0.141.1 | MIT | REST API, OpenAPI generation and request validation. |
+| PyYAML | 6.0.3 | MIT | Safe parsing of optional startup configuration. |
+| Uvicorn | 0.52.4 | BSD-3-Clause | Native ASGI server. |
 | Hatchling | 1.32.0 | MIT | Build backend only. |
+| HTTPX | 0.28.1 | BSD-3-Clause | Development-only API contract client. |
+| types-PyYAML | 6.0.12.20260815 | Apache-2.0 | Development-only static type information. |
 | pytest | 9.1.1 | MIT | Development tests only. |
 | pytest-cov | 7.1.0 | MIT | Development coverage checks only. |
 | Ruff | 0.16.6 | MIT | Development formatting and linting only. |
