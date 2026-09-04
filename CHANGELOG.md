@@ -4,6 +4,10 @@ All notable changes will be documented here.
 
 ## [Unreleased]
 
+No changes yet.
+
+## [0.2.0] - 2026-09-04
+
 ### Added
 
 - Production Weber iGrill V202 adapter behind a shared asynchronous device boundary.
@@ -12,6 +16,12 @@ All notable changes will be documented here.
 - Four-channel probe presence, availability, timestamps, sequences and source models.
 - Deterministic one-to-four-probe simulator with temperature patterns and injected fault states.
 - Sanitised physical BLE fixture and a privacy-safe production-adapter validation command.
+
+### Validated
+
+- Production adapter on Raspberry Pi OS with two attached physical probes exactly matching the
+  V202 display at 19°C and 21°C, two unattached channels reported absent, and battery at 60 per
+  cent.
 
 ## [0.1.0] - 2026-09-04
 
