@@ -9,7 +9,7 @@ htmlcov/
 .ruff_cache/
 build/
 dist/
+*.tar.gz
 .env
 config.local.yaml
 physical-evidence.local.json
-
