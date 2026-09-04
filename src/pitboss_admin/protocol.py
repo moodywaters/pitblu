@@ -34,27 +34,26 @@ class TemperatureUnit(IntEnum):
     CELSIUS = 1
 
 
-def decode_temperature_unit(payload: bytes | bytearray) -> TemperatureUnit:
-    """Decode the display unit from the first byte of a non-empty payload."""
+def decode_temperature_unit(payload: bytes | bytearray) -> TemperatureUnit | None:
+    """Decode a documented one-byte display unit, or decline extended metadata."""
     if not payload:
         raise ProtocolError("temperature unit payload must contain at least one byte")
+    if len(payload) != 1:
+        return None
     try:
         return TemperatureUnit(payload[0])
     except ValueError as exc:
         raise ProtocolError("temperature unit is not recognised") from exc
 
 
-def decode_probe_temperature_c(payload: bytes | bytearray, unit: TemperatureUnit) -> float | None:
-    """Decode the leading 16-bit probe value and normalise it to Celsius."""
+def decode_probe_temperature_c(payload: bytes | bytearray) -> float | None:
+    """Decode the leading 16-bit raw Celsius probe value."""
     if len(payload) < 2:
         raise ProtocolError("probe payload must contain at least two bytes")
     raw = int.from_bytes(payload[:2], byteorder="little", signed=False)
     if raw == UNPLUGGED_PROBE:
         return None
-    value = float(raw)
-    if unit is TemperatureUnit.FAHRENHEIT:
-        value = (value - 32.0) * (5.0 / 9.0)
-    return round(value, 1)
+    return float(raw)
 
 
 def decode_battery_percent(payload: bytes | bytearray) -> int:

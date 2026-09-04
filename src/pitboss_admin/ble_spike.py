@@ -138,7 +138,7 @@ async def run_proof(
                 )
             else:
                 try:
-                    temperature_c = decode_probe_temperature_c(payload, unit)
+                    temperature_c = decode_probe_temperature_c(payload)
                 except Exception as exc:
                     probes.append(
                         {
@@ -175,7 +175,7 @@ async def run_proof(
         "deviceName": device_name,
         "model": "igrill-v202",
         "authentication": "zero-challenge-loopback-succeeded",
-        "reportedTemperatureUnit": unit.name.lower(),
+        "reportedTemperatureUnit": unit.name.lower() if unit is not None else "undetermined",
         "temperatureUnitRawPayloadHex": unit_payload.hex(),
         "batteryPercent": decode_battery_percent(battery_payload),
         "batteryRawPayloadHex": battery_payload.hex(),

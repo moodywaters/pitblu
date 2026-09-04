@@ -13,6 +13,7 @@ All notable changes will be documented here.
 - V202 temperature-unit payload handling based on its first byte, retaining trailing bytes as evidence.
 - Sanitised per-probe payload diagnostics when no inserted probe can be decoded.
 - Three-byte V202 probe framing, decoding the leading 16-bit value and preserving its status byte.
+- Raw V202 Celsius decoding based on physical display comparison, without guessing from extended unit metadata.
 
 ### Blocked
 

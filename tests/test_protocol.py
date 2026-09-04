@@ -11,30 +11,27 @@ from pitboss_admin.protocol import (
 
 
 @pytest.mark.parametrize(
-    ("payload", "unit", "expected"),
+    ("payload", "expected"),
     [
-        (bytes.fromhex("1900"), TemperatureUnit.CELSIUS, 25.0),
-        (bytes.fromhex("140080"), TemperatureUnit.CELSIUS, 20.0),
-        (bytes.fromhex("4d00"), TemperatureUnit.FAHRENHEIT, 25.0),
-        (UNPLUGGED_PROBE.to_bytes(2, "little") + b"\x80", TemperatureUnit.CELSIUS, None),
+        (bytes.fromhex("1900"), 25.0),
+        (bytes.fromhex("140080"), 20.0),
+        (UNPLUGGED_PROBE.to_bytes(2, "little") + b"\x80", None),
     ],
 )
-def test_decode_probe_temperature(
-    payload: bytes, unit: TemperatureUnit, expected: float | None
-) -> None:
-    assert decode_probe_temperature_c(payload, unit) == expected
+def test_decode_probe_temperature(payload: bytes, expected: float | None) -> None:
+    assert decode_probe_temperature_c(payload) == expected
 
 
 @pytest.mark.parametrize("payload", [b"", b"\x01"])
 def test_decode_probe_temperature_rejects_wrong_length(payload: bytes) -> None:
     with pytest.raises(ProtocolError):
-        decode_probe_temperature_c(payload, TemperatureUnit.CELSIUS)
+        decode_probe_temperature_c(payload)
 
 
 def test_decode_temperature_unit() -> None:
     assert decode_temperature_unit(b"\x00") is TemperatureUnit.FAHRENHEIT
     assert decode_temperature_unit(b"\x01") is TemperatureUnit.CELSIUS
-    assert decode_temperature_unit(b"\x01\x00") is TemperatureUnit.CELSIUS
+    assert decode_temperature_unit(b"\x01\x00") is None
 
 
 @pytest.mark.parametrize("payload", [b"", b"\x02"])
