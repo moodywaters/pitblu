@@ -75,3 +75,15 @@ Sanitised protocol evidence:
 Two inserted physical probes appeared correctly on logical probes 1 and 2, both at 20°C. Logical
 probes 3 and 4 returned the unplugged sentinel. The five-byte unit metadata remains uninterpreted;
 raw V202 probe values were proven directly against the Celsius display.
+
+## v0.2.0 production-adapter gate
+
+Status: pending
+
+Run `pitboss-v202-check` from the installed v0.2.0 branch on the target Raspberry Pi with the
+official Weber application closed. A pass requires physical source, polling connection state,
+battery availability, four logical probe results, both attached probes within 1°C of the display,
+the two unattached channels absent, and `bluetoothAddressIncluded` equal to `false`.
+
+The command must complete or fail within its explicit deadlines and disconnect before exit. Record
+only its sanitised JSON and the manual display comparison. Do not record a Bluetooth address.

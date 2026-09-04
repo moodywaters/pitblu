@@ -4,7 +4,14 @@ All notable changes will be documented here.
 
 ## [Unreleased]
 
-No changes yet.
+### Added
+
+- Production Weber iGrill V202 adapter behind a shared asynchronous device boundary.
+- Scheduled continuous-discovery supervisor with separate missing and connected cadences.
+- Explicit desired and observed connection state machine with deterministic backoff tests.
+- Four-channel probe presence, availability, timestamps, sequences and source models.
+- Deterministic one-to-four-probe simulator with temperature patterns and injected fault states.
+- Sanitised physical BLE fixture and a privacy-safe production-adapter validation command.
 
 ## [0.1.0] - 2026-09-04
 

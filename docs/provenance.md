@@ -34,6 +34,11 @@ and `000a000002` for the characteristic previously described as a one-byte unit 
 were observed directly and were not copied from third-party source. The acceptance record contains
 no Bluetooth address or personal network configuration.
 
+Version 0.2.0 records those bytes in `tests/fixtures/v202/physical-proof.json` and replays them
+through the clean-room protocol decoder. The production adapter, state machine, discovery
+supervisor and simulator are original project code. No additional external source or dependency
+was introduced for this milestone.
+
 ## Excluded source
 
 `elupus/togrill-bluetooth` was not researched or used because it targets ToGrill-branded hardware,
