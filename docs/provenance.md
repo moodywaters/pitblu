@@ -26,6 +26,14 @@ sources.
 Dependency licences were reviewed from their project metadata or licence distributions. Transitive
 dependencies will be captured in a lock or installation manifest before a distributable release.
 
+## Direct physical protocol evidence
+
+On 4 September 2026, the target V202 supplied sanitised payloads `140080` for an inserted probe at a
+simultaneous displayed 20°C, `30f880` for unplugged characteristics, `3c` for 60 per cent battery,
+and `000a000002` for the characteristic previously described as a one-byte unit flag. These facts
+were observed directly and were not copied from third-party source. The acceptance record contains
+no Bluetooth address or personal network configuration.
+
 ## Excluded source
 
 `elupus/togrill-bluetooth` was not researched or used because it targets ToGrill-branded hardware,

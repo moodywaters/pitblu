@@ -7,9 +7,9 @@ scaffold and a focused physical BLE proof for the Weber iGrill V202.
 The REST service, MQTT, persistence, simulator and native service deployment belong to later
 milestones and are not implemented yet.
 
-## Current gate
+## v0.1.0 result
 
-Version 0.1.0 is not complete until a Raspberry Pi run has demonstrated all of the following:
+Version 0.1.0 passed its Raspberry Pi physical gate on 4 September 2026, demonstrating:
 
 - discovery of the expected advertised name within 20 seconds;
 - connection and Weber challenge/response initialisation;
@@ -17,7 +17,8 @@ Version 0.1.0 is not complete until a Raspberry Pi run has demonstrated all of t
 - the standard Bluetooth battery percentage;
 - output containing no Bluetooth address.
 
-See [physical acceptance](docs/physical-acceptance.md) for the controlled procedure.
+See [physical acceptance](docs/physical-acceptance.md) for the sanitised evidence. Later milestones
+remain unimplemented.
 
 ## Development
 
@@ -50,4 +51,3 @@ Bluetooth addresses from errors. Plain HTTP in later versions will be for truste
 The original code in this repository is available under the MIT Licence. Research provenance and
 dependency notices are recorded in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and
 [docs/provenance.md](docs/provenance.md).
-

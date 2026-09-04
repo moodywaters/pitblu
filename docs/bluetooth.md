@@ -25,6 +25,17 @@ evidence is recorded. The three-byte probe framing and raw Celsius interpretatio
 directly on the target V202 on 4 September 2026. The proof reads but does not change the device's
 unit or other configuration.
 
+## Confirmed v0.1.0 findings
+
+Physical acceptance confirmed the V202 service UUID and zero-challenge loopback sequence. The
+standard battery characteristic returned `3c`, or 60 per cent. An inserted 20°C probe returned
+`140080`; unplugged channels returned `30f880`, whose leading `30f8` is the little-endian 63536
+sentinel. The V202 returned `000a000002` from `06ef0001`, not a one-byte display-unit flag.
+
+Two inserted probes appeared correctly on the first and second logical temperature characteristics,
+both at the displayed 20°C. The third and fourth characteristics returned the unplugged sentinel.
+Testing all four physical channels remains part of the later production-adapter milestone.
+
 The Bleak client requests pairing and wraps connection plus GATT service resolution in an explicit
 asyncio deadline. This outer deadline is required because the backend's constructor timeout did not
 bound service resolution during the first physical trial.
