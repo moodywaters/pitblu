@@ -10,6 +10,7 @@ All notable changes will be documented here.
 - Focused Bleak-based V202 discovery, authentication, probe and battery proof.
 - Protocol decoding tests, documentation structure, licence review and provenance record.
 - Explicitly bounded Linux connection, GATT service resolution and disconnection in the proof.
+- V202 temperature-unit payload handling based on its first byte, retaining trailing bytes as evidence.
 
 ### Blocked
 

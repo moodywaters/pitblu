@@ -35,9 +35,9 @@ class TemperatureUnit(IntEnum):
 
 
 def decode_temperature_unit(payload: bytes | bytearray) -> TemperatureUnit:
-    """Decode the single-byte display unit."""
-    if len(payload) != 1:
-        raise ProtocolError("temperature unit payload must contain exactly one byte")
+    """Decode the display unit from the first byte of a non-empty payload."""
+    if not payload:
+        raise ProtocolError("temperature unit payload must contain at least one byte")
     try:
         return TemperatureUnit(payload[0])
     except ValueError as exc:

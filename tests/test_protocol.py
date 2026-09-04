@@ -33,9 +33,10 @@ def test_decode_probe_temperature_rejects_wrong_length(payload: bytes) -> None:
 def test_decode_temperature_unit() -> None:
     assert decode_temperature_unit(b"\x00") is TemperatureUnit.FAHRENHEIT
     assert decode_temperature_unit(b"\x01") is TemperatureUnit.CELSIUS
+    assert decode_temperature_unit(b"\x01\x00") is TemperatureUnit.CELSIUS
 
 
-@pytest.mark.parametrize("payload", [b"", b"\x02", b"\x00\x01"])
+@pytest.mark.parametrize("payload", [b"", b"\x02"])
 def test_decode_temperature_unit_rejects_invalid_payload(payload: bytes) -> None:
     with pytest.raises(ProtocolError):
         decode_temperature_unit(payload)

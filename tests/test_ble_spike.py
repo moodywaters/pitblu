@@ -83,7 +83,7 @@ class FakeProofClient:
     async def read_gatt_char(self, uuid: str) -> bytes:
         values = {
             DEVICE_CHALLENGE_UUID: bytes(range(16)),
-            TEMPERATURE_UNIT_UUID: b"\x01",
+            TEMPERATURE_UNIT_UUID: b"\x01\x00",
             BATTERY_LEVEL_UUID: b"\x4b",
             PROBE_TEMPERATURE_UUIDS[0]: b"\x19\x00",
             PROBE_TEMPERATURE_UUIDS[2]: UNPLUGGED_PROBE.to_bytes(2, "little"),
@@ -107,6 +107,7 @@ def test_run_proof_returns_sanitised_physical_result(monkeypatch: pytest.MonkeyP
 
     assert result["batteryPercent"] == 75
     assert result["bluetoothAddressIncluded"] is False
+    assert result["temperatureUnitRawPayloadHex"] == "0100"
     probes = result["probes"]
     assert isinstance(probes, list)
     assert probes[0]["temperatureC"] == 25.0

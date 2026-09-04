@@ -161,6 +161,7 @@ async def run_proof(
         "model": "igrill-v202",
         "authentication": "zero-challenge-loopback-succeeded",
         "reportedTemperatureUnit": unit.name.lower(),
+        "temperatureUnitRawPayloadHex": unit_payload.hex(),
         "batteryPercent": decode_battery_percent(battery_payload),
         "batteryRawPayloadHex": battery_payload.hex(),
         "probes": probes,
