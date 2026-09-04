@@ -18,8 +18,11 @@ percentage byte.
 These are research hypotheses until the target hardware evidence is recorded. The proof reads but
 does not change the device's unit or other configuration.
 
+The Bleak client requests pairing and wraps connection plus GATT service resolution in an explicit
+asyncio deadline. This outer deadline is required because the backend's constructor timeout did not
+bound service resolution during the first physical trial.
+
 ## Privacy
 
 The advertised name is not treated as the Bluetooth address. Conventional colon-separated
 addresses are redacted from diagnostic errors and are never included in the success document.
-

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import contextlib
 import json
 import re
 import sys
@@ -92,7 +93,13 @@ async def run_proof(
         raise ProofError(f"device {device_name!r} was not discovered")
 
     print("Device discovered; connecting and initialising...", file=sys.stderr)
-    async with BleakClient(device, timeout=connect_timeout) as client:
+    client = BleakClient(device, timeout=connect_timeout, pair=True)
+    try:
+        await _with_timeout(
+            client.connect(),
+            connect_timeout,
+            "BLE connection and GATT service resolution",
+        )
         service_uuids = {service.uuid.lower() for service in client.services}
         if V202_TEMPERATURE_SERVICE_UUID not in service_uuids:
             raise ProofError("connected device does not expose the V202 temperature service")
@@ -139,6 +146,10 @@ async def run_proof(
                         "rawPayloadHex": payload.hex(),
                     }
                 )
+    finally:
+        if client.is_connected:
+            with contextlib.suppress(Exception):
+                await asyncio.wait_for(client.disconnect(), timeout=5.0)
 
     if not any(probe["present"] for probe in probes):
         raise ProofError("no inserted probe produced a valid temperature")

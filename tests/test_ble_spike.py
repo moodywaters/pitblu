@@ -66,14 +66,16 @@ class FakeService:
 class FakeProofClient:
     services: ClassVar[list[FakeService]] = [FakeService()]
 
-    def __init__(self, _device: object, *, timeout: float) -> None:
+    def __init__(self, _device: object, *, timeout: float, pair: bool) -> None:
         self.timeout = timeout
+        self.pair = pair
+        self.is_connected = False
 
-    async def __aenter__(self) -> "FakeProofClient":
-        return self
+    async def connect(self) -> None:
+        self.is_connected = True
 
-    async def __aexit__(self, *_args: object) -> None:
-        return None
+    async def disconnect(self) -> None:
+        self.is_connected = False
 
     async def write_gatt_char(self, _uuid: str, _payload: bytes, *, response: bool) -> None:
         assert response

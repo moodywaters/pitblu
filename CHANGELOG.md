@@ -9,8 +9,8 @@ All notable changes will be documented here.
 - Initial v0.1.0 repository scaffold and quality workflow.
 - Focused Bleak-based V202 discovery, authentication, probe and battery proof.
 - Protocol decoding tests, documentation structure, licence review and provenance record.
+- Explicitly bounded Linux connection, GATT service resolution and disconnection in the proof.
 
 ### Blocked
 
 - v0.1.0 release pending successful physical probe and battery evidence from the target Raspberry Pi.
-
