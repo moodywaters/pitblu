@@ -1,0 +1,10 @@
+{
+  "fixtureVersion": 1,
+  "source": "sanitised-physical",
+  "model": "igrill-v202",
+  "displayC": [20.0, 20.0],
+  "temperatureUnit": "000a000002",
+  "battery": "3c",
+  "probes": ["140080", "140080", "30f880", "30f880"],
+  "containsBluetoothAddress": false
+}
