@@ -34,7 +34,24 @@ sentinel. The V202 returned `000a000002` from `06ef0001`, not a one-byte display
 
 Two inserted probes appeared correctly on the first and second logical temperature characteristics,
 both at the displayed 20°C. The third and fourth characteristics returned the unplugged sentinel.
-Testing all four physical channels remains part of the later production-adapter milestone.
+The production adapter reads all four logical channels in v0.2.0. Inserting probes into all four
+physical sockets remains part of the complete v1.0.0 physical acceptance suite.
+
+## v0.2.0 production adapter
+
+The production adapter uses the confirmed V202 service and challenge sequence, reads all four
+logical probe characteristics on every snapshot and interprets the confirmed unplugged sentinel as
+`present: false`. A malformed or failed channel read is isolated to that probe as unavailable, so
+one faulty characteristic does not discard other valid readings. Battery failure is represented
+independently from probe availability.
+
+Discovery accepts the expected V202 advertised-name prefix or the confirmed temperature service.
+It exposes only a process-local opaque discovery identifier. Native BLE objects and Bluetooth
+addresses do not appear in model representations or validation output.
+
+Default deadlines follow the project plan: 10 seconds for connection and service resolution, 15
+seconds for authentication, and 5 seconds for each GATT read. The physical validation command can
+raise the connection allowance explicitly when diagnosing a slow BlueZ service-resolution path.
 
 The Bleak client requests pairing and wraps connection plus GATT service resolution in an explicit
 asyncio deadline. This outer deadline is required because the backend's constructor timeout did not

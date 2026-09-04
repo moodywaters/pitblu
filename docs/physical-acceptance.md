@@ -75,3 +75,33 @@ Sanitised protocol evidence:
 Two inserted physical probes appeared correctly on logical probes 1 and 2, both at 20°C. Logical
 probes 3 and 4 returned the unplugged sentinel. The five-byte unit metadata remains uninterpreted;
 raw V202 probe values were proven directly against the Celsius display.
+
+## v0.2.0 production-adapter gate
+
+Status: passed
+
+Run `pitboss-v202-check` from the installed v0.2.0 branch on the target Raspberry Pi with the
+official Weber application closed. A pass requires physical source, polling connection state,
+battery availability, four logical probe results, both attached probes within 1°C of the display,
+the two unattached channels absent, and `bluetoothAddressIncluded` equal to `false`.
+
+The command must complete or fail within its explicit deadlines and disconnect before exit. Record
+only its sanitised JSON and the manual display comparison. Do not record a Bluetooth address.
+
+### v0.2.0 result
+
+- Date: 4 September 2026
+- Command: `pitboss-v202-check` using a 60-second diagnostic connection allowance and 15-second
+  read allowance
+- Connection state: `polling`
+- Source and model: `physical`, `igrill-v202`
+- Probe 1: present and available, 19.0°C, matching the displayed 19°C
+- Probe 2: present and available, 21.0°C, matching the displayed 21°C
+- Probes 3 and 4: available characteristics reporting no inserted probe
+- Battery: available, 60 per cent
+- Privacy: output stated `bluetoothAddressIncluded: false`; no address was retained
+- Target checks: 47 tests passed with 94.03 per cent coverage on Python 3.13.5; Ruff lint and
+  formatting checks passed; strict mypy checking passed for 21 source files
+
+The command completed normally and disconnected before exit. All v0.2.0 acceptance criteria were
+met on the target Raspberry Pi.

@@ -1,11 +1,11 @@
 # pitboss-admin
 
 `pitboss-admin` is a planned headless, API-first Raspberry Pi gateway for Weber iGrill
-thermometers. Development is deliberately gated. Version 0.1.0 contains only the repository
-scaffold and a focused physical BLE proof for the Weber iGrill V202.
+thermometers. Development is deliberately gated. Version 0.2.0 builds a tested device foundation
+on the physical BLE protocol proven in version 0.1.0.
 
-The REST service, MQTT, persistence, simulator and native service deployment belong to later
-milestones and are not implemented yet.
+The REST service, MQTT, persistence and native service deployment belong to later milestones and
+are not implemented yet.
 
 ## v0.1.0 result
 
@@ -19,6 +19,19 @@ Version 0.1.0 passed its Raspberry Pi physical gate on 4 September 2026, demonst
 
 See [physical acceptance](docs/physical-acceptance.md) for the sanitised evidence. Later milestones
 remain unimplemented.
+
+## v0.2.0 device foundation
+
+- A production Bleak adapter discovers, connects, authenticates and reads all four V202 channels.
+- Physical and simulated devices implement the same asynchronous adapter boundary.
+- Discovery remains active through scheduled scans without keeping the radio continuously busy.
+- Desired and observed connection state are modelled explicitly.
+- The deterministic simulator supports one to four probes, temperature patterns, insertion,
+  removal, battery changes, stale samples and connection loss.
+- A sanitised recorded fixture replays the physical payloads in hardware-independent tests.
+
+The `pitboss-v202-check` command validates this production adapter on the Raspberry Pi and emits a
+privacy-safe snapshot. It is a milestone check, not a long-running service.
 
 ## Development
 

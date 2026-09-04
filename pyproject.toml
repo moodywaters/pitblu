@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pitboss-admin"
-version = "0.1.0"
+version = "0.2.0"
 description = "Headless Weber iGrill hardware gateway"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -30,6 +30,7 @@ dev = [
 
 [project.scripts]
 pitboss-ble-proof = "pitboss_admin.ble_spike:main"
+pitboss-v202-check = "pitboss_admin.physical_check:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/pitboss_admin"]
