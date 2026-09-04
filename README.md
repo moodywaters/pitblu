@@ -1,11 +1,11 @@
 # pitboss-admin
 
 `pitboss-admin` is a planned headless, API-first Raspberry Pi gateway for Weber iGrill
-thermometers. Development is deliberately gated. Version 0.2.0 builds a tested device foundation
-on the physical BLE protocol proven in version 0.1.0.
+thermometers. Development is deliberately gated. Version 0.3.0 adds the administrative REST and
+configuration control plane to the tested device foundation.
 
-The REST service, MQTT, persistence and native service deployment belong to later milestones and
-are not implemented yet.
+MQTT telemetry, SSE, the resilience controller and native service deployment belong to later
+milestones and are not implemented yet.
 
 ## v0.1.0 result
 
@@ -33,6 +33,20 @@ remain unimplemented.
 The `pitboss-v202-check` command validates this production adapter on the Raspberry Pi and emits a
 privacy-safe snapshot. It is a milestone check, not a long-running service.
 
+## v0.3.0 API and configuration
+
+- FastAPI exposes versioned discovery, device, operation, telemetry and configuration resources.
+- Slow device actions run as tracked background operations and return HTTP 202.
+- SQLite persists administrative state, never temperature history.
+- Configuration layers defaults, YAML, environment and transactional persisted overrides.
+- ETags prevent lost configuration updates.
+- Bearer tokens are stored only as salted scrypt hashes and can be rotated.
+- Secret resources are write-only and validation errors never echo submitted values.
+
+Run `pitboss-api` for the native development server. Its safe package default is loopback-only with
+authentication disabled. Non-loopback binding is rejected unless token authentication is enabled.
+See [REST API](docs/api.md) and [configuration](docs/configuration.md).
+
 ## Development
 
 Python 3.11 through 3.13 is the supported range. Install the editable development environment:
@@ -57,7 +71,8 @@ There is no Docker-based installation or development path.
 
 Never commit Bluetooth addresses, LAN addresses, tokens, broker credentials, local configuration
 or unredacted physical evidence. The proof discovers by advertised name and redacts conventional
-Bluetooth addresses from errors. Plain HTTP in later versions will be for trusted LAN use only.
+Bluetooth addresses from errors. Plain HTTP is for trusted LAN use only and must never be exposed
+directly to the internet.
 
 ## Licence
 

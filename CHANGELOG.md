@@ -6,6 +6,23 @@ All notable changes will be documented here.
 
 No changes yet.
 
+## [0.3.0] - 2026-09-04
+
+### Added
+
+- Versioned FastAPI administrative resources and generated OpenAPI.
+- Persistent asynchronous scan and connection operation metadata.
+- SQLite persistence for registered devices, desired state and configuration overrides.
+- Layered typed configuration with whole-update validation and ETag concurrency.
+- Bearer-token authentication, salted scrypt hashing and one-time token rotation responses.
+- Write-only MQTT password resource with redacted validation errors.
+
+### Validated
+
+- Simulator-backed API on the target Raspberry Pi: health, asynchronous discovery, device
+  registration and connection, four probe readings, and battery state.
+- Raspberry Pi quality gate with 58 tests, 93.28 per cent coverage, Ruff and strict mypy.
+
 ## [0.2.0] - 2026-09-04
 
 ### Added
