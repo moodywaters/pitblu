@@ -45,6 +45,7 @@ def test_device_and_operation_contract() -> None:
         )
         assert created.status_code == 201
         device_id = created.json()["device"]["deviceId"]
+        assert created.json()["device"]["desiredState"] == "connected"
         connection = created.json()["operation"]
         assert completed_operation(api, connection["operationId"])["status"] == "succeeded"
         assert len(api.get(f"/api/v1/devices/{device_id}/probes").json()) == 4

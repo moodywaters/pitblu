@@ -1,6 +1,8 @@
 """FastAPI control plane for pitboss-admin."""
 
+import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Annotated, Any, Literal
 from uuid import uuid4
 
@@ -223,7 +225,10 @@ def create_app(
         )
         if body.connect:
             operation = service.start_connection_operation(str(device["deviceId"]), "connect")
-            return {"device": device, "operation": operation}
+            return {
+                "device": service.device(str(device["deviceId"])),
+                "operation": operation,
+            }
         return device
 
     @app.get("/api/v1/devices/{device_id}")
@@ -333,12 +338,14 @@ def run() -> None:
     """Run the native development server using the effective startup configuration."""
     import uvicorn
 
-    config: ConfigurationManager = app.state.configuration
-    bootstrap_token: str | None = app.state.bootstrap_token
+    database_path = Path(os.environ.get("PITBOSS_DATABASE_PATH", "pitboss-admin.sqlite3"))
+    application = create_app(store=AdministrativeStore(database_path))
+    config: ConfigurationManager = application.state.configuration
+    bootstrap_token: str | None = application.state.bootstrap_token
     if bootstrap_token is not None:
         print(f"Initial administrator token (shown once): {bootstrap_token}")
     uvicorn.run(
-        app,
+        application,
         host=config.config.server.bind,
         port=config.config.server.port,
         access_log=False,
@@ -347,6 +354,3 @@ def run() -> None:
 
 class AuthenticationError(Exception):
     pass
-
-
-app = create_app()

@@ -105,3 +105,24 @@ only its sanitised JSON and the manual display comparison. Do not record a Bluet
 
 The command completed normally and disconnected before exit. All v0.2.0 acceptance criteria were
 met on the target Raspberry Pi.
+
+## v0.3.0 Raspberry Pi API gate
+
+Status: passed
+
+On 4 September 2026, the v0.3.0 candidate ran natively on the target Raspberry Pi using its
+simulated adapter and loopback-only API default. The following were demonstrated through REST:
+
+- unauthenticated minimal `GET /health` returned `{"status":"ok"}`;
+- `POST /api/v1/scans` returned a queued operation and its resource progressed to `succeeded`;
+- the scan returned one supported simulated V202 without a Bluetooth address;
+- registration with initial connection returned HTTP 201 plus a queued operation;
+- the connection operation progressed to `succeeded`;
+- the probe resource returned four available, present readings at 20.0°C through 23.0°C, all with
+  `source` equal to `simulated`;
+- the battery resource returned 100 per cent with `source` equal to `simulated`;
+- the temporary API process stopped normally after the checks.
+
+The target quality gate passed 58 tests with 93.28 per cent coverage on Python 3.13.5. Ruff lint
+and format checks passed, and strict mypy reported no issues in 30 source files. No private address,
+LAN address or secret was recorded.

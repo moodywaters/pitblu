@@ -36,3 +36,7 @@ only a salted scrypt hash is stored, and rotation returns a replacement plaintex
 Authentication may be disabled only with the loopback bind. Before changing `auth.mode` to `token`,
 rotate an administrator token while still on the safe loopback connection. A configuration update
 cannot enable token mode without a stored token hash.
+
+`PITBOSS_DATABASE_PATH` is a deployment-level startup override rather than an application setting.
+The development default is `pitboss-admin.sqlite3` in the working directory. The v0.6.0 native
+installer will set the production path under `/var/lib/pitboss-admin/` with restricted permissions.
