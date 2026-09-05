@@ -425,3 +425,190 @@ Begin only with repository inspection and the `v0.1.0` implementation plan. Repo
 5. Any decision you genuinely need from me.
 
 Then implement `v0.1.0` incrementally. Do not start later milestones until the physical BLE proof and milestone checks are complete.
+
+## Continuation handoff: 5 September 2026, after v0.4.0
+
+This section is an additive progress record for an AI continuing the existing project. Preserve
+the original specification above and the authoritative `pitboss-admin-project-plan.md`. The
+original "Start now" section describes the initial project state, not the current starting point.
+Do not restart v0.1.0: v0.1.0 through v0.4.0 have been released. The next implementation milestone
+is v0.5.0, subject to the user's direction to resume implementation. This handoff update itself
+does not implement or complete any part of v0.5.0.
+
+### Repository and released baseline
+
+- Private repository: https://github.com/moodywaters/pitboss-admin. Keep it private.
+- Main branch: `main`.
+- Latest release: https://github.com/moodywaters/pitboss-admin/releases/tag/v0.4.0.
+- v0.4.0 was merged through pull request #5; its release commit is `9bd8999` and its
+  implementation commit is `6f0f014`. Resolve full commits from Git rather than guessing them.
+- Earlier releases are tagged `v0.1.0`, `v0.2.0` and `v0.3.0`.
+- At handoff, application package version is `0.4.0`. Inspect current Git state before proceeding;
+  later commits may supersede this dated record.
+- `docs/physical-acceptance.md` records sanitised evidence. `CHANGELOG.md`, `docs/mqtt.md`,
+  `docs/api.md`, `docs/configuration.md` and `docs/provenance.md` describe the implemented state.
+- `docs/v0.4.0-plan.md` still has a release-pending status/check box from before publication;
+  the release and tag above establish that publication subsequently completed.
+
+### Completed milestones and evidence
+
+**v0.1.0: physical BLE proof, completed 4 September 2026.** Discovery, BlueZ pairing, Weber
+initialisation and physical probe plus battery reads succeeded on the target Pi. Two attached
+probes both decoded to 20 degrees Celsius and matched the physical display. Battery was 60 per
+cent. Two other channels were absent. Private Bluetooth addresses were excluded from evidence.
+
+Physical protocol findings to preserve:
+
+- Inserted probe bytes `140080` encode 20 degrees Celsius. The V202 framing is three bytes;
+  decode the leading 16-bit value using the existing protocol implementation.
+- Unplugged bytes `30f880` are a sentinel, not a temperature.
+- Battery bytes `3c` represent 60 per cent.
+- Unit metadata `000a000002` is not a one-byte Fahrenheit flag. Its extended meaning remains
+  undetermined. Do not reintroduce a Fahrenheit conversion: the raw Celsius interpretation was
+  verified against the display.
+- Authentication evidence is `zero-challenge-loopback-succeeded`.
+- Early pairing and GATT timeouts were resolved during the spike. Preserve the explicit deadlines
+  and Linux connection/service-resolution handling already implemented.
+- Replay fixture: `tests/fixtures/v202/physical-proof.json`.
+
+**v0.2.0: device foundation, completed 4 September 2026.** Production adapter, shared adapter
+interface, discovery supervisor, connection-state/backoff models, four channels, simulator and
+recorded fixture were implemented. The production adapter returned physical probes at 19 and
+21 degrees Celsius, both confirmed on the display, two absent channels and 60 per cent battery.
+Pi validation passed 47 tests at 94.03 per cent coverage with lint, formatting and typing clean.
+The discovery and state-machine components are foundations; their existence does not imply the
+full application recovery controller is integrated.
+
+**v0.3.0: REST and configuration, completed 4 September 2026.** FastAPI resources, asynchronous
+operation metadata, SQLite administrative persistence, layered configuration, ETags, token hashing
+and rotation, and write-only secrets were implemented. Simulator health, scan, registration,
+connection, four probes and battery were verified through REST on the Pi. The gate passed 58
+tests at 93.28 per cent coverage with lint, formatting and typing clean.
+
+An intentional documented API difference from the original onboarding wording is that registration
+accepts an opaque `discoveryId` from a scan result, not a raw Bluetooth address. Preserve the
+implemented public contract and privacy boundary. Refer to `docs/api.md` and the ADRs.
+
+**v0.4.0: telemetry, released 5 September 2026.** Canonical events, bounded in-memory event fan-out,
+SSE, MQTT QoS 1 topic mapping, retained service Last Will, continuous sampling and stale state
+were implemented. Physical and simulated adapters share the event path. Live v0.4.0 transport
+acceptance used the simulator, not another physical BLE acceptance run.
+
+The final Pi candidate passed 71 tests at 93.26 per cent coverage on Python 3.13.5. Ruff checked
+61 formatted files; strict mypy checked 37 source files. GitHub CI passed on Python 3.11, 3.12
+and 3.13 before merge. A dependency deprecation warning in Starlette/AnyIO did not fail the gate.
+
+Live Pi telemetry acceptance demonstrated:
+
+- SSE carrying correct device identifiers, UTC sample times, four readings and increasing sequences.
+- Fresh simulator recovery after reconnect, with sequence 23 advancing to 27 over 20 seconds.
+- REST probe and battery values becoming unavailable, stale and numerically null after disconnect.
+- Authenticated Mosquitto service availability retained at QoS 1 with `source: simulated`.
+- Four MQTT temperatures at 20, 21, 22 and 23 degrees Celsius with the required envelope.
+- A new subscription after disconnect receiving four retained stale probe-availability messages
+  and zero temperature messages, confirming temperatures were not retained.
+- Force-stopping the isolated test API causing Mosquitto to publish retained service unavailability
+  at QoS 1, proving the broker Last Will.
+
+Live testing caught and fixed two regressions. `TelemetryEvent` now accepts internal snake_case
+field names as well as public aliases and rejects unknown fields, preserving `deviceId` and
+`observedAt`. The live simulator uses an injected current clock for each new observation; the
+deterministic test simulator may still use a fixed starting time. Do not anchor live sample times
+to API startup or assume a fixed five-second advance matches elapsed time.
+
+### Current implementation map
+
+- `adapters/base.py`, `adapters/igrill_v202.py`, `adapters/simulated.py`: shared device boundary.
+- `protocol.py`, `ble_spike.py`, `physical_check.py`: decoder and manual hardware checks.
+- `discovery.py`, `connection.py`: discovery supervision and state/backoff foundations.
+- `api.py`, `service.py`: HTTP transport and administrative operations with connected-device polling.
+- `storage.py`, `configuration.py`, `auth.py`: administrative persistence, settings and tokens.
+- `events.py`: canonical Pydantic events, recent history, bounded subscriber queues and SSE framing.
+- `telemetry.py`: current snapshots, stale deadlines, REST freshness and per-topic event sequences.
+- `mqtt.py`: aiomqtt publisher, topic mapping, retention and Last Will.
+
+Paths in this map are relative to `src/pitboss_admin/`. Read implementation and tests before
+changing behaviour. Runtime dependencies include aiomqtt 2.5.1, Bleak 3.0.2, FastAPI 0.141.1,
+PyYAML 6.0.3 and Uvicorn 0.52.4. aiomqtt uses Paho MQTT 2.1.0 in the validated installation.
+Consult `pyproject.toml` and provenance/notices for the current versions and licence record.
+
+### Known limitations and v0.5.0 work
+
+Do not mistake released milestone scope for v1.0.0 readiness. The following require attention
+in the resilience milestone or subsequent planned work:
+
+- A failed MQTT background task does not currently change HTTP liveness/readiness or expose a
+  useful publisher status. During validation, a rejected stored credential left HTTP healthy while
+  no MQTT message was published. Add safe task supervision and diagnostics, without logging secrets.
+- Automatic MQTT reconnect and complete BLE recovery/backoff orchestration are not implemented.
+  The sampling loop currently stops on a read exception. Persistent desired state is stored, but
+  full restart recovery and connection-handle restoration must be implemented and verified.
+- Serialisation of conflicting device operations, cancellation and bounded graceful shutdown need
+  completion. The service currently owns one selected adapter; inspect multi-device implications.
+- Current events/history are bounded but in memory. Complete the planned operational diagnostics
+  and persistence without introducing temperature history.
+- Last Will `observedAt` is the payload preparation time before broker connection, not the time
+  of failure. MQTT cannot dynamically rewrite the pre-registered Will on disconnect. Consumers
+  need receipt time for failure detection. Normal shutdown currently reuses that prepared payload.
+- Event sequences are per topic and process, and reset on restart. Consider restart/session
+  identification before claiming cross-restart deduplication guarantees.
+- Stale REST clears battery and probe numeric values; MQTT stale transitions currently publish
+  device/probe unavailability. Audit retained battery state, device deletion, disconnect semantics
+  and repeated old snapshots when completing data-integrity/recovery behaviour.
+- Battery is currently obtained in each full snapshot; the separate configured battery cadence
+  and availability heartbeat need integration/audit. SSE idle comments are not MQTT heartbeats.
+- Configuration metadata currently marks all settings restart-required. Some handlers read the
+  current config while long-lived components capture startup settings; audit the effective runtime
+  semantics rather than assuming every update is consistently hot-applied or deferred.
+- Native installer, dedicated account, protected production filesystem layout, systemd, upgrade
+  and rollback remain v0.6.0. Clean-Pi/security/provenance audits remain v0.9.0. Full physical
+  acceptance and the 12-hour soak remain v1.0.0. None has been claimed complete.
+
+### Working environment and current Pi state
+
+Development has been performed on Windows in `C:\pitboss`; the application target is the Raspberry
+Pi. The user runs Pi commands through SSH. Do not run Linux installation commands on Windows or
+assume the agent has a direct Pi execution tool. The Pi development checkout is
+`/home/john/pitboss-admin` with virtual environment `/home/john/pitboss-admin/.venv`.
+This is a development layout, not the future `/opt` production installation.
+
+The user explicitly updated their command preference: several related Pi commands may now be
+provided in one block. This supersedes the earlier one-command-at-a-time rule. Wait for output
+when the next step depends on it. Label Windows PowerShell versus Pi shell commands clearly.
+
+The v0.4.0 test API ran on loopback port 8081 with simulation and an isolated database. It was
+stopped by the Last Will test and has not been restarted in this handoff. Temporary test databases,
+logs and retained MQTT test messages may remain on the Pi. A test database contains the broker
+password and must remain protected deployment data; never package, print or commit it. Inspect
+current state before cleanup and preserve the existing broker and its authentication/ACLs.
+
+Do not assume old shell variables or process IDs survive a new SSH session. Identify the actual
+process before stopping it. Do not export ad hoc helper variables prefixed `PITBOSS_`: the config
+loader treats that prefix as application configuration and rejects unknown settings.
+
+Source archives were copied from Windows and extracted into the existing Pi checkout. One early
+v0.4.0 archive had a `pitboss/` top-level directory and was initially extracted to the wrong sibling
+directory; the correct installation used `--strip-components=1 -C /home/john/pitboss-admin`.
+Inspect archive contents before giving extraction instructions. Exclude Git metadata, virtual
+environments, bytecode, caches, databases, logs, secrets and local config from every package.
+
+During MQTT validation, typed credentials worked while a previously stored value did not. The
+successful procedure verified broker authentication first, saved through the write-only API, then
+compared the stored value locally without displaying either value. Restart was needed for the
+publisher to load the changed credential. Never ask the user to paste a password into the chat.
+
+### Resume procedure for a new AI
+
+1. Read this appended handoff, the original specification and project plan, then inspect the
+   current repository, tags, open PRs and local changes. Preserve any subsequent user work.
+2. Treat v0.1.0 through v0.4.0 as released with the evidence and limitations above. Do not repeat
+   completed hardware gates unless a change or new failure justifies regression validation.
+3. When asked to continue implementation, write a v0.5.0 plan for supervised BLE/MQTT recovery,
+   persistence integration, operation concurrency, safe diagnostics and graceful shutdown.
+4. Use controlled time and test doubles for failure/recovery tests, then request targeted Pi
+   validation. Never infer broker health from HTTP health alone.
+5. Run Ruff lint, Ruff format check, strict mypy and pytest with the existing 90 per cent coverage
+   gate. Keep hardware-independent CI working on Python 3.11 through 3.13.
+6. Update documentation and provenance alongside code; use reviewed milestone commits and green
+   CI before merging or releasing. Keep the repository private and do not advance to v0.6.0
+   until v0.5.0 is verified.
