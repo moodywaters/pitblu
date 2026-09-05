@@ -1,6 +1,59 @@
 # MQTT
 
-MQTT is not implemented in v0.1.0. It begins in v0.4.0. The planned schema uses JSON, QoS 1,
-stable public device identifiers and an independent `v1` topic version. No administrative commands
-will be accepted over MQTT.
+Version 0.4.0 publishes telemetry to MQTT when `mqtt.enabled` is true. MQTT is a read-only data
+plane: the service does not subscribe to or accept administrative commands. The default broker is
+local, but host, port, TLS, username and base topic are configurable. The password is managed only
+through the write-only secret API.
 
+## Topic contract
+
+With the default `pitboss` base topic:
+
+| Topic | Retained |
+| --- | --- |
+| `pitboss/v1/service/availability` | Yes, with Last Will |
+| `pitboss/v1/devices/{deviceId}/availability` | Yes |
+| `pitboss/v1/devices/{deviceId}/connection` | Yes |
+| `pitboss/v1/devices/{deviceId}/battery` | Yes |
+| `pitboss/v1/devices/{deviceId}/probes/{probe}/availability` | Yes |
+| `pitboss/v1/devices/{deviceId}/probes/{probe}/temperature` | No |
+
+Every publication uses QoS 1 and JSON. Consumers must tolerate duplicate delivery and can
+deduplicate a topic using its monotonically increasing `sequence`. Device topics contain a stable
+public identifier, never a Bluetooth address. Probe numbers are one-based.
+
+A temperature payload is shaped as follows:
+
+```json
+{
+  "schemaVersion": 1,
+  "deviceId": "igrill-v202-example",
+  "probe": 1,
+  "temperatureC": 20.5,
+  "observedAt": "2026-09-05T12:00:00+00:00",
+  "sequence": 42,
+  "source": "physical"
+}
+```
+
+Availability, connection and battery payloads use the same envelope and add their state fields.
+The service publishes retained online state after connecting to the broker and configures a
+retained unavailable Last Will before connecting. A normal publisher stop also publishes the
+unavailable state.
+
+The Last Will payload is prepared before connecting. Its `observedAt` is therefore the preparation
+time, not the eventual disconnect time. Consumers should record their own receipt time for failure
+detection. Sequence counters are scoped to the running process and topic; they reset on restart.
+
+In this milestone, publisher connection failures do not change HTTP liveness and automatic MQTT
+reconnection is not yet implemented. Verify broker delivery independently. Failure diagnostics and
+reconnection belong to v0.5.0.
+
+Temperatures are deliberately not retained. Current state is available through REST, and an active
+subscriber receives subsequent readings at the configured probe polling interval. When no fresh
+snapshot arrives before `polling.stale_after`, device and probe availability events report
+`available: false` with reason `stale`; REST suppresses the old numeric values.
+
+Do not put credentials in YAML, shell history or source control. Configure `mqtt.password` through
+the authenticated write-only secret endpoint. Additional consumers should use separate
+least-privilege broker identities.

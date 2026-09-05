@@ -1,11 +1,11 @@
 # pitboss-admin
 
 `pitboss-admin` is a planned headless, API-first Raspberry Pi gateway for Weber iGrill
-thermometers. Development is deliberately gated. Version 0.3.0 adds the administrative REST and
-configuration control plane to the tested device foundation.
+thermometers. Development is deliberately gated. Version 0.4.0 adds a shared telemetry event path,
+MQTT publishing, SSE and stale-reading handling to the tested API and device foundation.
 
-MQTT telemetry, SSE, the resilience controller and native service deployment belong to later
-milestones and are not implemented yet.
+The resilience controller and native service deployment belong to later milestones and are not
+implemented yet.
 
 ## v0.1.0 result
 
@@ -46,6 +46,19 @@ privacy-safe snapshot. It is a milestone check, not a long-running service.
 Run `pitboss-api` for the native development server. Its safe package default is loopback-only with
 authentication disabled. Non-loopback binding is rejected unless token authentication is enabled.
 See [REST API](docs/api.md) and [configuration](docs/configuration.md).
+
+## v0.4.0 telemetry
+
+- One canonical event model feeds bounded recent history, SSE and MQTT.
+- MQTT uses the configurable `pitboss/v1` topic tree, JSON payloads and QoS 1.
+- Service availability has a retained Last Will; state and availability are retained while raw
+  temperatures are not.
+- Connected devices are polled continuously using the configured probe interval.
+- Probe and battery REST state explicitly reports freshness and becomes unavailable after the
+  configured stale threshold.
+- Physical and simulated events use the same schema and always identify their source.
+
+MQTT remains disabled by default. See [MQTT](docs/mqtt.md) and [REST API](docs/api.md).
 
 ## Development
 

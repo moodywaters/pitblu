@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from pitboss_admin.adapters.simulated import SimulatedIGrillAdapter
 from pitboss_admin.api import create_app
 from pitboss_admin.configuration import ConfigurationManager
+from pitboss_admin.models import utc_now
 from pitboss_admin.storage import AdministrativeStore
 
 
@@ -13,7 +14,11 @@ def client(*, authentication: bool = False) -> tuple[TestClient, AdministrativeS
     store = AdministrativeStore()
     environment = {"PITBOSS_AUTH__MODE": "token"} if authentication else {}
     config = ConfigurationManager(store, environ=environment)
-    app = create_app(adapter=SimulatedIGrillAdapter(4), store=store, configuration=config)
+    app = create_app(
+        adapter=SimulatedIGrillAdapter(4, clock=utc_now),
+        store=store,
+        configuration=config,
+    )
     return TestClient(app), store
 
 
@@ -63,7 +68,15 @@ def test_device_and_operation_contract() -> None:
         assert first.status_code == second.status_code == 202
         assert api.get("/api/v1/operations").json()
         assert api.get(f"/api/v1/operations/{first.json()['operationId']}").status_code == 200
-        assert api.get("/api/v1/events").json() == []
+        events = api.get("/api/v1/events").json()
+        assert events
+        assert {event["source"] for event in events} == {"simulated"}
+        assert "probe.temperature" in {event["type"] for event in events}
+        assert all(
+            event["deviceId"] == device_id
+            for event in events
+            if event["type"] != "service.availability"
+        )
         assert api.delete(f"/api/v1/devices/{device_id}").status_code == 204
     store.close()
 
@@ -157,6 +170,7 @@ def test_openapi_contains_the_v03_contract() -> None:
         "/api/v1/operations",
         "/api/v1/operations/{operation_id}",
         "/api/v1/events",
+        "/api/v1/events/stream",
         "/api/v1/config",
         "/api/v1/config/schema",
         "/api/v1/config/validate",

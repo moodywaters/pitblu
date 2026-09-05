@@ -1,6 +1,6 @@
 # REST API
 
-Version 0.3.0 implements the administrative control plane. OpenAPI and interactive documentation
+Version 0.4.0 implements the administrative control plane and live telemetry stream. OpenAPI and interactive documentation
 are generated at `/openapi.json` and `/docs`. The package default listens only on loopback.
 
 ## Authentication and errors
@@ -24,10 +24,11 @@ values are never included in validation details.
 | `GET`, `POST /api/v1/devices` | Lists or registers explicitly selected devices. |
 | `GET`, `PATCH`, `DELETE /api/v1/devices/{deviceId}` | Manages one registered device. |
 | `POST /api/v1/devices/{deviceId}/{action}` | Starts `connect`, `disconnect` or `reconnect`; HTTP 202. |
-| `GET /api/v1/devices/{deviceId}/probes` | Current in-memory probe snapshot. |
-| `GET /api/v1/devices/{deviceId}/battery` | Current in-memory battery snapshot. |
+| `GET /api/v1/devices/{deviceId}/probes` | Current probe state, including freshness. |
+| `GET /api/v1/devices/{deviceId}/battery` | Current battery state, including freshness. |
 | `GET /api/v1/operations[/{operationId}]` | Up to 100 recent persistent operation records. |
-| `GET /api/v1/events` | Reserved collection; bounded events are implemented in v0.5.0. |
+| `GET /api/v1/events` | Up to 100 recent canonical telemetry events. |
+| `GET /api/v1/events/stream` | Live canonical events as `text/event-stream`. |
 | `GET`, `PATCH /api/v1/config` | Describes or transactionally updates effective settings. |
 | `GET /api/v1/config/schema` | Setting metadata and write-only secret status. |
 | `POST /api/v1/config/validate` | Validates a proposed whole configuration without saving it. |
@@ -43,4 +44,11 @@ exception class code, never a raw Bleak error or address. API reads and repeated
 requests are idempotent in their resulting state. Conflicting-operation serialisation is added with
 the resilience controller in v0.5.0.
 
-SSE begins in v0.4.0 and is intentionally absent here.
+SSE frames contain `id`, `event` and JSON `data` fields. The data is the same canonical schema used
+by recent history and, where applicable, MQTT: `schemaVersion`, `eventId`, `type`, `observedAt`,
+`sequence`, `source`, optional `deviceId` and `probe`, and type-specific `data`. Idle streams send
+comment heartbeats at the configured availability-heartbeat interval. Authentication follows the
+same rules as all other `/api/v1/*` resources.
+
+After the stale threshold, probe and battery resources keep their last observation metadata but
+return `fresh: false`; stale temperatures and battery percentages are returned as `null`.

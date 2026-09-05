@@ -16,6 +16,7 @@ sources.
 
 | Dependency | Version | Licence | Purpose |
 | --- | --- | --- | --- |
+| aiomqtt | 2.5.1 | BSD-3-Clause, copyright 2020 SBT Instruments | Async MQTT client facade. |
 | Bleak | 3.0.2 | MIT | Async BLE discovery and GATT client. |
 | FastAPI | 0.141.1 | MIT | REST API, OpenAPI generation and request validation. |
 | PyYAML | 6.0.3 | MIT | Safe parsing of optional startup configuration. |
@@ -27,6 +28,10 @@ sources.
 | pytest-cov | 7.1.0 | MIT | Development coverage checks only. |
 | Ruff | 0.16.6 | MIT | Development formatting and linting only. |
 | mypy | 2.3.1 | MIT | Development type checking only. |
+
+aiomqtt installs Eclipse Paho MQTT Python 2.1.0 as its transport dependency. Paho declares
+`EPL-2.0 OR BSD-3-Clause`; this project relies on the BSD-3-Clause option. No aiomqtt or Paho source
+was copied or adapted.
 
 Dependency licences were reviewed from their project metadata or licence distributions. Transitive
 dependencies will be captured in a lock or installation manifest before a distributable release.

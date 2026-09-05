@@ -1,6 +1,6 @@
 # Configuration
 
-Version 0.3.0 exposes every planned application setting through REST. Precedence is:
+Version 0.4.0 exposes every planned application setting through REST. Precedence is:
 
 1. package default;
 2. optional YAML startup file;
@@ -23,6 +23,9 @@ configuration loading.
 Each setting response contains its effective value, source, type, description, default, minimum,
 maximum, allowed values, editability, sensitivity and restart requirement. Secret values are never
 part of this mapping.
+
+The current implementation applies persisted changes on the next process start, so every setting
+is reported with `restartRequired: true`.
 
 `PATCH /api/v1/config` requires the current quoted ETag in `If-Match`. The full candidate is
 validated before persisted overrides are replaced in one SQLite transaction. A stale version

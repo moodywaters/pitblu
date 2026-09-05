@@ -6,6 +6,29 @@ All notable changes will be documented here.
 
 No changes yet.
 
+## [0.4.0] - 2026-09-05
+
+### Added
+
+- Canonical version-one telemetry events with bounded in-memory fan-out and history.
+- Authenticated SSE stream with event identifiers and idle heartbeats.
+- Configurable MQTT publisher, QoS 1 topic mapping and retained service Last Will.
+- Continuous connected-device sampling through the shared physical/simulated adapter path.
+- Configurable stale-reading transitions reflected in REST, SSE and MQTT availability.
+
+### Fixed during Raspberry Pi validation
+
+- Preserve internal device identifiers and observation timestamps when constructing events.
+- Use the current observation time for live simulator samples, including delayed connections.
+
+### Validated
+
+- Hardware-independent MQTT topic, payload, retain and Last Will tests using an asynchronous fake.
+- Event fan-out, SSE framing, stale transitions and recovery-path tests.
+- Live Raspberry Pi simulator SSE, authenticated MQTT temperatures and retained service state,
+  stale probe availability, absence of retained temperatures, and broker Last Will after forced exit.
+- Final Raspberry Pi quality gate: 71 tests, 93.26 per cent coverage, Ruff and strict mypy.
+
 ## [0.3.0] - 2026-09-04
 
 ### Added

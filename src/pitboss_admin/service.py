@@ -5,13 +5,15 @@ from __future__ import annotations
 import asyncio
 import re
 from collections.abc import Coroutine
-from typing import Literal, cast
+from typing import Literal
 from uuid import uuid4
 
 from pitboss_admin.adapters.base import DeviceAdapter
 from pitboss_admin.connection import ConnectionState, ConnectionStateMachine
-from pitboss_admin.models import DeviceSnapshot, DiscoveredDevice, utc_now
+from pitboss_admin.events import EventBus
+from pitboss_admin.models import DiscoveredDevice, utc_now
 from pitboss_admin.storage import AdministrativeStore
+from pitboss_admin.telemetry import TelemetryState
 
 
 class ResourceNotFoundError(LookupError):
@@ -47,40 +49,26 @@ def _operation_view(row: dict[str, object]) -> dict[str, object]:
     }
 
 
-def _snapshot_view(snapshot: DeviceSnapshot) -> dict[str, object]:
-    return {
-        "battery": {
-            "available": snapshot.battery_available,
-            "percentage": snapshot.battery_percent,
-            "observedAt": snapshot.observed_at.isoformat(),
-            "sequence": snapshot.sequence,
-            "source": snapshot.source.value,
-        },
-        "probes": [
-            {
-                "probe": probe.number,
-                "available": probe.available,
-                "present": probe.present,
-                "temperatureC": probe.temperature_c,
-                "observedAt": probe.observed_at.isoformat(),
-                "sequence": probe.sequence,
-                "source": probe.source.value,
-                "errorCode": probe.error_code,
-            }
-            for probe in snapshot.probes
-        ],
-    }
-
-
 class AdministrationService:
-    def __init__(self, adapter: DeviceAdapter, store: AdministrativeStore) -> None:
+    def __init__(
+        self,
+        adapter: DeviceAdapter,
+        store: AdministrativeStore,
+        telemetry: TelemetryState | None = None,
+        *,
+        poll_interval: float = 5,
+    ) -> None:
+        if poll_interval <= 0:
+            raise ValueError("poll interval must be positive")
         self.adapter = adapter
         self.store = store
+        self.telemetry = telemetry or TelemetryState(EventBus())
+        self.poll_interval = poll_interval
         self._candidates: dict[str, DiscoveredDevice] = {}
         self._scan_results: dict[str, list[dict[str, object]]] = {}
-        self._snapshots: dict[str, DeviceSnapshot] = {}
         self._connected_device: str | None = None
         self._tasks: set[asyncio.Task[None]] = set()
+        self._polling_tasks: dict[str, asyncio.Task[None]] = {}
 
     def _new_operation(self, kind: str, device_id: str | None = None) -> dict[str, object]:
         timestamp = utc_now().isoformat()
@@ -193,9 +181,10 @@ class AdministrationService:
     async def delete_device(self, device_id: str) -> None:
         self.device(device_id)
         if self._connected_device == device_id:
+            await self._stop_polling(device_id)
             await self.adapter.disconnect()
             self._connected_device = None
-        self._snapshots.pop(device_id, None)
+        await self.telemetry.remove(device_id)
         self.store.delete_device(device_id)
 
     def start_connection_operation(
@@ -224,14 +213,17 @@ class AdministrationService:
             return
         try:
             if action == "disconnect":
+                await self._stop_polling(device_id)
                 await self.adapter.disconnect()
                 self._connected_device = None
+                await self.telemetry.connection(device_id, "disconnected")
                 self.store.update_device(
                     device_id,
                     {"desired_state": "disconnected", "observed_state": "disconnected"},
                 )
             else:
                 if action == "reconnect":
+                    await self._stop_polling(device_id)
                     await self.adapter.disconnect()
                 candidate = self._candidates.get(str(row["discovery_id"]))
                 if candidate is None:
@@ -243,8 +235,9 @@ class AdministrationService:
                 await self.adapter.connect(candidate)
                 machine.transition(ConnectionState.CONNECTED)
                 machine.transition(ConnectionState.POLLING)
-                self._snapshots[device_id] = await self.adapter.read_snapshot()
+                await self.telemetry.record(device_id, await self.adapter.read_snapshot())
                 self._connected_device = device_id
+                self._start_polling(device_id)
                 self.store.update_device(
                     device_id,
                     {"desired_state": "connected", "observed_state": machine.observed.value},
@@ -257,23 +250,54 @@ class AdministrationService:
         self._finish(operation)
 
     async def close(self) -> None:
+        polling = tuple(self._polling_tasks.values())
+        self._polling_tasks.clear()
+        for task in polling:
+            task.cancel()
+        if polling:
+            await asyncio.gather(*polling, return_exceptions=True)
         if self._tasks:
             await asyncio.gather(*self._tasks, return_exceptions=True)
         await self.adapter.disconnect()
+        await self.telemetry.close()
+
+    def _start_polling(self, device_id: str) -> None:
+        previous = self._polling_tasks.pop(device_id, None)
+        if previous is not None:
+            previous.cancel()
+        task = asyncio.create_task(self._poll(device_id))
+        self._polling_tasks[device_id] = task
+
+        def discard(completed: asyncio.Task[None]) -> None:
+            if self._polling_tasks.get(device_id) is completed:
+                self._polling_tasks.pop(device_id, None)
+
+        task.add_done_callback(discard)
+
+    async def _stop_polling(self, device_id: str) -> None:
+        task = self._polling_tasks.pop(device_id, None)
+        if task is not None:
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
+
+    async def _poll(self, device_id: str) -> None:
+        while self._connected_device == device_id:
+            await asyncio.sleep(self.poll_interval)
+            if self._connected_device != device_id:
+                return
+            try:
+                snapshot = await self.adapter.read_snapshot()
+            except Exception:
+                return
+            await self.telemetry.record(device_id, snapshot)
 
     def probes(self, device_id: str) -> list[dict[str, object]]:
         self.device(device_id)
-        snapshot = self._snapshots.get(device_id)
-        if snapshot is None:
-            return []
-        return cast("list[dict[str, object]]", _snapshot_view(snapshot)["probes"])
+        return self.telemetry.probes(device_id)
 
     def battery(self, device_id: str) -> dict[str, object] | None:
         self.device(device_id)
-        snapshot = self._snapshots.get(device_id)
-        if snapshot is None:
-            return None
-        return cast("dict[str, object]", _snapshot_view(snapshot)["battery"])
+        return self.telemetry.battery(device_id)
 
     def operations(self) -> list[dict[str, object]]:
         return [_operation_view(row) for row in self.store.operations()]

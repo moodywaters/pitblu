@@ -53,11 +53,11 @@ class PollingConfig(_Section):
 
 class MqttConfig(_Section):
     enabled: bool = False
-    host: str = "127.0.0.1"
+    host: str = Field("127.0.0.1", min_length=1, max_length=253)
     port: int = Field(1883, ge=1, le=65535)
     tls: bool = False
-    username: str | None = None
-    base_topic: str = "pitboss"
+    username: str | None = Field(None, max_length=128)
+    base_topic: str = Field("pitboss", min_length=1, max_length=128, pattern=r"^[^+#\x00]+$")
     qos: Literal[1] = 1
 
 
@@ -218,7 +218,7 @@ class ConfigurationManager:
                     "allowed": _ALLOWED.get(key),
                     "editable": True,
                     "sensitive": False,
-                    "restartRequired": key.startswith(("server.", "auth.")),
+                    "restartRequired": True,
                 }
                 for key, value in self._values.items()
             },
