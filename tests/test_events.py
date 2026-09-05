@@ -64,7 +64,10 @@ def test_sse_stream_uses_canonical_event_schema() -> None:
 def test_event_buffer_sizes_must_be_positive() -> None:
     for arguments in ({"history_size": 0}, {"subscriber_queue_size": 0}):
         try:
-            EventBus(**arguments)
+            EventBus(
+                history_size=arguments.get("history_size", 100),
+                subscriber_queue_size=arguments.get("subscriber_queue_size", 100),
+            )
         except ValueError as exc:
             assert "positive" in str(exc)
         else:

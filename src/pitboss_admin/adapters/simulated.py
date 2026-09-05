@@ -56,6 +56,7 @@ class SimulatedIGrillAdapter:
             name="Simulated iGrill V202",
             model="igrill-v202",
             rssi=-42,
+            _identity="simulated-igrill-v202",
         )
 
     @property

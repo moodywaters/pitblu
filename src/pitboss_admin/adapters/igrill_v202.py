@@ -103,6 +103,7 @@ class BleakIGrillV202Adapter:
                     model="igrill-v202",
                     rssi=advertisement.rssi,
                     _native=native,
+                    _identity=getattr(native, "address", None),
                 )
             )
         return tuple(discovered)

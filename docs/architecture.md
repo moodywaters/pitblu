@@ -43,5 +43,9 @@ use QoS 1. Availability, connection and battery state are retained; temperature 
 availability is protected by a retained Last Will. MQTT is disabled by default and has no command
 subscription path.
 
-The resilience controller and systemd deployment remain later milestones. See the ADRs under
-`docs/adr/`.
+The v0.5.0 runtime serialises adapter calls and reserves one adapter owner. Registered desired
+connections recover with jittered backoff and protected identity matching. Read failures degrade
+state before sustained failure triggers reconnect. Startup marks interrupted operations and
+restores eligible registrations. Operational events, but not telemetry history, are bounded in
+SQLite. MQTT independently retries and exposes safe status. Shutdown cancels workers, preserves
+desired state and flushes offline retained publications. Native systemd deployment remains v0.6.0.

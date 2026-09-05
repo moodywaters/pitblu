@@ -39,6 +39,10 @@ class TelemetryState:
         return sequence
 
     async def record(self, device_id: str, snapshot: DeviceSnapshot) -> None:
+        current = self._current.get(device_id)
+        if current is not None and snapshot.observed_at <= current.snapshot.observed_at:
+            await self.mark_stale()
+            return
         self._current[device_id] = _CurrentSnapshot(snapshot)
         previous = self._stale_tasks.pop(device_id, None)
         if previous is not None:
@@ -57,7 +61,7 @@ class TelemetryState:
                 sequence=self._sequence(
                     device_id, EventType.DEVICE_AVAILABILITY, None, snapshot.sequence
                 ),
-                data={"available": True},
+                data={"available": any(probe.available for probe in snapshot.probes)},
                 **common,
             )
         )
@@ -107,12 +111,16 @@ class TelemetryState:
                     )
                 )
 
-    async def mark_stale(self, now: datetime | None = None) -> tuple[str, ...]:
+    async def mark_stale(
+        self, now: datetime | None = None, *, force_device: str | None = None, reason: str = "stale"
+    ) -> tuple[str, ...]:
         current_time = now or utc_now()
         changed: list[str] = []
         for device_id, current in self._current.items():
             snapshot = current.snapshot
-            if current.stale or current_time - snapshot.observed_at < self.stale_after:
+            if current.stale or (
+                device_id != force_device and current_time - snapshot.observed_at < self.stale_after
+            ):
                 continue
             current.stale = True
             changed.append(device_id)
@@ -127,7 +135,15 @@ class TelemetryState:
                     sequence=self._sequence(
                         device_id, EventType.DEVICE_AVAILABILITY, None, snapshot.sequence
                     ),
-                    data={"available": False, "reason": "stale"},
+                    data={"available": False, "reason": reason},
+                    **common,
+                )
+            )
+            await self.events.publish(
+                TelemetryEvent(
+                    type=EventType.BATTERY,
+                    sequence=self._sequence(device_id, EventType.BATTERY, None, snapshot.sequence),
+                    data={"available": False, "percentage": None, "reason": reason},
                     **common,
                 )
             )
@@ -142,7 +158,7 @@ class TelemetryState:
                             probe.sequence,
                         ),
                         probe=probe.number,
-                        data={"available": False, "present": probe.present, "reason": "stale"},
+                        data={"available": False, "present": probe.present, "reason": reason},
                         **common,
                     )
                 )
@@ -175,6 +191,7 @@ class TelemetryState:
             )
         )
         if state == "disconnected":
+            await self.mark_stale(force_device=device_id, reason="disconnected")
             await self.events.publish(
                 TelemetryEvent(
                     type=EventType.DEVICE_AVAILABILITY,
@@ -188,10 +205,12 @@ class TelemetryState:
             )
 
     async def remove(self, device_id: str) -> None:
+        await self.connection(device_id, "disconnected")
         task = self._stale_tasks.pop(device_id, None)
         if task is not None:
             task.cancel()
         self._current.pop(device_id, None)
+        self.events.forget_device(device_id)
         self._event_sequences = {
             key: value for key, value in self._event_sequences.items() if key[0] != device_id
         }
@@ -222,6 +241,10 @@ class TelemetryState:
             }
             for probe in current.snapshot.probes
         ]
+
+    def observed_at(self, device_id: str) -> datetime | None:
+        current = self._current.get(device_id)
+        return current.snapshot.observed_at if current else None
 
     def battery(self, device_id: str) -> dict[str, object] | None:
         current = self._current.get(device_id)

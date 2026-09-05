@@ -4,7 +4,18 @@ All notable changes will be documented here.
 
 ## [Unreleased]
 
-No changes yet.
+### v0.5.0 candidate
+
+- Supervised MQTT retry, stable-period backoff reset, retained-state replay and safe publisher status.
+- BLE retry after connection loss or sustained invalid reads, with explicit reconnect bypass.
+- Protected registered device identity, additive SQLite migration and restart recovery.
+- Duplicate-operation reuse, conflict rejection, single-adapter ownership and serialised BLE calls.
+- Bounded persistent operation events, configuration-change events and interrupted-operation recovery.
+- Authenticated diagnostics, MQTT-aware readiness and session identifiers in telemetry.
+- Immediate disconnect invalidation, stale retained battery state and duplicate-snapshot suppression.
+- Graceful shutdown flushes unavailable state and cancels recovery without clearing desired state.
+
+Raspberry Pi resilience acceptance is pending. v0.5.0 has not been released.
 
 ## [0.4.0] - 2026-09-05
 

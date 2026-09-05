@@ -51,5 +51,8 @@ was introduced for this milestone.
 
 ## Excluded source
 
+Version 0.5.0 introduces no new third-party dependency or copied/adapted code. Recovery, lifecycle,
+diagnostics and persistence changes use the existing dependency set and Python standard library.
+
 `elupus/togrill-bluetooth` was not researched or used because it targets ToGrill-branded hardware,
 not the Weber iGrill protocol.

@@ -612,3 +612,22 @@ publisher to load the changed credential. Never ask the user to paste a password
 6. Update documentation and provenance alongside code; use reviewed milestone commits and green
    CI before merging or releasing. Keep the repository private and do not advance to v0.6.0
    until v0.5.0 is verified.
+
+## Continuation update: v0.5.0 candidate, 5 September 2026
+
+The user authorised v0.5.0 implementation after the handoff above. Work is on
+`codex/v0.5.0-resilience`; this is a candidate, not a released or Pi-accepted milestone.
+Read `docs/v0.5.0-plan.md` for the required remaining target checks. Local validation passed 84
+tests at 93.99 per cent coverage, Ruff and strict mypy. No new dependency was introduced.
+
+The candidate adds MQTT retry/diagnostics/retained replay, BLE recovery and registered identity
+restoration, control conflict handling, adapter ownership, bounded persistent operational events,
+session IDs, stale battery invalidation and graceful shutdown. `/api/v1/diagnostics` and
+`/api/v1/events/operations` are new protected resources. `/ready` returns 503 when enabled MQTT is
+not connected. The SQLite identity column is additive. Legacy registrations require an explicit
+fresh `discoveryId` selection using device PATCH before automatic restore; names are not identities.
+
+Next: deliver the candidate source archive, run the Pi quality gate, then verify broker recovery,
+application restart, persisted disconnect, physical V202 power-cycle recovery and shutdown. The
+Pi's previous temporary API was stopped after the v0.4.0 Last Will test. Inspect processes before
+changing runtime state. Do not mark v0.5.0 complete or start v0.6.0 until target acceptance passes.

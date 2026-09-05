@@ -35,6 +35,8 @@ def test_device_and_operation_contract() -> None:
     with api:
         assert api.get("/health").json() == {"status": "ok"}
         assert api.get("/ready").status_code == 200
+        assert api.get("/api/v1/diagnostics").json()["mqtt"]["state"] == "disabled"
+        assert api.get("/api/v1/events/operations").json() == []
         assert api.get("/api/v1/bluetooth").json()["source"] == "simulated"
 
         scan = api.post("/api/v1/scans", json={}).json()
@@ -71,11 +73,12 @@ def test_device_and_operation_contract() -> None:
         events = api.get("/api/v1/events").json()
         assert events
         assert {event["source"] for event in events} == {"simulated"}
+        assert api.get("/api/v1/events/operations").json()
         assert "probe.temperature" in {event["type"] for event in events}
         assert all(
             event["deviceId"] == device_id
             for event in events
-            if event["type"] != "service.availability"
+            if event["type"].startswith(("device.", "probe."))
         )
         assert api.delete(f"/api/v1/devices/{device_id}").status_code == 204
     store.close()
@@ -92,6 +95,8 @@ def test_authentication_rotation_and_safe_errors() -> None:
         assert unauthorised.json()["error"]["code"] == "authentication_required"
         assert "x-correlation-id" in unauthorised.headers
         assert api.get("/ready", headers=headers).status_code == 200
+        assert api.get("/api/v1/diagnostics").status_code == 401
+        assert api.get("/api/v1/events/operations").status_code == 401
 
         rotation = api.post("/api/v1/auth/token/rotate", headers=headers)
         replacement = rotation.json()["token"]

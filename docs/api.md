@@ -1,6 +1,6 @@
 # REST API
 
-Version 0.4.0 implements the administrative control plane and live telemetry stream. OpenAPI and interactive documentation
+Version 0.5.0 implements the administrative control plane and live telemetry stream. OpenAPI and interactive documentation
 are generated at `/openapi.json` and `/docs`. The package default listens only on loopback.
 
 ## Authentication and errors
@@ -18,6 +18,8 @@ values are never included in validation details.
 | --- | --- |
 | `GET /health`, `GET /ready` | Minimal liveness and readiness. |
 | `GET /api/v1/status` | Service version, status and UTC time. |
+| `GET /api/v1/diagnostics` | Safe MQTT and device-worker status, failure codes and session ID. |
+| `GET /api/v1/events/operations` | Up to 100 persistent operational/configuration events. |
 | `GET /api/v1/bluetooth` | Adapter availability, connection and physical/simulated source. |
 | `POST /api/v1/scans` | Starts a scan operation and returns HTTP 202. |
 | `GET /api/v1/scans/{scanId}` | Operation state and supported temporary discovery results. |
@@ -40,13 +42,23 @@ Registration accepts the opaque `discoveryId` from an authenticated scan respons
 ordinary REST payloads. A stable public `deviceId` is assigned and persisted.
 
 Operation status is `queued`, `running`, `succeeded` or `failed`. Failures contain a stable safe
-exception class code, never a raw Bleak error or address. API reads and repeated connection
-requests are idempotent in their resulting state. Conflicting-operation serialisation is added with
-the resilience controller in v0.5.0.
+error code, never a raw Bleak error or address. API reads and repeated connection
+requests are idempotent in their resulting state. An identical pending control returns its existing
+operation. A conflicting pending control returns HTTP 409. Scan, connect, read and disconnect calls
+share an adapter lock. Another registered device cannot acquire an already-owned adapter.
+
+New registrations store protected hardware identity separately from public fields. Legacy v0.4.0
+registrations lack that identity: disconnect, perform a fresh scan, then explicitly select the
+returned `discoveryId` with `PATCH /api/v1/devices/{deviceId}` before reconnecting. Automatic recovery
+never guesses identity from an advertised name. Registered desired state and automatic-reconnection
+preference determine startup recovery. The current service restores one adapter owner at a time.
+
+`/health` is only liveness. With MQTT enabled, `/ready` returns 503 until the publisher connects.
+Diagnostics contain safe codes rather than exception messages, host settings or credentials.
 
 SSE frames contain `id`, `event` and JSON `data` fields. The data is the same canonical schema used
 by recent history and, where applicable, MQTT: `schemaVersion`, `eventId`, `type`, `observedAt`,
-`sequence`, `source`, optional `deviceId` and `probe`, and type-specific `data`. Idle streams send
+`sequence`, `source`, `sessionId`, optional `deviceId` and `probe`, and type-specific `data`. Idle streams send
 comment heartbeats at the configured availability-heartbeat interval. Authentication follows the
 same rules as all other `/api/v1/*` resources.
 

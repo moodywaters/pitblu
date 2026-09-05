@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
@@ -63,8 +64,15 @@ class AdministrativeStore:
                     updated_at TEXT NOT NULL,
                     error_code TEXT
                 );
+                CREATE TABLE IF NOT EXISTS operational_events (
+                    ordinal INTEGER PRIMARY KEY AUTOINCREMENT,
+                    payload TEXT NOT NULL
+                );
                 """
             )
+            columns = {row["name"] for row in connection.execute("PRAGMA table_info(devices)")}
+            if "identity" not in columns:
+                connection.execute("ALTER TABLE devices ADD COLUMN identity TEXT")
 
     @contextmanager
     def transaction(self) -> Iterator[sqlite3.Connection]:
@@ -173,6 +181,10 @@ class AdministrativeStore:
                     values["created_at"],
                 ),
             )
+            connection.execute(
+                "UPDATE devices SET identity = ? WHERE device_id = ?",
+                (values.get("identity"), values["device_id"]),
+            )
 
     def devices(self) -> list[dict[str, object]]:
         with self._lock:
@@ -180,7 +192,14 @@ class AdministrativeStore:
         return [dict(row) for row in rows]
 
     def update_device(self, device_id: str, values: Mapping[str, object]) -> bool:
-        allowed = {"friendly_name", "auto_reconnect", "desired_state", "observed_state"}
+        allowed = {
+            "friendly_name",
+            "auto_reconnect",
+            "desired_state",
+            "observed_state",
+            "identity",
+            "discovery_id",
+        }
         selected = {key: value for key, value in values.items() if key in allowed}
         if not selected:
             return self.device(device_id) is not None
@@ -226,6 +245,11 @@ class AdministrativeStore:
                     values.get("error_code"),
                 ),
             )
+            connection.execute(
+                "DELETE FROM operations WHERE status IN ('succeeded','failed') "
+                "AND operation_id NOT IN (SELECT operation_id FROM operations "
+                "ORDER BY created_at DESC LIMIT 100)"
+            )
 
     def operations(self) -> list[dict[str, object]]:
         with self._lock:
@@ -244,6 +268,31 @@ class AdministrativeStore:
     def close(self) -> None:
         with self._lock:
             self._connection.close()
+
+    def interrupt_operations(self, timestamp: str) -> None:
+        with self.transaction() as connection:
+            connection.execute(
+                "UPDATE operations SET status='failed', error_code='interrupted', updated_at=? "
+                "WHERE status IN ('queued', 'running')",
+                (timestamp,),
+            )
+
+    def append_event(self, payload: dict[str, object]) -> None:
+        with self.transaction() as connection:
+            connection.execute(
+                "INSERT INTO operational_events(payload) VALUES (?)", (json.dumps(payload),)
+            )
+            connection.execute(
+                "DELETE FROM operational_events WHERE ordinal NOT IN "
+                "(SELECT ordinal FROM operational_events ORDER BY ordinal DESC LIMIT 100)"
+            )
+
+    def recent_events(self) -> list[dict[str, object]]:
+        with self._lock:
+            rows = self._connection.execute(
+                "SELECT payload FROM operational_events ORDER BY ordinal"
+            ).fetchall()
+        return [json.loads(row["payload"]) for row in rows]
 
 
 class VersionConflictError(RuntimeError):
