@@ -631,3 +631,19 @@ Next: deliver the candidate source archive, run the Pi quality gate, then verify
 application restart, persisted disconnect, physical V202 power-cycle recovery and shutdown. The
 Pi's previous temporary API was stopped after the v0.4.0 Last Will test. Inspect processes before
 changing runtime state. Do not mark v0.5.0 complete or start v0.6.0 until target acceptance passes.
+
+### v0.5.0 Pi validation update, 5 September 2026
+
+The first candidate passed all 84 Pi tests, lint, formatting and strict typing. Simulator
+automatic restoration after application restart and persisted explicit disconnect both passed.
+MQTT broker outage returned safe backoff diagnostics and readiness 503; recovery returned 200
+without changing the application session. Retained online and offline availability passed QoS 1.
+Idle outage detection uses the 60-second heartbeat, so a 10-second test was insufficient.
+
+Active SSE shutdown hit Uvicorn's drain deadline before lifespan cleanup. This is not a passed
+graceful SSE gate. The follow-up fix closes HTTP event streams before server drainage, preserving
+internal MQTT subscriptions for final unavailable publications. A real loopback HTTP regression
+test verifies normal chunked termination. Updated local results: 86 tests, 94.01 per cent coverage.
+The Pi test API is currently stopped following the shutdown test. Next deliver the corrected
+candidate and retest active SSE shutdown, then finish invalid-credential and physical recovery
+checks. See `docs/v0.5.0-plan.md`. No release or later milestone is authorised by these partial gates.

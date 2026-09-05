@@ -59,6 +59,7 @@ class EventBus:
         self.session_id = uuid4().hex
         self._persist = persist
         self._latest: dict[tuple[str | None, EventType, int | None], TelemetryEvent] = {}
+        self._streams_closed = asyncio.Event()
 
     async def publish(self, event: TelemetryEvent) -> None:
         event = event.model_copy(update={"session_id": self.session_id})
@@ -91,14 +92,31 @@ class EventBus:
         finally:
             self._subscribers.discard(queue)
 
+    def close_streams(self) -> None:
+        """End HTTP streams without closing internal MQTT subscribers."""
+        self._streams_closed.set()
+
     async def stream(self, *, heartbeat: float = 60) -> AsyncIterator[str]:
         async with self.subscribe() as queue:
-            while True:
+            while not self._streams_closed.is_set():
+                pending = asyncio.create_task(queue.get())
+                stopping = asyncio.create_task(self._streams_closed.wait())
                 try:
-                    event = await asyncio.wait_for(queue.get(), timeout=heartbeat)
-                except TimeoutError:
+                    done, _ = await asyncio.wait(
+                        (pending, stopping),
+                        timeout=heartbeat,
+                        return_when=asyncio.FIRST_COMPLETED,
+                    )
+                finally:
+                    pending.cancel()
+                    stopping.cancel()
+                    await asyncio.gather(pending, stopping, return_exceptions=True)
+                if self._streams_closed.is_set():
+                    return
+                if pending not in done:
                     yield ": heartbeat\n\n"
                     continue
+                event = pending.result()
                 payload = event.model_dump_json(by_alias=True)
                 yield f"id: {event.event_id}\nevent: {event.type.value}\ndata: {payload}\n\n"
 

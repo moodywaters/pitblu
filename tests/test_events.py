@@ -72,3 +72,24 @@ def test_event_buffer_sizes_must_be_positive() -> None:
             assert "positive" in str(exc)
         else:
             raise AssertionError("invalid buffer size was accepted")
+
+
+def test_stream_shutdown_keeps_internal_subscribers_alive() -> None:
+    async def exercise() -> None:
+        bus = EventBus()
+        stream = bus.stream()
+
+        async def consume() -> list[str]:
+            return [item async for item in stream]
+
+        async with bus.subscribe() as mqtt_queue:
+            pending = asyncio.create_task(consume())
+            await asyncio.sleep(0)
+            bus.close_streams()
+            assert await asyncio.wait_for(pending, 1) == []
+            await bus.publish(event(1))
+            assert (await mqtt_queue.get()).sequence == 1
+            assert [item async for item in bus.stream()] == []
+        assert not bus._subscribers
+
+    asyncio.run(exercise())

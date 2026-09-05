@@ -14,6 +14,7 @@ All notable changes will be documented here.
 - Authenticated diagnostics, MQTT-aware readiness and session identifiers in telemetry.
 - Immediate disconnect invalidation, stale retained battery state and duplicate-snapshot suppression.
 - Graceful shutdown flushes unavailable state and cancels recovery without clearing desired state.
+- Close SSE responses before HTTP shutdown drainage, without interrupting final MQTT publications.
 
 Raspberry Pi resilience acceptance is pending. v0.5.0 has not been released.
 
