@@ -126,3 +126,33 @@ simulated adapter and loopback-only API default. The following were demonstrated
 The target quality gate passed 58 tests with 93.28 per cent coverage on Python 3.13.5. Ruff lint
 and format checks passed, and strict mypy reported no issues in 30 source files. No private address,
 LAN address or secret was recorded.
+
+## v0.4.0 Raspberry Pi telemetry gate
+
+On 5 September 2026, the corrected candidate demonstrated the following using the simulator,
+the loopback API and the existing authenticated Mosquitto broker:
+
+- SSE delivered four probe readings with stable device identifiers, shared observation timestamps,
+  increasing sequences and an explicit simulated source.
+- Reconnection restored fresh readings; sequence 23 advanced to 27 over 20 seconds.
+- After disconnect, REST reported stale probe and battery state with unavailable numeric values.
+- Service availability arrived as retained JSON at QoS 1.
+- Four MQTT temperatures arrived at 20, 21, 22 and 23 degrees Celsius with the specified payload
+  fields, QoS 1 and no retain flag.
+- A new subscriber after disconnect received four retained stale probe-availability messages and
+  no temperature messages.
+- Force-stopping the isolated test API caused the broker to publish retained service
+  unavailability at QoS 1, proving Last Will behaviour.
+
+Live validation identified and corrected event-field alias handling and simulator timestamp drift
+after delayed connection. Regression tests now cover both cases. A stored credential mismatch
+was resolved by verifying authentication before saving and comparing the stored value locally;
+no credential was recorded in this evidence.
+
+The final corrected Pi candidate passed 71 tests at 93.26 per cent coverage on Python 3.13.5.
+Ruff lint and formatting passed for 61 files; strict mypy passed for 37 source files.
+The corrected candidate also passed 71 tests at 93.26 per cent locally. These telemetry checks use simulated devices;
+earlier milestones separately established physical V202 probe and battery readings.
+
+The test API is stopped following the Last Will test. The Will observation timestamp is its
+preparation time at connection setup, not the time the broker detects a lost connection.

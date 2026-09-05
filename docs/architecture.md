@@ -1,7 +1,7 @@
 # Architecture
 
 The authoritative target is a native, headless Raspberry Pi gateway with separate control and
-telemetry planes. Version 0.3.0 implements the REST control plane over the v0.2.0 device boundary.
+telemetry planes. Version 0.4.0 implements both planes over the shared device boundary.
 
 `DeviceAdapter` is the only device-facing boundary. The production and simulated V202 adapters
 both implement asynchronous discovery, connection, disconnection and snapshot reads. Their shared
@@ -32,5 +32,16 @@ Only salted scrypt hashes are persisted for administrator tokens; rotation retur
 Write-only integration secrets use dedicated endpoints and never appear in configuration or error
 responses.
 
-SSE, MQTT, the resilience controller and systemd deployment remain later milestones. See the ADRs
-under `docs/adr/`.
+Successful snapshots enter `TelemetryState`, which owns current in-memory state and stale
+deadlines. It emits immutable canonical events through a bounded `EventBus`. Recent REST history,
+authenticated SSE subscribers and the optional MQTT publisher consume that same event type. Slow
+subscribers have bounded queues and lose their oldest queued event rather than blocking device
+sampling.
+
+The MQTT adapter maps canonical events onto the independent `v1` topic contract. All publications
+use QoS 1. Availability, connection and battery state are retained; temperature is not. Service
+availability is protected by a retained Last Will. MQTT is disabled by default and has no command
+subscription path.
+
+The resilience controller and systemd deployment remain later milestones. See the ADRs under
+`docs/adr/`.

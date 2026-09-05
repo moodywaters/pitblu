@@ -1,15 +1,50 @@
 import asyncio
 from collections.abc import Coroutine
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any, TypeVar
 
 import pytest
 
 from pitboss_admin.adapters.base import AdapterDisconnectedError, UnsupportedDeviceError
 from pitboss_admin.adapters.simulated import SimulatedIGrillAdapter, TemperaturePattern
+from pitboss_admin.events import EventBus
 from pitboss_admin.models import DiscoveredDevice, TelemetrySource
+from pitboss_admin.telemetry import TelemetryState
 
 T = TypeVar("T")
+
+
+def test_live_clock_handles_delayed_connection_and_stale_recovery() -> None:
+    async def exercise() -> None:
+        now = datetime(2026, 9, 5, tzinfo=UTC)
+        adapter = SimulatedIGrillAdapter(clock=lambda: now)
+        now += timedelta(minutes=2)
+        await adapter.connect((await adapter.discover(1))[0])
+        state = TelemetryState(EventBus())
+        try:
+            first = await adapter.read_snapshot()
+            assert first.observed_at == now
+            await state.record("simulated-device", first)
+            assert await state.mark_stale(now) == ()
+            assert state.probes("simulated-device")[0]["fresh"] is True
+            assert all(event.observed_at == now for event in state.events.recent())
+            assert all(event.device_id == "simulated-device" for event in state.events.recent())
+
+            adapter.set_stale(True)
+            now += timedelta(seconds=16)
+            assert await adapter.read_snapshot() is first
+            assert await state.mark_stale(now) == ("simulated-device",)
+            adapter.set_stale(False)
+            second = await adapter.read_snapshot()
+            assert second.observed_at == now
+            await state.record("simulated-device", second)
+            assert await state.mark_stale(now) == ()
+            assert state.probes("simulated-device")[0]["fresh"] is True
+        finally:
+            await state.close()
+            await adapter.disconnect()
+
+    asyncio.run(exercise())
 
 
 def run(coroutine: Coroutine[Any, Any, T]) -> T:

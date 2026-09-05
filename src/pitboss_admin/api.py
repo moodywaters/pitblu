@@ -1,5 +1,7 @@
 """FastAPI control plane for pitboss-admin."""
 
+import asyncio
+import contextlib
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -9,7 +11,7 @@ from uuid import uuid4
 from fastapi import Depends, FastAPI, Header, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from pitboss_admin import __version__
@@ -18,13 +20,16 @@ from pitboss_admin.adapters.igrill_v202 import BleakIGrillV202Adapter
 from pitboss_admin.adapters.simulated import SimulatedIGrillAdapter
 from pitboss_admin.auth import AdministratorTokens
 from pitboss_admin.configuration import ConfigurationManager, ConfigurationValueError
+from pitboss_admin.events import EventBus, EventType, TelemetryEvent
 from pitboss_admin.models import utc_now
+from pitboss_admin.mqtt import MqttPublisher, MqttSettings
 from pitboss_admin.service import (
     AdministrationService,
     ResourceNotFoundError,
     StateConflictError,
 )
 from pitboss_admin.storage import AdministrativeStore, VersionConflictError
+from pitboss_admin.telemetry import TelemetryState
 
 
 class _RequestModel(BaseModel):
@@ -95,7 +100,7 @@ def create_app(
     database = store or AdministrativeStore()
     config = configuration or ConfigurationManager(database)
     selected_adapter = adapter or (
-        SimulatedIGrillAdapter(config.config.simulation.probe_count)
+        SimulatedIGrillAdapter(config.config.simulation.probe_count, clock=utc_now)
         if config.config.simulation.enabled
         else BleakIGrillV202Adapter(
             connect_timeout=config.config.bluetooth.connect_timeout,
@@ -103,7 +108,14 @@ def create_app(
             read_timeout=config.config.bluetooth.read_timeout,
         )
     )
-    service = AdministrationService(selected_adapter, database)
+    events = EventBus()
+    telemetry = TelemetryState(events, stale_after=config.config.polling.stale_after)
+    service = AdministrationService(
+        selected_adapter,
+        database,
+        telemetry,
+        poll_interval=config.config.polling.probe_interval,
+    )
     tokens = AdministratorTokens(database)
     bootstrap_token = None
     if config.config.auth.mode == "token" and not tokens.status().configured:
@@ -111,13 +123,51 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI):  # type: ignore[no-untyped-def]
-        yield
-        await service.close()
+        mqtt_task: asyncio.Task[None] | None = None
+        if config.config.mqtt.enabled:
+            mqtt = MqttPublisher(
+                MqttSettings(
+                    host=config.config.mqtt.host,
+                    port=config.config.mqtt.port,
+                    username=config.config.mqtt.username,
+                    password=database.get_secret("mqtt.password"),
+                    tls=config.config.mqtt.tls,
+                    base_topic=config.config.mqtt.base_topic,
+                    qos=config.config.mqtt.qos,
+                    source=selected_adapter.source,
+                )
+            )
+            mqtt_task = asyncio.create_task(mqtt.run(events))
+        await events.publish(
+            TelemetryEvent(
+                type=EventType.SERVICE_AVAILABILITY,
+                sequence=1,
+                source=selected_adapter.source,
+                data={"available": True},
+            )
+        )
+        try:
+            yield
+        finally:
+            await events.publish(
+                TelemetryEvent(
+                    type=EventType.SERVICE_AVAILABILITY,
+                    sequence=2,
+                    source=selected_adapter.source,
+                    data={"available": False},
+                )
+            )
+            await service.close()
+            if mqtt_task is not None:
+                mqtt_task.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await mqtt_task
 
     app = FastAPI(title="pitboss-admin", version=__version__, lifespan=lifespan)
     app.state.service = service
     app.state.configuration = config
     app.state.tokens = tokens
+    app.state.events = events
     app.state.bootstrap_token = bootstrap_token
 
     if config.config.server.cors_origins:
@@ -271,8 +321,16 @@ def create_app(
         return service.operation(operation_id)
 
     @app.get("/api/v1/events")
-    async def events(_auth: protected) -> list[object]:
-        return []
+    async def recent_events(_auth: protected) -> list[dict[str, Any]]:
+        return [event.model_dump(mode="json", by_alias=True) for event in events.recent()]
+
+    @app.get("/api/v1/events/stream")
+    async def event_stream(_auth: protected) -> StreamingResponse:
+        return StreamingResponse(
+            events.stream(heartbeat=config.config.polling.availability_heartbeat),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
 
     @app.get("/api/v1/config")
     async def get_config(response: Response, _auth: protected) -> dict[str, Any]:

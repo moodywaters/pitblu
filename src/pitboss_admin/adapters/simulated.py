@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
@@ -30,6 +31,7 @@ class SimulatedIGrillAdapter:
         probe_count: int = 4,
         *,
         start_time: datetime | None = None,
+        clock: Callable[[], datetime] | None = None,
     ) -> None:
         if not 1 <= probe_count <= 4:
             raise ValueError("simulator probe count must be between 1 and 4")
@@ -43,6 +45,7 @@ class SimulatedIGrillAdapter:
         self._connection_available = True
         self._stale = False
         self._sequence = 0
+        self._clock = clock
         self._time = start_time or datetime(2026, 1, 1, tzinfo=UTC)
         if self._time.tzinfo is None:
             raise ValueError("simulator start time must be timezone-aware")
@@ -85,7 +88,7 @@ class SimulatedIGrillAdapter:
             return self._last_snapshot
 
         self._sequence += 1
-        self._time += timedelta(seconds=5)
+        self._time = self._clock() if self._clock is not None else self._time + timedelta(seconds=5)
         readings: list[ProbeReading] = []
         for number, probe in enumerate(self._probes, start=1):
             if probe.pattern is TemperaturePattern.RISING:

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pitboss-admin"
-version = "0.3.0"
+version = "0.4.0"
 description = "Headless Weber iGrill hardware gateway"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -19,6 +19,7 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
+  "aiomqtt==2.5.1",
   "bleak==3.0.2",
   "fastapi==0.141.1",
   "PyYAML==6.0.3",
