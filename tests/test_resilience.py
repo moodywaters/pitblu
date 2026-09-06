@@ -1,5 +1,6 @@
 import asyncio
 from collections.abc import Callable
+from dataclasses import replace
 from datetime import timedelta
 from pathlib import Path
 from typing import Any
@@ -36,6 +37,40 @@ async def register(service: AdministrationService) -> str:
 async def command(service: AdministrationService, device_id: str) -> None:
     operation = service.start_connection_operation(device_id, "connect")
     await until(lambda: service.operation(str(operation["operationId"]))["status"] == "succeeded")
+
+
+def test_scan_cannot_invalidate_recovery_candidate_before_connect() -> None:
+    class RacingAdapter(SimulatedIGrillAdapter):
+        scans = 0
+        race = False
+        service: AdministrationService
+
+        async def discover(self, duration: float) -> tuple[DiscoveredDevice, ...]:
+            self.scans += 1
+            self._candidate = replace(self._candidate, discovery_id=str(self.scans))
+            if self.race:
+                self.race = False
+                self.service.start_scan(1)
+                await asyncio.sleep(0)
+            return await super().discover(duration)
+
+    async def exercise() -> None:
+        adapter = RacingAdapter(clock=utc_now)
+        store = AdministrativeStore()
+        service = AdministrationService(adapter, store)
+        adapter.service = service
+        try:
+            device_id = await register(service)
+            service._candidates.clear()
+            adapter.race = True
+            await command(service, device_id)
+            assert service.last_error is None
+            assert service.diagnostics()["failureStage"] is None
+        finally:
+            await service.close()
+            store.close()
+
+    asyncio.run(exercise())
 
 
 def test_restart_releases_only_registered_leftover_connection() -> None:

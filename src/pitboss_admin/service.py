@@ -100,6 +100,7 @@ class AdministrationService:
         self.discovery_error: str | None = None
         self.shutdown_timeout = shutdown_timeout
         self.last_error: str | None = None
+        self.last_failure_stage: str | None = None
 
     async def start(self) -> None:
         self.store.interrupt_operations(utc_now().isoformat())
@@ -353,10 +354,12 @@ class AdministrationService:
         if row is None:
             self._finish(operation, ResourceNotFoundError("device not found"))
             return
+        stage = "prepare"
         try:
             if not recovering:
                 await self._stop_recovery(device_id)
             if action == "disconnect":
+                stage = "disconnect"
                 await self._stop_polling(device_id)
                 if self._owner in {None, device_id}:
                     async with self._io_lock:
@@ -380,45 +383,54 @@ class AdministrationService:
                     await self._stop_polling(device_id)
                     async with self._io_lock:
                         await self.adapter.disconnect()
-                candidate = self._candidates.get(str(row["discovery_id"]))
-                if candidate is None:
-                    async with self._io_lock:
+                # Discovery replaces the adapter's candidate cache. Keep resolution and
+                # connection atomic so background scans cannot invalidate the selection.
+                async with self._io_lock:
+                    stage = "discovery"
+                    candidate = self._candidates.get(str(row["discovery_id"]))
+                    if candidate is None:
                         candidates = await self.adapter.discover(self.scan_duration)
-                    self._candidates = {item.discovery_id: item for item in candidates}
-                    identity = row.get("identity")
-                    if identity is not None:
-                        candidate = next(
-                            (item for item in candidates if item._identity == identity), None
-                        )
-                    if candidate is None and isinstance(identity, str):
-                        async with self._io_lock:
+                        self._candidates = {item.discovery_id: item for item in candidates}
+                        identity = row.get("identity")
+                        if identity is not None:
+                            candidate = next(
+                                (item for item in candidates if item._identity == identity), None
+                            )
+                        if candidate is None and isinstance(identity, str):
+                            stage = "bluez_release"
                             released = await self.adapter.recover_registered(identity)
                             if released:
+                                stage = "rediscovery"
                                 candidates = await self.adapter.discover(self.scan_duration)
                                 self._candidates = {item.discovery_id: item for item in candidates}
                                 candidate = next(
                                     (item for item in candidates if item._identity == identity),
                                     None,
                                 )
-                    if candidate is None:
-                        raise StateConflictError(
-                            "registered identity not found; legacy registrations require "
-                            "a fresh scan and explicit selection"
+                        if candidate is None:
+                            stage = "registered_identity_missing"
+                            raise StateConflictError(
+                                "registered identity not found; legacy registrations require "
+                                "a fresh scan and explicit selection"
+                            )
+                        self.store.update_device(
+                            device_id, {"discovery_id": candidate.discovery_id}
                         )
-                    self.store.update_device(device_id, {"discovery_id": candidate.discovery_id})
-                machine = ConnectionStateMachine()
-                machine.discovered()
-                machine.request_connect(force=action == "reconnect")
-                machine.transition(ConnectionState.INITIALISING)
-                async with self._io_lock:
+                    machine = ConnectionStateMachine()
+                    machine.discovered()
+                    machine.request_connect(force=action == "reconnect")
+                    machine.transition(ConnectionState.INITIALISING)
+                    stage = "connect_initialise"
                     await self.adapter.connect(candidate)
-                machine.transition(ConnectionState.CONNECTED)
-                machine.transition(ConnectionState.POLLING)
-                async with self._io_lock:
+                    machine.transition(ConnectionState.CONNECTED)
+                    machine.transition(ConnectionState.POLLING)
+                    stage = "initial_read"
                     snapshot = await self.adapter.read_snapshot()
+                stage = "record_snapshot"
                 await self.telemetry.record(device_id, snapshot)
                 self._connected_device = device_id
                 self.last_error = None
+                self.last_failure_stage = None
                 self._start_polling(device_id)
                 self.store.update_device(
                     device_id,
@@ -436,8 +448,11 @@ class AdministrationService:
             raise
         except Exception as exc:
             self.last_error = "device_operation_failed"
+            self.last_failure_stage = stage
             logging.getLogger(__name__).warning(
-                json.dumps({"event": "device_operation_failed", "deviceId": device_id})
+                json.dumps(
+                    {"event": "device_operation_failed", "deviceId": device_id, "stage": stage}
+                )
             )
             observed = "disconnected" if action == "disconnect" else "backoff"
             self.store.update_device(device_id, {"observed_state": observed})
@@ -595,6 +610,7 @@ class AdministrationService:
             "recoveryTasks": len(self._recoveries),
             "pendingOperations": len(self._tasks),
             "errorCode": self.last_error,
+            "failureStage": self.last_failure_stage,
             "discoveryErrorCode": self.discovery_error,
         }
 

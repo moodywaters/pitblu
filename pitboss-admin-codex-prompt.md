@@ -667,3 +667,13 @@ in BlueZ. It then rediscovers and authenticates normally. No pairing removal or 
 Local checks pass 92 tests at 93.98 per cent coverage. Physical retest is pending; leave v0.5.0 open.
 The Pi remains in the reproduced condition, awaiting the updated package and API restart without
 hardware power cycling. The 16-hour soak remains a v1.0.0 gate.
+
+### Recovery follow-up, 6 September 2026
+
+The BlueZ-release candidate did not pass the physical abrupt-stop test. Isolated adapter
+discovery/authentication/reading succeeded, and normal API startup then worked, but another
+SIGKILL/restart failed. Do not claim recovery is fixed. A discovered cache-replacement race
+is now covered by a regression test and fixed by holding one lock from candidate resolution
+through connection and the first read. Protected diagnostics include a safe fixed-label
+failureStage, with no raw exception content. Local checks: 93 tests, 94.01 per cent coverage.
+Ship this follow-up and retest the existing condition without power cycling the iGrill.

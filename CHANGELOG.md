@@ -16,6 +16,7 @@ All notable changes will be documented here.
 - Graceful shutdown flushes unavailable state and cancels recovery without clearing desired state.
 - Close SSE responses before HTTP shutdown drainage, without interrupting final MQTT publications.
 - Recover a registered device's leftover BlueZ connection after unexpected process termination.
+- Serialise discovery through initial connection/read and expose safe recovery failure stages.
 
 Raspberry Pi resilience acceptance is pending. v0.5.0 has not been released.
 
