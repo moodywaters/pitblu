@@ -100,7 +100,8 @@ def test_publisher_sets_last_will_and_publishes_online_event_and_offline() -> No
         await asyncio.sleep(0)
         task.cancel()
         with pytest.raises(asyncio.CancelledError):
-            await task
+            async with asyncio.timeout(2):
+                await task
 
         client = clients[0]
         will = client.options["will"]

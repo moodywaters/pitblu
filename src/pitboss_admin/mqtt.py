@@ -173,7 +173,8 @@ class MqttPublisher:
                             await self.publish_event(client, event)
                     while True:
                         try:
-                            event = await asyncio.wait_for(queue.get(), self.settings.heartbeat)
+                            async with asyncio.timeout(self.settings.heartbeat):
+                                event = await queue.get()
                         except TimeoutError:
                             await client.publish(
                                 availability_topic,
