@@ -4,7 +4,7 @@ All notable changes will be documented here.
 
 ## [Unreleased]
 
-### v0.5.0 candidate
+## [0.5.0] - 2026-09-06
 
 - Supervised MQTT retry, stable-period backoff reset, retained-state replay and safe publisher status.
 - BLE retry after connection loss or sustained invalid reads, with explicit reconnect bypass.
@@ -18,7 +18,10 @@ All notable changes will be documented here.
 - Recover a registered device's leftover BlueZ connection after unexpected process termination.
 - Serialise discovery through initial connection/read and expose safe recovery failure stages.
 
-Raspberry Pi resilience acceptance is pending. v0.5.0 has not been released.
+- Preserve MQTT shutdown cancellation on Python 3.11 and bound CI job duration.
+
+Target recovery and shutdown acceptance passed. CI passed on Python 3.11, 3.12 and 3.13.
+Automatic process supervision remains v0.6.0; the minimum 16-hour soak remains v1.0.0.
 
 ## [0.4.0] - 2026-09-05
 

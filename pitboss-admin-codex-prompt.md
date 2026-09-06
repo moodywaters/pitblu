@@ -677,3 +677,19 @@ is now covered by a regression test and fixed by holding one lock from candidate
 through connection and the first read. Protected diagnostics include a safe fixed-label
 failureStage, with no raw exception content. Local checks: 93 tests, 94.01 per cent coverage.
 Ship this follow-up and retest the existing condition without power cycling the iGrill.
+
+### v0.5.0 acceptance and release handoff, 6 September 2026
+
+The corrected recovery path passed controlled physical API SIGKILL plus manual process relaunch
+without an iGrill power cycle or Bluetooth reset. Sequence advanced from 1 to 9, both probes
+matched the display at 19 Celsius, battery 50 per cent, and two probes were absent. The original
+overnight exit cause remains unknown. MQTT broker recovery, simulator restart/disconnect
+persistence, invalid-credential retry and clean active-SSE/offline-MQTT shutdown also passed.
+
+The Pi passed 93 tests at 94.01 per cent coverage, lint (67 formatted files) and strict typing
+(42 sources). Final CI exposed a Python 3.11 MQTT cancellation hang, fixed using an asyncio
+timeout context. Final CI run 34036122863 passed Python 3.11, 3.12 and 3.13; local checks also
+passed 93 tests at 94.01 per cent. The Pi's installed build predates this last small MQTT change.
+Deliver the final release package at the next update. Targeted v0.5.0 acceptance is complete.
+Next milestone is v0.6.0 native installation, secure service account and automatic process restart.
+The 16-hour soak is exclusively a v1.0.0 gate. Do not claim unattended long-cook readiness yet.
