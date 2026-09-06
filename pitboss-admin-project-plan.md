@@ -363,7 +363,7 @@ Current research references:
 - Recover from a temporary Bluetooth failure without restarting the service
 - Recover automatically after Mosquitto restarts
 - Restore persisted desired connection state after Raspberry Pi reboot
-- Complete a 12-hour physical soak test without manual intervention
+- Complete an at-least-16-hour physical soak test without manual intervention
 - Record and automatically recover any transient disconnection during the soak
 
 ### API and MQTT
@@ -403,7 +403,7 @@ Once these decisions are complete, produce a detailed implementation prompt for 
 - `v0.5.0`: reconnection resilience, persistence, concurrency controls, diagnostics and graceful shutdown
 - `v0.6.0`: native installer, dedicated service account, filesystem permissions, `systemd`, upgrade and rollback
 - `v0.9.0`: clean-Pi installation test, security review, documentation audit and third-party provenance audit
-- `v1.0.0`: complete physical acceptance suite and successful 12-hour soak test
+- `v1.0.0`: complete physical acceptance suite and successful at-least-16-hour soak test
 
 Codex must complete and verify each milestone before advancing. The physical BLE spike comes first so that the proprietary hardware interaction is proven before the surrounding service is built.
 

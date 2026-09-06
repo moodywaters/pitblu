@@ -395,7 +395,7 @@ Do not proceed until the physical read succeeds or the blocker is accurately dia
 ### `v1.0.0`: physical release
 
 - Complete physical acceptance suite
-- Successful 12-hour soak test
+- Successful at-least-16-hour soak test
 
 ## Mandatory `v1.0.0` release gates
 
@@ -409,7 +409,7 @@ Do not proceed until the physical read succeeds or the blocker is accurately dia
 - Reject invalid/sentinel temperatures.
 - Mark stale data and publish unavailability correctly.
 - Recover after iGrill power cycling, Bluetooth failure, Mosquitto restart and Pi reboot without manual service restart.
-- Complete a 12-hour physical soak without manual intervention; record and recover transient disconnects.
+- Complete an at-least-16-hour physical soak without manual intervention; record and recover transient disconnects.
 - Verify REST, async operations, SSE, MQTT schema, Last Will, configuration persistence, authentication and secret redaction.
 - Verify clean native installation, automatic `systemd` startup, graceful shutdown, upgrade and rollback.
 - Pass CI and complete documentation, provenance and licence audits.
@@ -647,3 +647,12 @@ test verifies normal chunked termination. Updated local results: 86 tests, 94.01
 The Pi test API is currently stopped following the shutdown test. Next deliver the corrected
 candidate and retest active SSE shutdown, then finish invalid-credential and physical recovery
 checks. See `docs/v0.5.0-plan.md`. No release or later milestone is authorised by these partial gates.
+
+### Soak milestone clarification, 6 September 2026
+
+The user explicitly placed the extended, minimum 16-hour physical soak at v1.0.0. This
+supersedes references to 12 hours in older handoff records. Continue earlier milestones without
+waiting for the soak; do not interpret this as waiving v0.5.0 targeted recovery acceptance.
+Record freshness, MQTT delivery, interruptions and unattended recovery during final soak testing.
+The soak has not started or passed. The authoritative plan and physical acceptance document
+have been updated accordingly.

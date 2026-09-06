@@ -156,3 +156,12 @@ earlier milestones separately established physical V202 probe and battery readin
 
 The test API is stopped following the Last Will test. The Will observation timestamp is its
 preparation time at connection setup, not the time the broker detects a lost connection.
+
+## v1.0.0 extended soak gate
+
+On 6 September 2026 the user confirmed a minimum 16-hour physical soak for v1.0.0,
+superseding the original 12-hour requirement to cover cooks lasting 14 hours or longer.
+Run it after native deployment and targeted recovery checks. Record reading freshness,
+MQTT reception, interruptions and automatic recovery throughout. Completion requires no
+manual intervention and review of any telemetry gaps. This gate is pending, not a prerequisite
+for completing earlier v0.x milestones. Short recovery tests remain required for v0.5.0.
