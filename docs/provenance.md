@@ -54,5 +54,10 @@ was introduced for this milestone.
 Version 0.5.0 introduces no new third-party dependency or copied/adapted code. Recovery, lifecycle,
 diagnostics and persistence changes use the existing dependency set and Python standard library.
 
+The leftover-connection recovery helper invokes the existing BlueZ `bluetoothctl` executable
+through bounded Python subprocess calls. No BlueZ code was copied or adapted. The behaviour
+addresses direct Pi evidence: SIGKILL left a registered device connected and fresh discovery
+could not restore application readings. BlueZ remains an operating-system prerequisite.
+
 `elupus/togrill-bluetooth` was not researched or used because it targets ToGrill-branded hardware,
 not the Weber iGrill protocol.

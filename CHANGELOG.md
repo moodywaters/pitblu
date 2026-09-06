@@ -15,6 +15,7 @@ All notable changes will be documented here.
 - Immediate disconnect invalidation, stale retained battery state and duplicate-snapshot suppression.
 - Graceful shutdown flushes unavailable state and cancels recovery without clearing desired state.
 - Close SSE responses before HTTP shutdown drainage, without interrupting final MQTT publications.
+- Recover a registered device's leftover BlueZ connection after unexpected process termination.
 
 Raspberry Pi resilience acceptance is pending. v0.5.0 has not been released.
 

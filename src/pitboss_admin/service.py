@@ -390,6 +390,16 @@ class AdministrationService:
                         candidate = next(
                             (item for item in candidates if item._identity == identity), None
                         )
+                    if candidate is None and isinstance(identity, str):
+                        async with self._io_lock:
+                            released = await self.adapter.recover_registered(identity)
+                            if released:
+                                candidates = await self.adapter.discover(self.scan_duration)
+                                self._candidates = {item.discovery_id: item for item in candidates}
+                                candidate = next(
+                                    (item for item in candidates if item._identity == identity),
+                                    None,
+                                )
                     if candidate is None:
                         raise StateConflictError(
                             "registered identity not found; legacy registrations require "

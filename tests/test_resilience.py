@@ -12,7 +12,7 @@ from pitboss_admin.api import create_app
 from pitboss_admin.configuration import ConfigurationManager
 from pitboss_admin.connection import BackoffPolicy
 from pitboss_admin.events import EventBus, EventType, TelemetryEvent
-from pitboss_admin.models import DeviceSnapshot, TelemetrySource, utc_now
+from pitboss_admin.models import DeviceSnapshot, DiscoveredDevice, TelemetrySource, utc_now
 from pitboss_admin.mqtt import MqttPublisher, MqttSettings
 from pitboss_admin.service import AdministrationService, StateConflictError
 from pitboss_admin.storage import AdministrativeStore
@@ -36,6 +36,44 @@ async def register(service: AdministrationService) -> str:
 async def command(service: AdministrationService, device_id: str) -> None:
     operation = service.start_connection_operation(device_id, "connect")
     await until(lambda: service.operation(str(operation["operationId"]))["status"] == "succeeded")
+
+
+def test_restart_releases_only_registered_leftover_connection() -> None:
+    class LeftoverAdapter(SimulatedIGrillAdapter):
+        stuck = True
+        recovered: list[str]
+
+        def __init__(self) -> None:
+            super().__init__(clock=utc_now)
+            self.recovered = []
+
+        async def discover(self, duration: float) -> tuple[DiscoveredDevice, ...]:
+            return () if self.stuck else await super().discover(duration)
+
+        async def recover_registered(self, identity: str) -> bool:
+            self.recovered.append(identity)
+            assert identity == "simulated-igrill-v202"
+            self.stuck = False
+            return True
+
+    async def exercise() -> None:
+        store = AdministrativeStore()
+        original = AdministrationService(SimulatedIGrillAdapter(clock=utc_now), store)
+        device_id = await register(original)
+        await command(original, device_id)
+        await original.close()
+        adapter = LeftoverAdapter()
+        restarted = AdministrationService(adapter, store)
+        try:
+            await restarted.start()
+            await until(lambda: restarted._connected_device == device_id)
+            assert adapter.recovered == ["simulated-igrill-v202"]
+            assert restarted.probes(device_id)[0]["fresh"] is True
+        finally:
+            await restarted.close()
+            store.close()
+
+    asyncio.run(exercise())
 
 
 def test_restart_restores_only_registered_identity_and_desired_state(tmp_path: Path) -> None:

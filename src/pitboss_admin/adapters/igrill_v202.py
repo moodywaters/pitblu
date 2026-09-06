@@ -108,6 +108,11 @@ class BleakIGrillV202Adapter:
             )
         return tuple(discovered)
 
+    async def recover_registered(self, identity: str) -> bool:
+        from pitboss_admin.bluez import release_registered_connection
+
+        return await release_registered_connection(identity)
+
     async def connect(self, device: DiscoveredDevice) -> None:
         if self.is_connected:
             return

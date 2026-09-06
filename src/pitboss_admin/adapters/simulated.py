@@ -72,6 +72,9 @@ class SimulatedIGrillAdapter:
             raise ValueError("scan duration must be positive")
         return (self._candidate,) if self._connection_available else ()
 
+    async def recover_registered(self, identity: str) -> bool:
+        return False
+
     async def connect(self, device: DiscoveredDevice) -> None:
         if device.discovery_id != self._candidate.discovery_id:
             raise UnsupportedDeviceError("unknown simulated device")

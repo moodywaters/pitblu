@@ -656,3 +656,14 @@ waiting for the soak; do not interpret this as waiving v0.5.0 targeted recovery 
 Record freshness, MQTT delivery, interruptions and unattended recovery during final soak testing.
 The soak has not started or passed. The authoritative plan and physical acceptance document
 have been updated accordingly.
+
+### Leftover BlueZ connection recovery, 6 September 2026
+
+Controlled API SIGKILL reproduced the overnight recovery symptom: BlueZ kept the registered
+iGrill connected and the replacement API entered backoff with no readings. The original process
+exit cause remains unknown. The follow-up candidate uses bounded, output-suppressed bluetoothctl
+calls to release only the exact persisted identity when missing from discovery and still connected
+in BlueZ. It then rediscovers and authenticates normally. No pairing removal or adapter reset.
+Local checks pass 92 tests at 93.98 per cent coverage. Physical retest is pending; leave v0.5.0 open.
+The Pi remains in the reproduced condition, awaiting the updated package and API restart without
+hardware power cycling. The 16-hour soak remains a v1.0.0 gate.
