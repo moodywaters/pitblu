@@ -62,8 +62,9 @@ MQTT remains disabled by default. See [MQTT](docs/mqtt.md) and [REST API](docs/a
 
 ## Development
 
-The v0.5.0 candidate adds MQTT and BLE recovery, safe diagnostics, persistent operational events
-and graceful shutdown. See [v0.5.0 acceptance plan](docs/v0.5.0-plan.md) for the pending Pi gates.
+Version v0.5.0 adds MQTT and BLE recovery, safe diagnostics, persistent operational events
+and graceful shutdown. See [v0.5.0 acceptance plan](docs/v0.5.0-plan.md) for the completed
+target checks and the historical findings that led to the recovery fixes.
 
 Python 3.11 through 3.13 is the supported range. Install the editable development environment:
 
