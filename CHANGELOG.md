@@ -4,6 +4,17 @@ All notable changes will be documented here.
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-09-07
+
+- Native installer, dedicated service account and protected production filesystem layout.
+- Versioned virtual environments, explicit backups, upgrades, rollback and non-destructive uninstall.
+- Hardened systemd unit with bounded shutdown and automatic restart after process failure.
+- Explicit startup YAML loading and managed-service token guard, with terminal-only token bootstrap.
+
+Pi installation, service-account Bluetooth/MQTT, automatic crash/reboot recovery, permissions,
+same-candidate upgrade/rollback and non-destructive uninstall/restoration passed. CI passed
+Python 3.11, 3.12 and 3.13. The security audit and 16-hour soak remain later release gates.
+
 ## [0.5.0] - 2026-09-06
 
 - Supervised MQTT retry, stable-period backoff reset, retained-state replay and safe publisher status.

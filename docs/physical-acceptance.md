@@ -187,3 +187,21 @@ implemented or claimed. The cause of the earlier overnight process exit remains 
 The subsequent Python 3.11 MQTT cancellation fix passed CI on Python 3.11, 3.12 and 3.13
 (run 34036122863). The physical evidence above precedes that small software change. No 16-hour
 soak has been run. Automatic process supervision and final soak acceptance are later milestones.
+
+## v0.6.0 native deployment evidence, 7 September 2026
+
+The Pi passed 100 tests at 93.83 per cent coverage, Ruff lint/format (70 files), strict mypy
+(44 sources) and Bash syntax. Fresh native installation, dedicated-account BLE access,
+token-authenticated registration, HTTP 401 without credentials and protected filesystem modes
+passed. Two inserted probes matched the iGrill display at 21 Celsius, battery 50 per cent, with
+two absent channels. Physical MQTT temperatures were received without retention at QoS 1;
+service online availability was retained at QoS 1.
+
+Systemd automatically restarted a deliberately killed process and restored fresh physical
+readings without hardware intervention. A same-candidate upgrade and rollback preserved the
+original token, device registration, MQTT configuration and current readings. Backups were
+verified and retained. A full Pi reboot restored readiness, authenticated access, MQTT and
+physical polling without manual startup. Non-destructive uninstall and unit restoration preserved
+state and resumed authenticated operation. Local journal checks found neither of the entered
+plaintext credentials. See the v0.6.0 plan for limitations; this is not the final security audit,
+cross-version migration test or 16-hour soak.

@@ -26,4 +26,5 @@ jobs:
       - run: python -m ruff check .
       - run: python -m ruff format --check .
       - run: python -m mypy src tests
+      - run: bash -n deploy/manage.sh
       - run: python -m pytest -vv -o faulthandler_timeout=30

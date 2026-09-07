@@ -61,3 +61,10 @@ could not restore application readings. BlueZ remains an operating-system prereq
 
 `elupus/togrill-bluetooth` was not researched or used because it targets ToGrill-branded hardware,
 not the Weber iGrill protocol.
+
+## v0.6.0 native deployment
+
+The deployment scripts, offline SQLite backup/token operations and unit file are original project
+code. No third-party source was copied or adapted and no Python dependency was added. They invoke
+the existing operating-system systemd, BlueZ, shadow account tools and util-linux flock/runuser
+utilities. These remain installed system prerequisites rather than bundled source.

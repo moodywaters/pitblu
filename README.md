@@ -4,7 +4,8 @@
 thermometers. Development is deliberately gated. Version v0.5.0 adds supervised recovery,
 operation concurrency controls, persistent diagnostics and shutdown to the telemetry foundation.
 
-Native service installation belongs to v0.6.0. Targeted Raspberry Pi recovery acceptance passed;
+Native service installation and targeted Pi deployment acceptance are complete in v0.6.0.
+See [installation](docs/installation.md). Targeted v0.5.0 Raspberry Pi recovery acceptance passed;
 the final minimum 16-hour physical soak remains a v1.0.0 gate.
 
 ## v0.1.0 result

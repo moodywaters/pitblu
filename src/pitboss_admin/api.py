@@ -442,22 +442,28 @@ def run() -> None:
     """Run the native development server using the effective startup configuration."""
     import uvicorn
 
+    from pitboss_admin.deployment import startup_configuration
     from pitboss_admin.server import GracefulServer
 
     database_path = Path(os.environ.get("PITBOSS_DATABASE_PATH", "pitboss-admin.sqlite3"))
-    application = create_app(store=AdministrativeStore(database_path))
-    config: ConfigurationManager = application.state.configuration
-    bootstrap_token: str | None = application.state.bootstrap_token
-    if bootstrap_token is not None:
-        print(f"Initial administrator token (shown once): {bootstrap_token}")
-    server_config = uvicorn.Config(
-        application,
-        host=config.config.server.bind,
-        port=config.config.server.port,
-        access_log=False,
-        timeout_graceful_shutdown=15,
-    )
-    GracefulServer(server_config, application.state.events).run()
+    store = AdministrativeStore(database_path)
+    try:
+        configuration = startup_configuration(store, os.environ)
+        application = create_app(store=store, configuration=configuration)
+        config: ConfigurationManager = application.state.configuration
+        bootstrap_token: str | None = application.state.bootstrap_token
+        if bootstrap_token is not None:
+            print(f"Initial administrator token (shown once): {bootstrap_token}")
+        server_config = uvicorn.Config(
+            application,
+            host=config.config.server.bind,
+            port=config.config.server.port,
+            access_log=False,
+            timeout_graceful_shutdown=15,
+        )
+        GracefulServer(server_config, application.state.events).run()
+    finally:
+        store.close()
 
 
 class AuthenticationError(Exception):

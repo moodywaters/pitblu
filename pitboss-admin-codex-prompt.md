@@ -693,3 +693,46 @@ passed 93 tests at 94.01 per cent. The Pi's installed build predates this last s
 Deliver the final release package at the next update. Targeted v0.5.0 acceptance is complete.
 Next milestone is v0.6.0 native installation, secure service account and automatic process restart.
 The 16-hour soak is exclusively a v1.0.0 gate. Do not claim unattended long-cook readiness yet.
+
+## v0.6.0 candidate handoff, 7 September 2026
+
+v0.5.0 is released on GitHub, merged via PR 6 at a09096c98faf10c3e8b038e2d931de5ab62e6a0f.
+The user authorised v0.6.0. Work is on codex/v0.6.0-native-deployment. Candidate implementation
+adds deploy/manage.sh (install, backup, upgrade, rollback, non-destructive uninstall), a hardened
+systemd unit, initial loopback/token-only YAML and a pitboss-state administrative CLI. The service
+uses /opt/pitboss-admin/current/venv with permanent root-owned versioned environments, configuration
+under /etc/pitboss-admin and protected state under /var/lib/pitboss-admin. No existing test database
+or Mosquitto configuration is imported or overwritten. Installer leaves the service stopped.
+
+PITBOSS_CONFIG_FILE selects explicit startup YAML; PITBOSS_MANAGED=true refuses disabled auth or
+a missing pre-bootstrapped token hash. Token bootstrap is interactive and must never be logged or
+pasted into chat. Local results: 100 tests, 93.83 per cent coverage, Ruff (70 formatted files),
+strict mypy (44 sources) and Bash syntax pass. Pi/systemd installation, recovery, backup/rollback
+and permissions remain unverified; do not release v0.6.0 until those checks pass.
+
+Deliver a source archive rooted at pitboss-admin-v0.6.0/, separate from the running test source.
+Use its own test virtual environment. The last known Pi test API remains on loopback port 8081;
+do not reuse its historical PID without inspection. Production defaults to port 8080, loopback,
+token authentication, physical BLE and MQTT disabled. Stop the test API before production device
+onboarding to avoid competing BLE ownership. See docs/v0.6.0-plan.md and deployment procedures.
+
+## v0.6.0 acceptance handoff, 7 September 2026
+
+Native deployment acceptance passed. The Pi is now running the enabled pitboss-admin systemd
+service under the dedicated non-root account, not the earlier nohup test process. Production
+API is loopback port 8080 with token authentication. Both physical probes matched 21 Celsius,
+battery 50 per cent; MQTT publication and retained availability passed on a validation namespace.
+No secrets, token values, private device addresses or protected database contents were recorded.
+
+Tests: 100 passed, 93.83 per cent coverage, Ruff 70 files, strict mypy 44 sources and Bash syntax.
+CI passes Python 3.11/3.12/3.13. Target checks covered HTTP 401, original-token authentication,
+dedicated-account BLE, filesystem ownership/modes, systemd SIGKILL restart, Pi reboot recovery,
+backup, same-candidate upgrade/rollback, non-destructive uninstall/unit restoration and continued
+physical MQTT/readings. The local journal check found neither entered plaintext credential.
+Cross-version migration, full security audit and soak are not implied by these checks.
+
+Protected backups and previous releases remain on the Pi. The service was restored and is running
+after uninstall testing. Do not use any historic PID; inspect systemctl for current state. Do not
+start the old test API against the same thermometer. Keep the MQTT validation topic unchanged
+until the user explicitly chooses to change it. Next planned milestone is v0.9.0: clean-Pi test,
+security/documentation/provenance audits. The minimum 16-hour soak remains v1.0.0.
