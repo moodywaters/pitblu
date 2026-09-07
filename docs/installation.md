@@ -1,7 +1,7 @@
-# Native installation (v0.6.0 candidate)
+# Native installation (v0.6.0)
 
 Target: Raspberry Pi OS Trixie, 64-bit ARM, Python 3.13, systemd and BlueZ. Docker is not used.
-Deployment acceptance on the physical Pi is still pending. Do not install during an active cook.
+Targeted deployment acceptance passed on the physical Pi. Do not install during an active cook.
 
 ## Before installing
 

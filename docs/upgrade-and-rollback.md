@@ -1,6 +1,6 @@
 # Backup, upgrade, rollback and uninstall
 
-v0.6.0 candidate procedures require physical Pi acceptance. Never upgrade during an active cook.
+v0.6.0 procedures passed same-candidate lifecycle testing on the Pi. Never upgrade during a cook.
 All operations use a deployment lock and fixed production roots. The home-directory test installation
 is not modified. Old releases and backups are retained; there is no automatic garbage collection.
 
