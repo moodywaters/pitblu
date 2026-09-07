@@ -179,7 +179,8 @@ class ConfigurationManager:
         env_values = {
             key.removeprefix("PITBOSS_").lower().replace("__", "."): yaml.safe_load(value)
             for key, value in environment.items()
-            if key.startswith("PITBOSS_") and key != "PITBOSS_DATABASE_PATH"
+            if key.startswith("PITBOSS_")
+            and key not in {"PITBOSS_DATABASE_PATH", "PITBOSS_CONFIG_FILE", "PITBOSS_MANAGED"}
         }
         self._apply_layer(env_values, "environment")
         self._version, persisted = store.config_state()

@@ -4,6 +4,15 @@ All notable changes will be documented here.
 
 ## [Unreleased]
 
+### v0.6.0 candidate
+
+- Native installer, dedicated service account and protected production filesystem layout.
+- Versioned virtual environments, explicit backups, upgrades, rollback and non-destructive uninstall.
+- Hardened systemd unit with bounded shutdown and automatic restart after process failure.
+- Explicit startup YAML loading and managed-service token guard, with terminal-only token bootstrap.
+
+Physical installation, service-account Bluetooth access and deployment recovery checks are pending.
+
 ## [0.5.0] - 2026-09-06
 
 - Supervised MQTT retry, stable-period backoff reset, retained-state replay and safe publisher status.

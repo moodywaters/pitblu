@@ -11,6 +11,11 @@ For example, `PITBOSS_BLUETOOTH__SCAN_DURATION=7` sets `bluetooth.scan_duration`
 environment input use safe YAML scalar parsing. Unknown settings and invalid combinations stop
 configuration loading.
 
+For native deployment, `PITBOSS_CONFIG_FILE` selects the YAML file and must name an existing file.
+`PITBOSS_DATABASE_PATH` and `PITBOSS_MANAGED` are also deployment controls, excluded from normal
+setting parsing. Managed mode requires token authentication and a previously bootstrapped hash;
+it never generates an initial token in service logs. See [installation](installation.md).
+
 ## Setting families
 
 - `server`: bind address, port and explicit CORS origins;

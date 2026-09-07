@@ -1,0 +1,10 @@
+# Initial installation is token-protected and loopback-only.
+server:
+  bind: 127.0.0.1
+  port: 8080
+auth:
+  mode: token
+mqtt:
+  enabled: false
+simulation:
+  enabled: false
