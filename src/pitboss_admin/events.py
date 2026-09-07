@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 from collections import deque
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from datetime import datetime
 from enum import StrEnum
@@ -24,6 +24,8 @@ class EventType(StrEnum):
     BATTERY = "device.battery"
     PROBE_AVAILABILITY = "probe.availability"
     PROBE_TEMPERATURE = "probe.temperature"
+    OPERATION = "operation.state"
+    CONFIGURATION = "configuration.changed"
 
 
 class TelemetryEvent(BaseModel):
@@ -31,6 +33,7 @@ class TelemetryEvent(BaseModel):
 
     schema_version: Literal[1] = Field(1, alias="schemaVersion")
     event_id: str = Field(default_factory=lambda: uuid4().hex, alias="eventId")
+    session_id: str = Field("", alias="sessionId")
     type: EventType
     observed_at: datetime = Field(default_factory=utc_now, alias="observedAt")
     sequence: int = Field(ge=1)
@@ -41,14 +44,30 @@ class TelemetryEvent(BaseModel):
 
 
 class EventBus:
-    def __init__(self, *, history_size: int = 100, subscriber_queue_size: int = 100) -> None:
+    def __init__(
+        self,
+        *,
+        history_size: int = 100,
+        subscriber_queue_size: int = 100,
+        persist: Callable[[dict[str, object]], None] | None = None,
+    ) -> None:
         if min(history_size, subscriber_queue_size) < 1:
             raise ValueError("event buffer sizes must be positive")
         self._history: deque[TelemetryEvent] = deque(maxlen=history_size)
         self._subscribers: set[asyncio.Queue[TelemetryEvent]] = set()
         self._subscriber_queue_size = subscriber_queue_size
+        self.session_id = uuid4().hex
+        self._persist = persist
+        self._latest: dict[tuple[str | None, EventType, int | None], TelemetryEvent] = {}
+        self._streams_closed = asyncio.Event()
 
     async def publish(self, event: TelemetryEvent) -> None:
+        event = event.model_copy(update={"session_id": self.session_id})
+        if event.type in {EventType.OPERATION, EventType.CONFIGURATION}:
+            if self._persist is not None:
+                self._persist(event.model_dump(mode="json", by_alias=True))
+        elif event.type is not EventType.PROBE_TEMPERATURE:
+            self._latest[(event.device_id, event.type, event.probe)] = event
         self._history.append(event)
         for queue in tuple(self._subscribers):
             if queue.full():
@@ -57,6 +76,12 @@ class EventBus:
 
     def recent(self) -> list[TelemetryEvent]:
         return list(self._history)
+
+    def retained_state(self) -> list[TelemetryEvent]:
+        return list(self._latest.values())
+
+    def forget_device(self, device_id: str) -> None:
+        self._latest = {key: event for key, event in self._latest.items() if key[0] != device_id}
 
     @asynccontextmanager
     async def subscribe(self) -> AsyncIterator[asyncio.Queue[TelemetryEvent]]:
@@ -67,14 +92,31 @@ class EventBus:
         finally:
             self._subscribers.discard(queue)
 
+    def close_streams(self) -> None:
+        """End HTTP streams without closing internal MQTT subscribers."""
+        self._streams_closed.set()
+
     async def stream(self, *, heartbeat: float = 60) -> AsyncIterator[str]:
         async with self.subscribe() as queue:
-            while True:
+            while not self._streams_closed.is_set():
+                pending = asyncio.create_task(queue.get())
+                stopping = asyncio.create_task(self._streams_closed.wait())
                 try:
-                    event = await asyncio.wait_for(queue.get(), timeout=heartbeat)
-                except TimeoutError:
+                    done, _ = await asyncio.wait(
+                        (pending, stopping),
+                        timeout=heartbeat,
+                        return_when=asyncio.FIRST_COMPLETED,
+                    )
+                finally:
+                    pending.cancel()
+                    stopping.cancel()
+                    await asyncio.gather(pending, stopping, return_exceptions=True)
+                if self._streams_closed.is_set():
+                    return
+                if pending not in done:
                     yield ": heartbeat\n\n"
                     continue
+                event = pending.result()
                 payload = event.model_dump_json(by_alias=True)
                 yield f"id: {event.event_id}\nevent: {event.type.value}\ndata: {payload}\n\n"
 

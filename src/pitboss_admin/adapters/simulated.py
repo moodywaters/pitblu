@@ -56,6 +56,7 @@ class SimulatedIGrillAdapter:
             name="Simulated iGrill V202",
             model="igrill-v202",
             rssi=-42,
+            _identity="simulated-igrill-v202",
         )
 
     @property
@@ -70,6 +71,9 @@ class SimulatedIGrillAdapter:
         if duration <= 0:
             raise ValueError("scan duration must be positive")
         return (self._candidate,) if self._connection_available else ()
+
+    async def recover_registered(self, identity: str) -> bool:
+        return False
 
     async def connect(self, device: DiscoveredDevice) -> None:
         if device.discovery_id != self._candidate.discovery_id:

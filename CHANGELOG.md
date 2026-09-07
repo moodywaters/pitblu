@@ -4,7 +4,24 @@ All notable changes will be documented here.
 
 ## [Unreleased]
 
-No changes yet.
+## [0.5.0] - 2026-09-06
+
+- Supervised MQTT retry, stable-period backoff reset, retained-state replay and safe publisher status.
+- BLE retry after connection loss or sustained invalid reads, with explicit reconnect bypass.
+- Protected registered device identity, additive SQLite migration and restart recovery.
+- Duplicate-operation reuse, conflict rejection, single-adapter ownership and serialised BLE calls.
+- Bounded persistent operation events, configuration-change events and interrupted-operation recovery.
+- Authenticated diagnostics, MQTT-aware readiness and session identifiers in telemetry.
+- Immediate disconnect invalidation, stale retained battery state and duplicate-snapshot suppression.
+- Graceful shutdown flushes unavailable state and cancels recovery without clearing desired state.
+- Close SSE responses before HTTP shutdown drainage, without interrupting final MQTT publications.
+- Recover a registered device's leftover BlueZ connection after unexpected process termination.
+- Serialise discovery through initial connection/read and expose safe recovery failure stages.
+
+- Preserve MQTT shutdown cancellation on Python 3.11 and bound CI job duration.
+
+Target recovery and shutdown acceptance passed. CI passed on Python 3.11, 3.12 and 3.13.
+Automatic process supervision remains v0.6.0; the minimum 16-hour soak remains v1.0.0.
 
 ## [0.4.0] - 2026-09-05
 

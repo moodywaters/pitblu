@@ -30,6 +30,7 @@ def test_service_polling_records_a_subsequent_snapshot(monkeypatch: pytest.Monke
             return result
 
         monkeypatch.setattr("pitboss_admin.service.asyncio.sleep", no_wait)
+        service._sleep = no_wait
         monkeypatch.setattr(adapter, "read_snapshot", one_read)
         await service._poll("device-1")
 
@@ -54,6 +55,7 @@ def test_service_polling_stops_cleanly_after_read_failure(
             return None
 
         monkeypatch.setattr("pitboss_admin.service.asyncio.sleep", no_wait)
+        service._sleep = no_wait
         await service._poll("device-1")
         assert service.telemetry.probes("device-1") == []
         await service.close()

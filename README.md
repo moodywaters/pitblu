@@ -1,11 +1,11 @@
 # pitboss-admin
 
 `pitboss-admin` is a planned headless, API-first Raspberry Pi gateway for Weber iGrill
-thermometers. Development is deliberately gated. Version 0.4.0 adds a shared telemetry event path,
-MQTT publishing, SSE and stale-reading handling to the tested API and device foundation.
+thermometers. Development is deliberately gated. Version v0.5.0 adds supervised recovery,
+operation concurrency controls, persistent diagnostics and shutdown to the telemetry foundation.
 
-The resilience controller and native service deployment belong to later milestones and are not
-implemented yet.
+Native service installation belongs to v0.6.0. Targeted Raspberry Pi recovery acceptance passed;
+the final minimum 16-hour physical soak remains a v1.0.0 gate.
 
 ## v0.1.0 result
 
@@ -18,7 +18,7 @@ Version 0.1.0 passed its Raspberry Pi physical gate on 4 September 2026, demonst
 - output containing no Bluetooth address.
 
 See [physical acceptance](docs/physical-acceptance.md) for the sanitised evidence. Later milestones
-remain unimplemented.
+are recorded below.
 
 ## v0.2.0 device foundation
 
@@ -61,6 +61,10 @@ See [REST API](docs/api.md) and [configuration](docs/configuration.md).
 MQTT remains disabled by default. See [MQTT](docs/mqtt.md) and [REST API](docs/api.md).
 
 ## Development
+
+Version v0.5.0 adds MQTT and BLE recovery, safe diagnostics, persistent operational events
+and graceful shutdown. See [v0.5.0 acceptance plan](docs/v0.5.0-plan.md) for the completed
+target checks and the historical findings that led to the recovery fixes.
 
 Python 3.11 through 3.13 is the supported range. Install the editable development environment:
 

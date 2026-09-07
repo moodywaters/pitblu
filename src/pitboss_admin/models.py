@@ -26,6 +26,7 @@ class DiscoveredDevice:
     model: str
     rssi: int | None
     _native: object = field(repr=False, compare=False, default=None)
+    _identity: str | None = field(repr=False, compare=False, default=None)
 
 
 @dataclass(frozen=True, slots=True)

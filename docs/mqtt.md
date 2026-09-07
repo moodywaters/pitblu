@@ -1,6 +1,6 @@
 # MQTT
 
-Version 0.4.0 publishes telemetry to MQTT when `mqtt.enabled` is true. MQTT is a read-only data
+Version 0.5.0 publishes telemetry to MQTT when `mqtt.enabled` is true. MQTT is a read-only data
 plane: the service does not subscribe to or accept administrative commands. The default broker is
 local, but host, port, TLS, username and base topic are configurable. The password is managed only
 through the write-only secret API.
@@ -45,14 +45,25 @@ The Last Will payload is prepared before connecting. Its `observedAt` is therefo
 time, not the eventual disconnect time. Consumers should record their own receipt time for failure
 detection. Sequence counters are scoped to the running process and topic; they reset on restart.
 
-In this milestone, publisher connection failures do not change HTTP liveness and automatic MQTT
-reconnection is not yet implemented. Verify broker delivery independently. Failure diagnostics and
-reconnection belong to v0.5.0.
+Publisher failures enter retry backoff using base delays of 2, 4, 8, 15, 30 and 60 seconds with
+20 per cent jitter. Backoff resets after a stable connection, not after every connection attempt.
+`GET /api/v1/status` and `/api/v1/diagnostics` expose MQTT state, failure count and a safe error code.
+`/ready` returns 503 while enabled MQTT is not connected; `/health` remains process liveness only.
+An idle connection is checked by the configured availability heartbeat; loss can be detected on
+the next publish, including that heartbeat. Broker delivery remains part of manual acceptance.
+
+On reconnection the publisher restores the latest retained device, connection, battery and probe
+state. It does not replay temperature history. Normal shutdown flushes current offline state and
+publishes service unavailability with a current timestamp. Last Will timestamps still represent
+preparation time. Every process has a `sessionId`, shared by its SSE and MQTT telemetry; consumers
+should combine it with topic and sequence when identifying samples across process restarts.
 
 Temperatures are deliberately not retained. Current state is available through REST, and an active
 subscriber receives subsequent readings at the configured probe polling interval. When no fresh
 snapshot arrives before `polling.stale_after`, device and probe availability events report
 `available: false` with reason `stale`; REST suppresses the old numeric values.
+The retained battery state is also invalidated with a null percentage. Explicit disconnect
+invalidates available state immediately.
 
 Do not put credentials in YAML, shell history or source control. Configure `mqtt.password` through
 the authenticated write-only secret endpoint. Additional consumers should use separate

@@ -48,6 +48,7 @@ class RegisterDeviceRequest(_RequestModel):
 
 
 class PatchDeviceRequest(_RequestModel):
+    discovery_id: str | None = Field(None, alias="discoveryId", min_length=1)
     friendly_name: str | None = Field(None, alias="friendlyName", max_length=100)
     automatic_reconnection: bool | None = Field(None, alias="automaticReconnection")
 
@@ -99,6 +100,7 @@ def create_app(
 ) -> FastAPI:
     database = store or AdministrativeStore()
     config = configuration or ConfigurationManager(database)
+    startup = config.config.model_copy(deep=True)
     selected_adapter = adapter or (
         SimulatedIGrillAdapter(config.config.simulation.probe_count, clock=utc_now)
         if config.config.simulation.enabled
@@ -108,13 +110,19 @@ def create_app(
             read_timeout=config.config.bluetooth.read_timeout,
         )
     )
-    events = EventBus()
+    events = EventBus(persist=database.append_event)
     telemetry = TelemetryState(events, stale_after=config.config.polling.stale_after)
     service = AdministrationService(
         selected_adapter,
         database,
         telemetry,
         poll_interval=config.config.polling.probe_interval,
+        degraded_after=config.config.polling.degraded_after_failures,
+        reconnect_after=config.config.polling.forced_reconnect_after,
+        stable_after=config.config.polling.stable_backoff_reset,
+        scan_duration=config.config.bluetooth.scan_duration,
+        missing_scan_interval=config.config.bluetooth.missing_scan_interval,
+        connected_scan_interval=config.config.bluetooth.connected_scan_interval,
     )
     tokens = AdministratorTokens(database)
     bootstrap_token = None
@@ -123,6 +131,7 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI):  # type: ignore[no-untyped-def]
+        await service.start()
         mqtt_task: asyncio.Task[None] | None = None
         if config.config.mqtt.enabled:
             mqtt = MqttPublisher(
@@ -135,9 +144,12 @@ def create_app(
                     base_topic=config.config.mqtt.base_topic,
                     qos=config.config.mqtt.qos,
                     source=selected_adapter.source,
+                    heartbeat=config.config.polling.availability_heartbeat,
+                    stable_after=config.config.polling.stable_backoff_reset,
                 )
             )
             mqtt_task = asyncio.create_task(mqtt.run(events))
+            _app.state.mqtt = mqtt
         await events.publish(
             TelemetryEvent(
                 type=EventType.SERVICE_AVAILABILITY,
@@ -149,6 +161,7 @@ def create_app(
         try:
             yield
         finally:
+            await service.close()
             await events.publish(
                 TelemetryEvent(
                     type=EventType.SERVICE_AVAILABILITY,
@@ -157,17 +170,18 @@ def create_app(
                     data={"available": False},
                 )
             )
-            await service.close()
             if mqtt_task is not None:
-                mqtt_task.cancel()
-                with contextlib.suppress(asyncio.CancelledError):
-                    await mqtt_task
+                if mqtt.state != "connected":
+                    mqtt_task.cancel()
+                with contextlib.suppress(asyncio.CancelledError, TimeoutError):
+                    await asyncio.wait_for(mqtt_task, timeout=15)
 
     app = FastAPI(title="pitboss-admin", version=__version__, lifespan=lifespan)
     app.state.service = service
     app.state.configuration = config
     app.state.tokens = tokens
     app.state.events = events
+    app.state.mqtt = None
     app.state.bootstrap_token = bootstrap_token
 
     if config.config.server.cors_origins:
@@ -216,7 +230,7 @@ def create_app(
         return _error(request, "authentication_required", "valid bearer token required", 401)
 
     async def authenticate(request: Request) -> None:
-        if config.config.auth.mode == "disabled":
+        if startup.auth.mode == "disabled":
             return
         authorization = request.headers.get("authorization", "")
         scheme, _, token = authorization.partition(" ")
@@ -240,12 +254,34 @@ def create_app(
         return {"status": "ok"}
 
     @app.get("/ready", dependencies=[Depends(authenticate)])
-    async def ready() -> dict[str, str]:
+    async def ready(response: Response) -> dict[str, str]:
+        mqtt = app.state.mqtt
+        if mqtt is not None and mqtt.state != "connected":
+            response.status_code = 503
+            return {"status": "not_ready"}
         return {"status": "ready"}
 
     @app.get("/api/v1/status", dependencies=[Depends(authenticate)])
     async def service_status() -> dict[str, object]:
-        return {"status": "ok", "version": __version__, "time": utc_now().isoformat()}
+        mqtt_status = (
+            app.state.mqtt.status() if app.state.mqtt is not None else {"state": "disabled"}
+        )
+        return {
+            "status": "degraded" if mqtt_status["state"] not in {"connected", "disabled"} else "ok",
+            "version": __version__,
+            "time": utc_now().isoformat(),
+            "mqtt": mqtt_status,
+            "deviceRuntime": service.diagnostics(),
+            "sessionId": events.session_id,
+        }
+
+    @app.get("/api/v1/diagnostics", dependencies=[Depends(authenticate)])
+    async def diagnostics() -> dict[str, object]:
+        return await service_status()
+
+    @app.get("/api/v1/events/operations", dependencies=[Depends(authenticate)])
+    async def operational_events() -> list[dict[str, object]]:
+        return database.recent_events()
 
     @app.get("/api/v1/bluetooth", dependencies=[Depends(authenticate)])
     async def bluetooth() -> dict[str, object]:
@@ -257,7 +293,7 @@ def create_app(
 
     @app.post("/api/v1/scans", status_code=status.HTTP_202_ACCEPTED)
     async def start_scan(body: ScanRequest, _auth: protected) -> dict[str, object]:
-        duration = body.duration or config.config.bluetooth.scan_duration
+        duration = body.duration or startup.bluetooth.scan_duration
         return service.start_scan(duration)
 
     @app.get("/api/v1/scans/{scan_id}")
@@ -289,7 +325,9 @@ def create_app(
     async def patch_device(
         device_id: str, body: PatchDeviceRequest, _auth: protected
     ) -> dict[str, object]:
-        return service.patch_device(device_id, body.friendly_name, body.automatic_reconnection)
+        return service.patch_device(
+            device_id, body.friendly_name, body.automatic_reconnection, body.discovery_id
+        )
 
     @app.delete("/api/v1/devices/{device_id}", status_code=status.HTTP_204_NO_CONTENT)
     async def delete_device(device_id: str, _auth: protected) -> Response:
@@ -327,7 +365,7 @@ def create_app(
     @app.get("/api/v1/events/stream")
     async def event_stream(_auth: protected) -> StreamingResponse:
         return StreamingResponse(
-            events.stream(heartbeat=config.config.polling.availability_heartbeat),
+            events.stream(heartbeat=startup.polling.availability_heartbeat),
             media_type="text/event-stream",
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
@@ -368,6 +406,14 @@ def create_app(
                 f"configuration version conflict; current version is {exc.current_version}"
             ) from exc
         response.headers["etag"] = f'"{config.version}"'
+        await events.publish(
+            TelemetryEvent(
+                type=EventType.CONFIGURATION,
+                sequence=config.version,
+                source=selected_adapter.source,
+                data={"version": config.version, "settings": sorted(body.values)},
+            )
+        )
         return config_response()
 
     @app.put("/api/v1/config/secrets/{secret_name}")
@@ -396,18 +442,22 @@ def run() -> None:
     """Run the native development server using the effective startup configuration."""
     import uvicorn
 
+    from pitboss_admin.server import GracefulServer
+
     database_path = Path(os.environ.get("PITBOSS_DATABASE_PATH", "pitboss-admin.sqlite3"))
     application = create_app(store=AdministrativeStore(database_path))
     config: ConfigurationManager = application.state.configuration
     bootstrap_token: str | None = application.state.bootstrap_token
     if bootstrap_token is not None:
         print(f"Initial administrator token (shown once): {bootstrap_token}")
-    uvicorn.run(
+    server_config = uvicorn.Config(
         application,
         host=config.config.server.bind,
         port=config.config.server.port,
         access_log=False,
+        timeout_graceful_shutdown=15,
     )
+    GracefulServer(server_config, application.state.events).run()
 
 
 class AuthenticationError(Exception):

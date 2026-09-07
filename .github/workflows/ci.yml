@@ -10,6 +10,7 @@ permissions:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -25,5 +26,4 @@ jobs:
       - run: python -m ruff check .
       - run: python -m ruff format --check .
       - run: python -m mypy src tests
-      - run: python -m pytest
-
+      - run: python -m pytest -vv -o faulthandler_timeout=30

@@ -64,8 +64,32 @@ def test_sse_stream_uses_canonical_event_schema() -> None:
 def test_event_buffer_sizes_must_be_positive() -> None:
     for arguments in ({"history_size": 0}, {"subscriber_queue_size": 0}):
         try:
-            EventBus(**arguments)
+            EventBus(
+                history_size=arguments.get("history_size", 100),
+                subscriber_queue_size=arguments.get("subscriber_queue_size", 100),
+            )
         except ValueError as exc:
             assert "positive" in str(exc)
         else:
             raise AssertionError("invalid buffer size was accepted")
+
+
+def test_stream_shutdown_keeps_internal_subscribers_alive() -> None:
+    async def exercise() -> None:
+        bus = EventBus()
+        stream = bus.stream()
+
+        async def consume() -> list[str]:
+            return [item async for item in stream]
+
+        async with bus.subscribe() as mqtt_queue:
+            pending = asyncio.create_task(consume())
+            await asyncio.sleep(0)
+            bus.close_streams()
+            assert await asyncio.wait_for(pending, 1) == []
+            await bus.publish(event(1))
+            assert (await mqtt_queue.get()).sequence == 1
+            assert [item async for item in bus.stream()] == []
+        assert not bus._subscribers
+
+    asyncio.run(exercise())

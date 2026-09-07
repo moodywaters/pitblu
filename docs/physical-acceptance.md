@@ -156,3 +156,34 @@ earlier milestones separately established physical V202 probe and battery readin
 
 The test API is stopped following the Last Will test. The Will observation timestamp is its
 preparation time at connection setup, not the time the broker detects a lost connection.
+
+## v1.0.0 extended soak gate
+
+On 6 September 2026 the user confirmed a minimum 16-hour physical soak for v1.0.0,
+superseding the original 12-hour requirement to cover cooks lasting 14 hours or longer.
+Run it after native deployment and targeted recovery checks. Record reading freshness,
+MQTT reception, interruptions and automatic recovery throughout. Completion requires no
+manual intervention and review of any telemetry gaps. This gate is pending, not a prerequisite
+for completing earlier v0.x milestones. Short recovery tests remain required for v0.5.0.
+
+## v0.5.0 target evidence, 6 September 2026
+
+The Pi candidate passed 93 tests at 94.01 per cent coverage, lint, formatting (67 files) and
+strict typing (42 source files). Simulator desired-connected restoration and persisted explicit
+disconnect passed across application restarts. A local broker outage produced safe backoff and
+HTTP 503 readiness, followed by automatic MQTT recovery and HTTP 200 in the same session.
+Retained online availability was verified at QoS 1. Invalid credentials produced safe retry
+status without changing the saved password. Active SSE ended with curl exit 0 on shutdown,
+and retained offline MQTT availability matched the stopped session.
+
+Physical power cycling restored two 17 Celsius readings matching the display, two absent probes
+and battery 50 per cent, without restarting the API. A separate controlled API SIGKILL exposed
+a leftover BlueZ connection recovery failure. Following targeted BlueZ release and discovery-lock
+corrections, SIGKILL plus manual application relaunch restored physical readings without an iGrill
+power cycle or Bluetooth reset. Sequence advanced from 1 to 9; both probes were fresh at 19 Celsius
+and confirmed against the display, battery 50 per cent. Automatic process relaunch is not yet
+implemented or claimed. The cause of the earlier overnight process exit remains unknown.
+
+The subsequent Python 3.11 MQTT cancellation fix passed CI on Python 3.11, 3.12 and 3.13
+(run 34036122863). The physical evidence above precedes that small software change. No 16-hour
+soak has been run. Automatic process supervision and final soak acceptance are later milestones.

@@ -395,7 +395,7 @@ Do not proceed until the physical read succeeds or the blocker is accurately dia
 ### `v1.0.0`: physical release
 
 - Complete physical acceptance suite
-- Successful 12-hour soak test
+- Successful at-least-16-hour soak test
 
 ## Mandatory `v1.0.0` release gates
 
@@ -409,7 +409,7 @@ Do not proceed until the physical read succeeds or the blocker is accurately dia
 - Reject invalid/sentinel temperatures.
 - Mark stale data and publish unavailability correctly.
 - Recover after iGrill power cycling, Bluetooth failure, Mosquitto restart and Pi reboot without manual service restart.
-- Complete a 12-hour physical soak without manual intervention; record and recover transient disconnects.
+- Complete an at-least-16-hour physical soak without manual intervention; record and recover transient disconnects.
 - Verify REST, async operations, SSE, MQTT schema, Last Will, configuration persistence, authentication and secret redaction.
 - Verify clean native installation, automatic `systemd` startup, graceful shutdown, upgrade and rollback.
 - Pass CI and complete documentation, provenance and licence audits.
@@ -612,3 +612,84 @@ publisher to load the changed credential. Never ask the user to paste a password
 6. Update documentation and provenance alongside code; use reviewed milestone commits and green
    CI before merging or releasing. Keep the repository private and do not advance to v0.6.0
    until v0.5.0 is verified.
+
+## Continuation update: v0.5.0 candidate, 5 September 2026
+
+The user authorised v0.5.0 implementation after the handoff above. Work is on
+`codex/v0.5.0-resilience`; this is a candidate, not a released or Pi-accepted milestone.
+Read `docs/v0.5.0-plan.md` for the required remaining target checks. Local validation passed 84
+tests at 93.99 per cent coverage, Ruff and strict mypy. No new dependency was introduced.
+
+The candidate adds MQTT retry/diagnostics/retained replay, BLE recovery and registered identity
+restoration, control conflict handling, adapter ownership, bounded persistent operational events,
+session IDs, stale battery invalidation and graceful shutdown. `/api/v1/diagnostics` and
+`/api/v1/events/operations` are new protected resources. `/ready` returns 503 when enabled MQTT is
+not connected. The SQLite identity column is additive. Legacy registrations require an explicit
+fresh `discoveryId` selection using device PATCH before automatic restore; names are not identities.
+
+Next: deliver the candidate source archive, run the Pi quality gate, then verify broker recovery,
+application restart, persisted disconnect, physical V202 power-cycle recovery and shutdown. The
+Pi's previous temporary API was stopped after the v0.4.0 Last Will test. Inspect processes before
+changing runtime state. Do not mark v0.5.0 complete or start v0.6.0 until target acceptance passes.
+
+### v0.5.0 Pi validation update, 5 September 2026
+
+The first candidate passed all 84 Pi tests, lint, formatting and strict typing. Simulator
+automatic restoration after application restart and persisted explicit disconnect both passed.
+MQTT broker outage returned safe backoff diagnostics and readiness 503; recovery returned 200
+without changing the application session. Retained online and offline availability passed QoS 1.
+Idle outage detection uses the 60-second heartbeat, so a 10-second test was insufficient.
+
+Active SSE shutdown hit Uvicorn's drain deadline before lifespan cleanup. This is not a passed
+graceful SSE gate. The follow-up fix closes HTTP event streams before server drainage, preserving
+internal MQTT subscriptions for final unavailable publications. A real loopback HTTP regression
+test verifies normal chunked termination. Updated local results: 86 tests, 94.01 per cent coverage.
+The Pi test API is currently stopped following the shutdown test. Next deliver the corrected
+candidate and retest active SSE shutdown, then finish invalid-credential and physical recovery
+checks. See `docs/v0.5.0-plan.md`. No release or later milestone is authorised by these partial gates.
+
+### Soak milestone clarification, 6 September 2026
+
+The user explicitly placed the extended, minimum 16-hour physical soak at v1.0.0. This
+supersedes references to 12 hours in older handoff records. Continue earlier milestones without
+waiting for the soak; do not interpret this as waiving v0.5.0 targeted recovery acceptance.
+Record freshness, MQTT delivery, interruptions and unattended recovery during final soak testing.
+The soak has not started or passed. The authoritative plan and physical acceptance document
+have been updated accordingly.
+
+### Leftover BlueZ connection recovery, 6 September 2026
+
+Controlled API SIGKILL reproduced the overnight recovery symptom: BlueZ kept the registered
+iGrill connected and the replacement API entered backoff with no readings. The original process
+exit cause remains unknown. The follow-up candidate uses bounded, output-suppressed bluetoothctl
+calls to release only the exact persisted identity when missing from discovery and still connected
+in BlueZ. It then rediscovers and authenticates normally. No pairing removal or adapter reset.
+Local checks pass 92 tests at 93.98 per cent coverage. Physical retest is pending; leave v0.5.0 open.
+The Pi remains in the reproduced condition, awaiting the updated package and API restart without
+hardware power cycling. The 16-hour soak remains a v1.0.0 gate.
+
+### Recovery follow-up, 6 September 2026
+
+The BlueZ-release candidate did not pass the physical abrupt-stop test. Isolated adapter
+discovery/authentication/reading succeeded, and normal API startup then worked, but another
+SIGKILL/restart failed. Do not claim recovery is fixed. A discovered cache-replacement race
+is now covered by a regression test and fixed by holding one lock from candidate resolution
+through connection and the first read. Protected diagnostics include a safe fixed-label
+failureStage, with no raw exception content. Local checks: 93 tests, 94.01 per cent coverage.
+Ship this follow-up and retest the existing condition without power cycling the iGrill.
+
+### v0.5.0 acceptance and release handoff, 6 September 2026
+
+The corrected recovery path passed controlled physical API SIGKILL plus manual process relaunch
+without an iGrill power cycle or Bluetooth reset. Sequence advanced from 1 to 9, both probes
+matched the display at 19 Celsius, battery 50 per cent, and two probes were absent. The original
+overnight exit cause remains unknown. MQTT broker recovery, simulator restart/disconnect
+persistence, invalid-credential retry and clean active-SSE/offline-MQTT shutdown also passed.
+
+The Pi passed 93 tests at 94.01 per cent coverage, lint (67 formatted files) and strict typing
+(42 sources). Final CI exposed a Python 3.11 MQTT cancellation hang, fixed using an asyncio
+timeout context. Final CI run 34036122863 passed Python 3.11, 3.12 and 3.13; local checks also
+passed 93 tests at 94.01 per cent. The Pi's installed build predates this last small MQTT change.
+Deliver the final release package at the next update. Targeted v0.5.0 acceptance is complete.
+Next milestone is v0.6.0 native installation, secure service account and automatic process restart.
+The 16-hour soak is exclusively a v1.0.0 gate. Do not claim unattended long-cook readiness yet.
