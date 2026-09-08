@@ -1,25 +1,24 @@
 # Physical acceptance and remaining release gates
 
-Current released baseline: v0.6.0. The full v1.0.0 physical suite and minimum
-16-hour soak are **not complete**. Historical milestone passes are not a blanket
-pass for this checklist. Detailed dated results are preserved in
-[acceptance evidence](history/acceptance-evidence.md).
+Current candidate: v0.9.0rc1, revision f7d3879. The full v1.0.0 physical suite and
+minimum 16-hour soak are **not complete**.
 
-## Evidence already obtained
+## Candidate evidence: 8 September 2026
 
-- Physical V202 discovery, initialisation, two probe readings matching the display,
-  empty-channel detection and battery acquisition.
-- API registration/control, simulated telemetry, SSE, MQTT QoS/retention/Last Will
-  and stale-data transitions in targeted milestone tests.
-- Targeted physical reconnection and process-recovery checks.
-- Native installation under a dedicated account, token authentication, protected
-  permissions, physical MQTT delivery and automatic systemd crash/reboot recovery.
-- Protected backups, same-candidate upgrade/rollback, non-destructive uninstall
-  and restoration, and a local check for entered credentials in the journal.
+- Pi Python 3.13.5: 114 tests pass, 93.79% coverage; the preceding lint, format
+  and strict typing checks completed successfully in the operator's command chain.
+- Migration preserved the original administrator token and registered device state.
+- Physical probes 1 and 2 returned fresh 19 degrees Celsius readings; channels 3
+  and 4 reported absent; battery returned 50%. Display comparison remains unconfirmed.
+- MQTT authenticated as pitblu-core and delivered retained service availability
+  and non-retained physical temperatures on pitblu topics, all QoS 1.
+- Reboot restored service, MQTT and physical polling automatically, NRestarts=0.
+  Readiness returned 200; Bluetooth power and clock synchronisation reported true.
+- A verified protected backup was created after migration and reboot acceptance.
 
-Some checks used simulation, earlier code or a same-version deployment. They are
-not proof of cross-version migrations, a clean OS installation, comprehensive
-security or uninterrupted long-duration operation.
+These are operator-supplied results on the existing OS, not clean-Pi installation,
+four-inserted-probe acceptance, a comprehensive security audit or a 16-hour soak.
+No spare card or second Pi is currently available; clean-Pi testing remains pending.
 
 ## v0.9.0 audit gates
 

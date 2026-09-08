@@ -1,6 +1,6 @@
 # Quick start for a cook
 
-This guide is for the current v0.6.0 release. There is no phone-friendly dashboard
+This guide is for the v0.9.0rc1 candidate. There is no phone-friendly dashboard
 yet. Start with [the plain-English overview](bbq-overview.md) if you are new to the
 project.
 

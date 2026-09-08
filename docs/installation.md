@@ -1,10 +1,11 @@
 # Native installation
 
-These paths describe the renamed candidate, not the previously installed release.
+These paths describe the current v0.9.0rc1 candidate.
 Read [migration](rename-migration.md) before changing an existing deployment.
 
 Target: Raspberry Pi OS Trixie, 64-bit ARM, Python 3.13, systemd and BlueZ. Docker is not used.
-Targeted deployment acceptance passed on the physical Pi. Do not install during an active cook.
+Migration and reboot checks passed on the existing Pi. Clean-OS installation is
+still pending. Do not install during an active cook.
 
 ## Before installing
 

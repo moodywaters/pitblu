@@ -19,9 +19,9 @@ thermometer and not a controller for your barbecue.
 - Start automatically when a properly installed Pi starts.
 - Share live readings with a separate application.
 
-The current release is v0.6.0. Two physical probes have been checked against the
-iGrill display. The full release checks, including all four inserted probes and
-an uninterrupted test lasting at least 16 hours, are not yet complete. Successful
+The current version is the v0.9.0rc1 candidate, not a final release. Two physical
+probes return fresh readings. Display comparison, testing with all four probes inserted,
+and an uninterrupted test lasting at least 16 hours are not yet complete. Successful
 short tests are not a guarantee of reliable overnight cooking.
 
 ## What will I see on my phone?

@@ -1,20 +1,8 @@
 # Frontend and AI integration guide
 
-Contract baseline: released `v0.6.0`. This guide describes the implementation, not a
-promise that every item in the project plan already exists. Recheck it against the
-installed version before building a client. The v0.9.0 audit and v1.0.0 physical
-acceptance, including the minimum 16-hour soak, are separate release gates.
-
-Development branch only: [unreleased changes](unreleased.md) document fixes to
-partial device updates and browser response headers. The v0.6.0 caveats below still
-apply to the released Pi installation until an explicitly validated upgrade.
-
-Additional unreleased settings are `security.auth_requests_per_minute`,
-`security.mutations_per_minute`, `security.maximum_body_bytes` and
-`security.maximum_sse_clients`. These do not exist in the released v0.6.0 API.
-The development branch also protects `GET /openapi.json`, `GET /docs` and
-`GET /redoc` with the configured authentication policy; released v0.6.0 leaves
-these documentation routes public.
+Contract: **v0.9.0rc1**, installed and migration-tested on the operator's Pi.
+This is a candidate, not the final v0.9.0 release. Clean-Pi acceptance and the
+v1.0.0 physical suite and minimum 16-hour soak remain pending.
 
 ## 1. Purpose and architecture
 
@@ -52,8 +40,8 @@ authorisation, secure transport and controlled backend access to the private gat
 
 - Read `/api/v1/status` for the package version and current `sessionId`.
 - `/openapi.json`, `/docs` and `/redoc` expose generated API documentation. These
-  documentation routes are currently unauthenticated; they are not credentials or
-  current-state endpoints.
+  documentation routes follow token authentication. Use a trusted backend relay
+  to supply the bearer header for both HTML and schema requests.
 - OpenAPI describes request models but many responses are generic dictionaries.
   Use the response shapes and behaviour below as well as the generated schema.
 - `GET /health` needs no authentication. With `auth.mode=token`, every `/api/v1/*`
@@ -76,12 +64,15 @@ in the protected administrative database; do not treat backups as non-sensitive.
 
 ## 3. Complete HTTP resource inventory
 
-All paths below other than the three explicit root paths begin with `/api/v1`.
+Resource paths are listed explicitly below.
 Successful reads and updates return 200 unless another status is shown. Send JSON
 request bodies with `Content-Type: application/json`; unknown model fields are rejected.
 
 | Method and path | Request / result |
 | --- | --- |
+| `GET /openapi.json` | Authenticated generated OpenAPI schema. |
+| `GET /docs` | Authenticated Swagger UI HTML. |
+| `GET /redoc` | Authenticated ReDoc HTML. |
 | `GET /health` | `{"status":"ok"}`: process liveness only. |
 | `GET /ready` | `{"status":"ready"}` (200), or `{"status":"not_ready"}` (503) when enabled MQTT is not connected. |
 | `GET /api/v1/status` | Version, UTC time, session, MQTT and device-runtime diagnostics. |
@@ -168,10 +159,9 @@ The implementation currently owns one active adapter/device at a time, even thou
 the registry is a collection. Switching devices requires disconnecting the current
 owner. Simultaneous multi-thermometer polling is not supported.
 
-Device PATCH caveat: in v0.6.0, omitting `friendlyName` clears it to null. Include the
-existing name when only changing `automaticReconnection` or `discoveryId`. Identity
-selection requires disconnection first and a fresh discovery result. This is useful
-for legacy registrations without a saved identity; do not silently rebind hardware.
+Device PATCH preserves an omitted `friendlyName`; explicit null clears it.
+An empty patch returns the known device unchanged. Identity selection requires
+disconnection and a fresh discovery result; do not silently rebind hardware.
 Changing automatic reconnection is not equivalent to a connect/disconnect command.
 
 Explicit disconnect persists desired state `disconnected` and cancels recovery.
@@ -258,11 +248,12 @@ Device-runtime fields are `stopping`, `connected`, `pollingTasks`, `recoveryTask
 `pendingOperations`, `errorCode`, `failureStage`, `discoveryErrorCode`.
 
 Top-level `status=ok` and `/ready` 200 do not prove thermometer availability: readiness
-currently checks only enabled MQTT connectivity. `/bluetooth` currently returns
-`available=true` without independently checking adapter power or radio health.
-Show process, broker, device, probe presence and reading freshness separately.
-There is currently no clock-synchronisation-health field. Use receipt times and
-connection health as well as UTC timestamps when deciding whether data is live.
+currently checks only enabled MQTT connectivity. Status and diagnostics expose
+`host.bluetoothPowered` and `host.clockSynchronized` as true, false or null
+(unknown), using bounded read-only checks cached for 15 seconds.
+`/bluetooth.available` reflects physical adapter power, or true in simulation;
+it is not proof of successful GATT reads. Show process, broker, device, probe
+presence and freshness separately. Use receipt times as well as UTC observations.
 
 ## 7. SSE: live event integration
 
@@ -380,7 +371,7 @@ means strictly greater than zero. Validate through the API, not metadata alone.
 | `bluetooth.initialise_timeout` | 15 | Seconds, >0..120. |
 | `bluetooth.read_timeout` | 5 | Seconds, >0..60. |
 | `polling.probe_interval` | 5 | Seconds, >0..300; work duration can lengthen observed cadence. |
-| `polling.battery_interval` | 300 | Seconds, >0..3600; currently not wired to a separate schedule. |
+| `polling.battery_interval` | 300 | Seconds, >0..3600; physical battery reads on the first eligible probe cycle. |
 | `polling.stale_after` | 15 | Seconds, >0..3600. |
 | `polling.degraded_after_failures` | 3 | Integer 1..100 failed cycles. |
 | `polling.forced_reconnect_after` | 30 | Seconds, >0..3600 without valid readings. |
@@ -439,12 +430,37 @@ Show a masked empty input with configured/not-configured status; never prefill a
 fake mask as the password or submit it when unchanged. Rotation is separate from
 configuration and takes effect immediately for new authenticated requests.
 
-CORS is disabled by default. Configured CORS permits GET/POST/PATCH/PUT/DELETE and
-Authorization/Content-Type/If-Match headers. It currently does not expose ETag or
-X-Correlation-ID response headers to cross-origin browser JavaScript, nor allow
-X-Correlation-ID in preflight. A same-origin backend relay avoids these limitations
-and keeps the administrator credential out of the browser. Do not assume enabling
-CORS supplies end-user authentication or secure transport.
+CORS is disabled by default. Configured origins permit GET/POST/PATCH/PUT/DELETE,
+Authorization, Content-Type, If-Match and X-Correlation-ID request headers.
+ETag, X-Correlation-ID and Retry-After response headers are exposed. A backend
+relay keeps the administrator credential out of the browser. CORS is neither
+end-user authentication nor secure transport.
+
+### Resource limits and defensive behaviour
+
+All four `security` settings require restart and use normal configuration metadata:
+
+| Setting | Default | Range / behaviour |
+| --- | --- | --- |
+| `security.auth_requests_per_minute` | 300 | 10..3600; process-wide authentication admission |
+| `security.mutations_per_minute` | 30 | 1..300; POST/PATCH/PUT/DELETE admission after authentication |
+| `security.maximum_body_bytes` | 16384 | 8192..65536; including chunked mutation bodies |
+| `security.maximum_sse_clients` | 8 | 1..32 simultaneous streams |
+
+Rate limits use token buckets with burst min(rate,10), shared by all clients and
+reset on process restart. Rejection returns 429 `rate_limited` and Retry-After
+seconds. Extra SSE streams also return 429. Body overflow returns 413
+`request_too_large`; body reception exceeding five seconds returns 408
+`request_timeout`. Token hashing is bounded to two concurrent jobs.
+Responses use Cache-Control: no-store and X-Content-Type-Options: nosniff.
+Correlation identifiers accept 1..64 letters, digits, dots, underscores or hyphens;
+invalid values are replaced. Retry only safe operations after the indicated delay.
+
+Physical battery acquisition respects its interval; cached values retain their
+actual battery observation time, not the current probe timestamp. MQTT/SSE do not
+republish the cached value as a new acquisition every probe cycle. Failed reads
+invalidate the battery value and retry next cycle; reconnect forces a read.
+Stale device data invalidates numeric values. Simulator output remains test data.
 
 ## 10. Suggested web application coverage
 
@@ -493,6 +509,5 @@ and [physical acceptance](physical-acceptance.md).
 
 When changing a route, request/response field, event, topic, authentication behaviour
 or configuration setting, update this guide in the same change. Do not silently
-turn implementation gaps into promises. In particular the separate battery cadence,
-clock-synchronisation diagnostics, browser integration limitations and device PATCH
-semantics noted here remain audit items until code and tests demonstrate a fix.
+turn implementation gaps into promises. Keep candidate behaviour and pending
+physical acceptance distinct.

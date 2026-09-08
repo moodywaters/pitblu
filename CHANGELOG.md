@@ -1,129 +1,20 @@
 # Changelog
 
-All notable changes will be documented here.
+## [0.9.0rc1] - candidate
 
-## [Unreleased]
+Not a final release. Current documentation begins at v0.9.0; earlier release
+records remain in Git history, not in the active guides.
 
-- Rename the gateway to pitblu-core and organise moodywaters/pitblu as one repository
-  with gateway source in pitblu-core, a future pitblu-web placeholder and shared docs.
-  Update Python imports, commands, environment prefixes, systemd paths and MQTT defaults.
-  Existing installations require a separately verified migration; no aliases are provided.
+- pitblu monorepo with independently deployable pitblu-core and a future pitblu-web placeholder.
+- Native Raspberry Pi gateway with REST administration, SSE and MQTT telemetry.
+- Explicit device registration, physical and simulated adapters, recovery and administrative persistence.
+- Bearer authentication, token rotation, request/body/stream limits and protected API documentation.
+- Configuration metadata, optimistic concurrency, write-only secrets and corrected partial device updates.
+- Physical battery cadence with preserved observation timestamps and safe Bluetooth/clock diagnostics.
+- Hardened systemd deployment, protected backups, upgrades and rollback.
+- Comprehensive frontend/AI contract and plain-English BBQ guides.
+- Dependency inventory, security/provenance audit records and supported-Python CI.
+- Candidate migration, physical MQTT delivery and reboot recovery verified on the operator's Pi.
 
-- v0.9.0rc1 candidate: request/body/stream limits, protected documentation routes,
-  safe startup errors, bounded token hashing and defensive response headers.
-- Physical battery cadence with honest cached timestamps; read-only Bluetooth/clock diagnostics.
-- Deployment symlink guards, dependency inventories/scans and documented audit/clean-Pi gates.
-
-- Partial device updates preserve an omitted friendly name; explicit null still clears it.
-- Configured CORS exposes ETag/correlation response headers and allows correlation request headers.
-
-- Comprehensive frontend/AI integration contract and plain-English BBQ overview/quick start.
-- Current-release documentation index, corrected runtime descriptions and troubleshooting.
-- Superseded v0.1.0 to v0.6.0 plans removed; dated acceptance evidence separated
-  from the current release checklist. Original plans remain available in Git history.
-- Automated documentation checks for local links and route/setting/event inventory coverage.
-
-## [0.6.0] - 2026-09-07
-
-- Native installer, dedicated service account and protected production filesystem layout.
-- Versioned virtual environments, explicit backups, upgrades, rollback and non-destructive uninstall.
-- Hardened systemd unit with bounded shutdown and automatic restart after process failure.
-- Explicit startup YAML loading and managed-service token guard, with terminal-only token bootstrap.
-
-Pi installation, service-account Bluetooth/MQTT, automatic crash/reboot recovery, permissions,
-same-candidate upgrade/rollback and non-destructive uninstall/restoration passed. CI passed
-Python 3.11, 3.12 and 3.13. The security audit and 16-hour soak remain later release gates.
-
-## [0.5.0] - 2026-09-06
-
-- Supervised MQTT retry, stable-period backoff reset, retained-state replay and safe publisher status.
-- BLE retry after connection loss or sustained invalid reads, with explicit reconnect bypass.
-- Protected registered device identity, additive SQLite migration and restart recovery.
-- Duplicate-operation reuse, conflict rejection, single-adapter ownership and serialised BLE calls.
-- Bounded persistent operation events, configuration-change events and interrupted-operation recovery.
-- Authenticated diagnostics, MQTT-aware readiness and session identifiers in telemetry.
-- Immediate disconnect invalidation, stale retained battery state and duplicate-snapshot suppression.
-- Graceful shutdown flushes unavailable state and cancels recovery without clearing desired state.
-- Close SSE responses before HTTP shutdown drainage, without interrupting final MQTT publications.
-- Recover a registered device's leftover BlueZ connection after unexpected process termination.
-- Serialise discovery through initial connection/read and expose safe recovery failure stages.
-
-- Preserve MQTT shutdown cancellation on Python 3.11 and bound CI job duration.
-
-Target recovery and shutdown acceptance passed. CI passed on Python 3.11, 3.12 and 3.13.
-Automatic process supervision remains v0.6.0; the minimum 16-hour soak remains v1.0.0.
-
-## [0.4.0] - 2026-09-05
-
-### Added
-
-- Canonical version-one telemetry events with bounded in-memory fan-out and history.
-- Authenticated SSE stream with event identifiers and idle heartbeats.
-- Configurable MQTT publisher, QoS 1 topic mapping and retained service Last Will.
-- Continuous connected-device sampling through the shared physical/simulated adapter path.
-- Configurable stale-reading transitions reflected in REST, SSE and MQTT availability.
-
-### Fixed during Raspberry Pi validation
-
-- Preserve internal device identifiers and observation timestamps when constructing events.
-- Use the current observation time for live simulator samples, including delayed connections.
-
-### Validated
-
-- Hardware-independent MQTT topic, payload, retain and Last Will tests using an asynchronous fake.
-- Event fan-out, SSE framing, stale transitions and recovery-path tests.
-- Live Raspberry Pi simulator SSE, authenticated MQTT temperatures and retained service state,
-  stale probe availability, absence of retained temperatures, and broker Last Will after forced exit.
-- Final Raspberry Pi quality gate: 71 tests, 93.26 per cent coverage, Ruff and strict mypy.
-
-## [0.3.0] - 2026-09-04
-
-### Added
-
-- Versioned FastAPI administrative resources and generated OpenAPI.
-- Persistent asynchronous scan and connection operation metadata.
-- SQLite persistence for registered devices, desired state and configuration overrides.
-- Layered typed configuration with whole-update validation and ETag concurrency.
-- Bearer-token authentication, salted scrypt hashing and one-time token rotation responses.
-- Write-only MQTT password resource with redacted validation errors.
-
-### Validated
-
-- Simulator-backed API on the target Raspberry Pi: health, asynchronous discovery, device
-  registration and connection, four probe readings, and battery state.
-- Raspberry Pi quality gate with 58 tests, 93.28 per cent coverage, Ruff and strict mypy.
-
-## [0.2.0] - 2026-09-04
-
-### Added
-
-- Production Weber iGrill V202 adapter behind a shared asynchronous device boundary.
-- Scheduled continuous-discovery supervisor with separate missing and connected cadences.
-- Explicit desired and observed connection state machine with deterministic backoff tests.
-- Four-channel probe presence, availability, timestamps, sequences and source models.
-- Deterministic one-to-four-probe simulator with temperature patterns and injected fault states.
-- Sanitised physical BLE fixture and a privacy-safe production-adapter validation command.
-
-### Validated
-
-- Production adapter on Raspberry Pi OS with two attached physical probes exactly matching the
-  V202 display at 19°C and 21°C, two unattached channels reported absent, and battery at 60 per
-  cent.
-
-## [0.1.0] - 2026-09-04
-
-### Added
-
-- Initial v0.1.0 repository scaffold and quality workflow.
-- Focused Bleak-based V202 discovery, authentication, probe and battery proof.
-- Protocol decoding tests, documentation structure, licence review and provenance record.
-- Explicitly bounded Linux connection, GATT service resolution and disconnection in the proof.
-- V202 temperature-unit payload handling based on its first byte, retaining trailing bytes as evidence.
-- Sanitised per-probe payload diagnostics when no inserted probe can be decoded.
-- Three-byte V202 probe framing, decoding the leading 16-bit value and preserving its status byte.
-- Raw V202 Celsius decoding based on physical display comparison, without guessing from extended unit metadata.
-
-### Validated
-
-- Physical V202 discovery, pairing, zero-challenge loopback authentication, 20.0°C probe decoding
-  against the device display, 60 per cent battery reading and private-address-free output.
+Clean-Pi acceptance is pending: no spare target is currently available.
+The complete physical suite and minimum 16-hour soak remain v1.0.0 requirements.

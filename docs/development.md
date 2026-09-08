@@ -1,7 +1,7 @@
 # Development
 
 Use an isolated Python 3.11, 3.12 or 3.13 virtual environment. CI runs on all three
-versions. The current released baseline is v0.6.0; the active audit plan is v0.9.0.
+versions. The current candidate is v0.9.0rc1; the active audit plan is v0.9.0.
 
 ## Setup and checks
 
@@ -38,5 +38,5 @@ probe presence, battery percentage, stale snapshots and connection availability 
 sleeps. Connection backoff accepts an injected random source so boundary values are deterministic.
 
 The fixture under `tests/fixtures/v202/` contains only protocol payloads and manual display values
-from the accepted v0.1.0 run. It must never contain a Bluetooth address or private network data.
+from directly observed protocol evidence. It must never contain a Bluetooth address or private network data.
 The manual `pitblu-v202-check` command exercises the production adapter rather than the simulator.

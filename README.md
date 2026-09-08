@@ -14,15 +14,11 @@ SSE and optional MQTT. There is no built-in web dashboard or cook-history databa
 
 ## Release status
 
-The new application identity is **pitblu-core**, currently an unreleased
-v0.9.0rc1 candidate. Documentation uses this identity throughout. Existing release
-archives and the running Pi predate the rename; the new commands and paths do not
-apply to them until [migration](docs/rename-migration.md) is verified.
-
-**Current released version: v0.6.0.** The v0.9.0 release audit is in progress, not
-released. Full physical acceptance and the minimum 16-hour soak remain v1.0.0 gates.
-Two physical probes and battery readings have been demonstrated on the target Pi;
-do not interpret this as completed overnight reliability or four-inserted-probe testing.
+**Current installed candidate: v0.9.0rc1.** Migration, authentication, physical
+telemetry, MQTT delivery and reboot recovery have passed on the operator's Pi.
+This is not the final v0.9.0 release. Clean-Pi acceptance remains pending because
+no spare target is available; the full physical suite and minimum 16-hour soak
+remain mandatory v1.0.0 gates.
 
 ## Start here
 
@@ -61,8 +57,7 @@ private network configuration and database backups out of GitHub and support log
 ## Project records and licence
 
 [CHANGELOG.md](CHANGELOG.md) records releases. [Physical acceptance](docs/physical-acceptance.md)
-distinguishes completed checks from outstanding gates. Historical evidence is
-labelled separately and is not an installation guide.
+distinguishes completed checks from outstanding gates. Active documentation covers v0.9.0 onward; earlier records remain in Git history.
 
 Original code is under the [MIT Licence](LICENSE). See [third-party notices](THIRD_PARTY_NOTICES.md)
 and [provenance](docs/provenance.md). The v0.9.0 licence audit is not yet complete.

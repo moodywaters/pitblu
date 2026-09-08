@@ -1,8 +1,9 @@
 # Moving an existing installation to pitblu-core
 
-Status: migration procedure planning, not physically accepted. Do not run the new
-installer as an upgrade over a deployment using a different application identity.
-The running installation has not been changed by the source/repository rename.
+Status: candidate migration, authentication, physical MQTT delivery and reboot
+recovery passed on 8 September 2026. The operator's running service is pitblu-core.
+The checklist below is guidance for another deployment, not outstanding commands
+for that already migrated Pi. Never run an ordinary upgrade across different identities.
 
 ## What changes
 

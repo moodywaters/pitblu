@@ -3,7 +3,7 @@
 The [frontend integration guide](frontend-integration.md) lists every setting and
 explains configuration-editor workflows and saved-versus-running behaviour.
 
-Released v0.6.0 exposes typed application settings through REST. Precedence is:
+The v0.9.0rc1 candidate exposes typed application settings through REST. Precedence is:
 
 1. package default;
 2. optional YAML startup file;
@@ -23,6 +23,7 @@ it never generates an initial token in service logs. See [installation](installa
 
 - `server`: bind address, port and explicit CORS origins;
 - `auth`: disabled or bearer-token mode;
+- `security`: authentication/mutation admission, body size and simultaneous SSE limits;
 - `bluetooth`: scan, connection, initialisation and read timings;
 - `polling`: probe, battery, stale, degraded, reconnect, heartbeat and stable timings;
 - `mqtt`: enabled state, broker host and port, TLS, username, base topic and fixed QoS 1;
@@ -49,9 +50,9 @@ rotate an administrator token while still on the safe loopback connection. A con
 cannot enable token mode without a stored token hash.
 
 `PITBLU_DATABASE_PATH` is a deployment-level startup override rather than an application setting.
-The development default is `pitblu-core.sqlite3` in the working directory. The v0.6.0 native
+The development default is `pitblu-core.sqlite3` in the working directory. The native
 installer sets the production path under `/var/lib/pitblu-core/` with restricted permissions.
 
-The exposed battery interval does not yet drive separate acquisition scheduling.
+Physical battery acquisition follows its interval and preserves cached observation timestamps.
 Saved settings can differ from workers' startup values until restart. See the
 frontend guide for metadata limitations and saved-versus-running behaviour.

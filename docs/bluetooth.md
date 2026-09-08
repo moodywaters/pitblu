@@ -1,7 +1,7 @@
 # Bluetooth protocol notes
 
-Released v0.6.0 protocol and adapter behaviour. Dated supporting evidence is kept
-in [historical acceptance](history/acceptance-evidence.md).
+Current v0.9.0rc1 protocol and adapter behaviour. Retained protocol evidence and
+third-party attribution are documented in [provenance](provenance.md).
 
 ## Confirmed protocol and remaining uncertainty
 

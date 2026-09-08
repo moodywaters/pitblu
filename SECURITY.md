@@ -2,7 +2,7 @@
 
 ## Supported deployment
 
-The released baseline is v0.6.0. v0.9.0rc1 is an unreleased audit candidate, not
+The current candidate is v0.9.0rc1. v0.9.0rc1 is an unreleased audit candidate, not
 approved for unattended cooking. The gateway is for loopback or an explicitly
 trusted LAN only. Do not expose its HTTP port or MQTT broker directly to the
 internet. There is no built-in HTTPS, end-user account system or safety alarm.

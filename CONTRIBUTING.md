@@ -5,7 +5,7 @@ Code, tests, documentation and provenance must change together. Run all commands
 [the development guide](docs/development.md) before submitting a change.
 
 Follow the [documentation policy](docs/README.md). Keep current guides aligned with
-the released contract, separate historical evidence, and update both the frontend
+the current candidate contract, retain relevant provenance, and update both the frontend
 handoff and plain-English guides when user-visible behaviour changes.
 
 Do not add secrets, private Bluetooth addresses, LAN addresses, local configuration, Docker files,

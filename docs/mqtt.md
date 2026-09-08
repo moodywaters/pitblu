@@ -4,7 +4,7 @@ See the [frontend integration guide](frontend-integration.md) for every payload 
 SSE differences and subscriber reconciliation rules. In particular, service
 availability reuses sequence values and must not use device-telemetry deduplication.
 
-Released v0.6.0 publishes telemetry to MQTT when `mqtt.enabled` is true. MQTT is a read-only data
+The v0.9.0rc1 candidate publishes telemetry to MQTT when `mqtt.enabled` is true. MQTT is a read-only data
 plane: the service does not subscribe to or accept administrative commands. The default broker is
 local, but host, port, TLS, username and base topic are configurable. The password is managed only
 through the write-only secret API.

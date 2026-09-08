@@ -1,7 +1,7 @@
 # v0.9.0 security and correctness review
 
 Review date: 8 September 2026. Scope: source review and automated regression tests
-for the native gateway, against the v0.6.0 baseline and v0.9.0rc1 changes. This is an
+for the native gateway, against the v0.9.0rc1 implementation. This is an
 engineering review, not independent penetration testing or a security certification.
 No live Pi service was modified during the local review.
 

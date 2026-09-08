@@ -44,14 +44,14 @@ and `000a000002` for the characteristic previously described as a one-byte unit 
 were observed directly and were not copied from third-party source. The acceptance record contains
 no Bluetooth address or personal network configuration.
 
-Version 0.2.0 records those bytes in `tests/fixtures/v202/physical-proof.json` and replays them
+The fixture records those bytes in `pitblu-core/tests/fixtures/v202/physical-proof.json` and replays them
 through the clean-room protocol decoder. The production adapter, state machine, discovery
 supervisor and simulator are original project code. No additional external source or dependency
 was introduced for this milestone.
 
-## v0.5.0 resilience provenance
+## Resilience provenance
 
-Version 0.5.0 introduces no new third-party dependency or copied/adapted code. Recovery, lifecycle,
+The resilience implementation contains no copied/adapted third-party code. Recovery, lifecycle,
 diagnostics and persistence changes use the existing dependency set and Python standard library.
 
 The leftover-connection recovery helper invokes the existing BlueZ `bluetoothctl` executable
@@ -64,7 +64,7 @@ could not restore application readings. BlueZ remains an operating-system prereq
 `elupus/togrill-bluetooth` was not researched or used because it targets ToGrill-branded hardware,
 not the Weber iGrill protocol.
 
-## v0.6.0 native deployment
+## Native deployment
 
 The deployment scripts, offline SQLite backup/token operations and unit file are original project
 code. No third-party source was copied or adapted and no Python dependency was added. They invoke

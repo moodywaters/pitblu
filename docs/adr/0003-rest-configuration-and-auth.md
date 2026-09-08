@@ -1,7 +1,7 @@
 # ADR 0003: Separate REST transport from persistent administration
 
 - Status: accepted
-- Date: 4 September 2026
+- Applicability: current gateway architecture
 
 ## Decision
 
@@ -21,5 +21,5 @@ operation metadata and desired device state without creating a cook-history data
 updates cannot partially apply or silently overwrite a concurrent change. Secret-bearing request
 validation cannot echo submitted values.
 
-The v0.5.0 resilience controller will add per-device operation serialisation, recovery and bounded
-operational events. The v0.6.0 installer will provision database permissions and the initial token.
+The resilience controller serialises operations and coordinates recovery and bounded
+events. The native installer provisions database permissions and the initial token.

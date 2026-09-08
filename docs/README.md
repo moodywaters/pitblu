@@ -2,10 +2,9 @@
 
 ## Version and scope
 
-Current user and integration guides describe **released v0.6.0**. The v0.9.0 audit
-is in development and v1.0.0 physical acceptance, including the minimum 16-hour soak,
-is pending. Newer documentation on a development branch does not imply a newer
-runtime has been released or installed.
+Current guides describe **v0.9.0rc1**, the installed candidate, not a final release.
+Clean-Pi acceptance is pending because no spare target is available. The v1.0.0
+physical suite and minimum 16-hour soak are also pending.
 
 ## For cooks
 
@@ -26,15 +25,14 @@ runtime has been released or installed.
 - [Architecture](architecture.md), [Bluetooth protocol](bluetooth.md)
 - [Development](development.md), [contributing](../CONTRIBUTING.md)
 
-## Release assurance and historical records
+## Release assurance
 
 - [Current acceptance checklist](physical-acceptance.md)
 - [Security policy](../SECURITY.md) and [candidate security review](security-review.md)
 - [Dependency audit](dependency-audit.md) and [clean-Pi procedure](clean-pi-acceptance.md)
 - [Active v0.9.0 audit plan](v0.9.0-plan.md), not completed functionality
-- [Unreleased changes](unreleased.md), development-only differences from the installed release
-- [Changelog](../CHANGELOG.md), dated release history
-- [Historical acceptance evidence](history/acceptance-evidence.md), not a runbook
+- [Candidate status](release-status.md), validation and publication boundaries
+- [Changelog](../CHANGELOG.md), v0.9.0 onward
 - [Provenance](provenance.md), [third-party notices](../THIRD_PARTY_NOTICES.md), [licence](../LICENSE)
 - Decisions: [hardware-first](adr/0001-incremental-hardware-first.md),
   [adapter boundary](adr/0002-device-adapter-boundary.md),
@@ -47,8 +45,8 @@ runtime has been released or installed.
 
 Maintain one current installation path and integration contract. Remove superseded
 plans and obsolete command sequences from active documentation; Git history retains
-them. Preserve changelogs, licence/provenance, significant decisions and useful dated
-test evidence with explicit historical labels.
+them. Active documentation begins at v0.9.0. Preserve relevant licence/provenance
+and architectural rationale without obsolete milestone instructions.
 
 Update affected guides alongside code changes. Verify relative links and examples,
 state the release baseline, and distinguish implemented functionality, limitations

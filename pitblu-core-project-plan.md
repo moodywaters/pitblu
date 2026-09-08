@@ -1,12 +1,12 @@
 # Pitblu Admin Project Plan
 
-Status: authoritative target specification; implementation released through v0.6.0.
+Status: authoritative target specification; current implementation is the installed v0.9.0rc1 candidate.
 
 Documentation status reviewed: 7 September 2026.
 
 This specifies intended scope, not proof that every feature or release gate is
 complete. Use the [documentation index](docs/README.md) and
-[frontend guide](docs/frontend-integration.md) for current released behaviour.
+[frontend guide](docs/frontend-integration.md) for current candidate behaviour.
 The v0.9.0 audit and v1.0.0 final physical gates remain pending.
 
 ## Objective
@@ -335,17 +335,12 @@ Current research references:
 - Direct internet exposure
 - Docker and container deployment
 
-## Decisions still to complete
+## Implementation decisions
 
-- Exact REST API resources and response contracts
-- MQTT topic and payload contract, QoS and retention rules
-- Default polling, battery and stale-data intervals
-- API port, bind behaviour and authentication bootstrap
-- Whether SSE is mandatory in version one
-- Multi-iGrill behaviour in version one versus forward-compatible design only
-- Repository creation timing
-- Physical acceptance criteria
-- Final third-party licence review and project licence confirmation
+The [frontend integration guide](docs/frontend-integration.md) defines the implemented
+REST, MQTT and SSE contracts, defaults, authentication and current one-active-device
+limitation. Do not reopen those as undecided requirements. The remaining work is
+release assurance in [the audit plan](docs/v0.9.0-plan.md) and the physical gates below.
 
 ## Version 1.0 physical release gates
 
@@ -395,21 +390,17 @@ Current research references:
 
 These are mandatory gates for `v1.0.0`. Earlier `v0.x` milestone releases may be published while the gates are being completed.
 
-## Planned output
+## Continuation
 
-Once these decisions are complete, produce a detailed implementation prompt for ChatGPT Codex. The prompt must require incremental development, documentation in the same changes as code, tests, provenance tracking, native Raspberry Pi deployment and explicit validation against the physical Weber iGrill V202.
+Use [the AI handoff](pitblu-core-codex-prompt.md) for current deployment state and
+remaining work. It is maintained alongside implementation and acceptance evidence.
 
 ## Locked implementation milestones
 
-- `v0.1.0`: repository scaffold, licence review, CI, documentation structure, and a focused physical BLE spike that connects to the V202 and reads at least one probe plus battery
-- `v0.2.0`: production iGrill adapter, continuous discovery, four probes, connection state machine, simulator and recorded BLE fixtures
-- `v0.3.0`: REST resources, asynchronous operations, authentication and complete configuration API
-- `v0.4.0`: MQTT contract, Last Will, SSE stream and stale-data handling
-- `v0.5.0`: reconnection resilience, persistence, concurrency controls, diagnostics and graceful shutdown
-- `v0.6.0`: native installer, dedicated service account, filesystem permissions, `systemd`, upgrade and rollback
 - `v0.9.0`: clean-Pi installation test, security review, documentation audit and third-party provenance audit
 - `v1.0.0`: complete physical acceptance suite and successful at-least-16-hour soak test
 
-Codex must complete and verify each milestone before advancing. The physical BLE spike comes first so that the proprietary hardware interaction is proven before the surrounding service is built.
+Complete and verify each remaining milestone before advancing. Do not repeat
+completed scaffolding or mistake an existing-OS migration for clean-Pi acceptance.
 
 The architecture plan is complete. The master implementation prompt is maintained separately as `pitblu-core-codex-prompt.md`.
