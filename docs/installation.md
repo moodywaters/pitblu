@@ -18,7 +18,8 @@ against the same thermometer or terminate arbitrary Python processes.
 Install prerequisites on the Pi:
 
 ```bash
-sudo apt-get install python3-venv bluez
+sudo apt-get update
+sudo apt-get install python3-venv bluez util-linux passwd curl
 ```
 
 Unpack the reviewed repository source archive. From its root, run interactively:
@@ -48,8 +49,9 @@ curl --fail http://127.0.0.1:8080/health
 ```
 
 The service deliberately does not connect to unregistered devices. Register the iGrill through the
-authenticated API. The old test database is not imported automatically; it contains test overrides
-and credentials. Re-enter secrets through the write-only API over loopback. Token rotation is
+authenticated API using the [onboarding workflow](frontend-integration.md#4-discovery-registration-and-connection-workflow).
+Existing databases are not imported automatically. Configure secrets through the
+write-only API over loopback. Token rotation is
 authenticated through the existing API. A lost initial token requires a planned local recovery,
 not deleting the production database.
 
