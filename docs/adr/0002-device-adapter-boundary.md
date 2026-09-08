@@ -1,7 +1,7 @@
 # ADR 0002: Isolate devices behind one asynchronous boundary
 
 - Status: accepted
-- Date: 4 September 2026
+- Applicability: current gateway architecture
 
 ## Decision
 
@@ -15,10 +15,9 @@ discovery separate from both the adapter and state machine.
 
 ## Consequences
 
-Later control and telemetry layers can consume one typed interface and distinguish physical from
+Control and telemetry layers consume one typed interface and distinguish physical from
 simulated readings. Hardware-independent tests exercise the same models as production. Bluetooth
 addresses are not required in public models, logs or fixtures.
 
 The adapter completes transport connection and Weber authentication as one bounded operation. A
-future resilience controller will coordinate polling, stable-connection timing and automatic retry;
-that controller remains outside the v0.2.0 scope.
+resilience controller coordinates polling, stable-connection timing and automatic retry.

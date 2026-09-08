@@ -1,0 +1,46 @@
+[Unit]
+Description=Pitblu Admin Weber iGrill gateway
+Wants=network-online.target bluetooth.service
+After=network-online.target bluetooth.service
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=pitblu-core
+Group=pitblu-core
+SupplementaryGroups=bluetooth
+WorkingDirectory=/var/lib/pitblu-core
+Environment=PITBLU_DATABASE_PATH=/var/lib/pitblu-core/state.sqlite3
+Environment=PITBLU_CONFIG_FILE=/etc/pitblu-core/config.yaml
+Environment=PITBLU_MANAGED=true
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=-/etc/pitblu-core/environment
+ExecStart=/opt/pitblu-core/current/venv/bin/pitblu-api
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=45
+KillMode=control-group
+UMask=0077
+StateDirectory=pitblu-core
+StateDirectoryMode=0700
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictRealtime=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_BLUETOOTH
+CapabilityBoundingSet=
+AmbientCapabilities=
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

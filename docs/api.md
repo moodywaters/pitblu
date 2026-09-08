@@ -1,12 +1,18 @@
 # REST API
 
-Version 0.5.0 implements the administrative control plane and live telemetry stream. OpenAPI and interactive documentation
+For a complete client-development handoff, see the
+[frontend and AI integration guide](frontend-integration.md), including request and
+response shapes, workflows, browser constraints and current implementation caveats.
+
+The v0.9.0rc1 candidate provides the administrative control plane and live telemetry stream. OpenAPI and interactive documentation
 are generated at `/openapi.json` and `/docs`. The package default listens only on loopback.
 
 ## Authentication and errors
 
 `GET /health` is always unauthenticated and returns only `{"status":"ok"}`. When `auth.mode` is
-`token`, `/ready` and every `/api/v1/*` resource require `Authorization: Bearer <token>`.
+`token`, `/ready`, `/openapi.json`, `/docs`, `/redoc` and every `/api/v1/*`
+resource require `Authorization: Bearer <token>`. Resource limits may return 429,
+413 or 408; see the frontend guide for limits and retry behaviour.
 
 Errors use one safe envelope with `code`, `message`, `correlationId` and optional redacted details.
 The response repeats the correlation identifier in `X-Correlation-ID`. Request bodies and secret
@@ -47,11 +53,9 @@ requests are idempotent in their resulting state. An identical pending control r
 operation. A conflicting pending control returns HTTP 409. Scan, connect, read and disconnect calls
 share an adapter lock. Another registered device cannot acquire an already-owned adapter.
 
-New registrations store protected hardware identity separately from public fields. Legacy v0.4.0
-registrations lack that identity: disconnect, perform a fresh scan, then explicitly select the
-returned `discoveryId` with `PATCH /api/v1/devices/{deviceId}` before reconnecting. Automatic recovery
-never guesses identity from an advertised name. Registered desired state and automatic-reconnection
-preference determine startup recovery. The current service restores one adapter owner at a time.
+Registrations store protected hardware identity separately from public fields.
+Automatic recovery never guesses identity from an advertised name. Registered
+desired state and automatic-reconnection preference determine startup recovery. The current service restores one adapter owner at a time.
 
 `/health` is only liveness. With MQTT enabled, `/ready` returns 503 until the publisher connects.
 Diagnostics contain safe codes rather than exception messages, host settings or credentials.

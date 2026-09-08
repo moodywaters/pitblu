@@ -1,18 +1,21 @@
 # Configuration
 
-Version 0.4.0 exposes every planned application setting through REST. Precedence is:
+The [frontend integration guide](frontend-integration.md) lists every setting and
+explains configuration-editor workflows and saved-versus-running behaviour.
+
+The v0.9.0rc1 candidate exposes typed application settings through REST. Precedence is:
 
 1. package default;
 2. optional YAML startup file;
-3. `PITBOSS_` environment values using `__` between path components;
+3. `PITBLU_` environment values using `__` between path components;
 4. transactional persisted override.
 
-For example, `PITBOSS_BLUETOOTH__SCAN_DURATION=7` sets `bluetooth.scan_duration`. YAML and
+For example, `PITBLU_BLUETOOTH__SCAN_DURATION=7` sets `bluetooth.scan_duration`. YAML and
 environment input use safe YAML scalar parsing. Unknown settings and invalid combinations stop
 configuration loading.
 
-For native deployment, `PITBOSS_CONFIG_FILE` selects the YAML file and must name an existing file.
-`PITBOSS_DATABASE_PATH` and `PITBOSS_MANAGED` are also deployment controls, excluded from normal
+For native deployment, `PITBLU_CONFIG_FILE` selects the YAML file and must name an existing file.
+`PITBLU_DATABASE_PATH` and `PITBLU_MANAGED` are also deployment controls, excluded from normal
 setting parsing. Managed mode requires token authentication and a previously bootstrapped hash;
 it never generates an initial token in service logs. See [installation](installation.md).
 
@@ -20,6 +23,7 @@ it never generates an initial token in service logs. See [installation](installa
 
 - `server`: bind address, port and explicit CORS origins;
 - `auth`: disabled or bearer-token mode;
+- `security`: authentication/mutation admission, body size and simultaneous SSE limits;
 - `bluetooth`: scan, connection, initialisation and read timings;
 - `polling`: probe, battery, stale, degraded, reconnect, heartbeat and stable timings;
 - `mqtt`: enabled state, broker host and port, TLS, username, base topic and fixed QoS 1;
@@ -45,6 +49,10 @@ Authentication may be disabled only with the loopback bind. Before changing `aut
 rotate an administrator token while still on the safe loopback connection. A configuration update
 cannot enable token mode without a stored token hash.
 
-`PITBOSS_DATABASE_PATH` is a deployment-level startup override rather than an application setting.
-The development default is `pitboss-admin.sqlite3` in the working directory. The v0.6.0 native
-installer will set the production path under `/var/lib/pitboss-admin/` with restricted permissions.
+`PITBLU_DATABASE_PATH` is a deployment-level startup override rather than an application setting.
+The development default is `pitblu-core.sqlite3` in the working directory. The native
+installer sets the production path under `/var/lib/pitblu-core/` with restricted permissions.
+
+Physical battery acquisition follows its interval and preserves cached observation timestamps.
+Saved settings can differ from workers' startup values until restart. See the
+frontend guide for metadata limitations and saved-versus-running behaviour.

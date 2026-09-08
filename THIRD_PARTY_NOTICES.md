@@ -2,6 +2,10 @@
 
 No third-party source code has been copied or substantially adapted into this repository.
 
+The expanded [dependency audit](docs/dependency-audit.md) records transitive and
+build/development licences, distribution obligations and platform-specific evidence.
+Do not interpret the original-code MIT licence as relicensing those dependencies.
+
 Runtime dependencies are aiomqtt 2.5.1 under the BSD 3-Clause Licence, Bleak 3.0.2 under the MIT
 Licence, FastAPI 0.141.1 under the MIT Licence, PyYAML 6.0.3 under the MIT Licence, and Uvicorn
 0.52.4 under the BSD 3-Clause Licence. aiomqtt carries copyright 2020 SBT Instruments. Its Paho

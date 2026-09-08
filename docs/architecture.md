@@ -1,7 +1,7 @@
 # Architecture
 
 The authoritative target is a native, headless Raspberry Pi gateway with separate control and
-telemetry planes. Version 0.4.0 implements both planes over the shared device boundary.
+telemetry planes. The v0.9.0rc1 candidate implements both planes over the shared device boundary.
 
 `DeviceAdapter` is the only device-facing boundary. The production and simulated V202 adapters
 both implement asynchronous discovery, connection, disconnection and snapshot reads. Their shared
@@ -15,8 +15,8 @@ adapter is connected. This is continuous supervision, not uninterrupted radio sc
 Desired connection state is separate from the observed state. The observed states are discovered,
 connecting, initialising, connected, polling, degraded, backoff, disconnected and unsupported.
 Transitions are validated and repeated connect or disconnect requests are idempotent. The backoff
-policy models the planned 2, 4, 8, 15, 30 and 60-second schedule with plus or minus 20 per cent
-jitter, while the future resilience controller remains v0.5.0 work.
+policy uses the 2, 4, 8, 15, 30 and 60-second schedule with plus or minus 20 per cent
+jitter. Runtime recovery coordinates retries and stable-connection backoff reset.
 
 FastAPI owns HTTP transport and generated OpenAPI. An administration service coordinates adapters
 without coupling them to HTTP. SQLite contains registered devices, desired state, configuration
@@ -43,9 +43,11 @@ use QoS 1. Availability, connection and battery state are retained; temperature 
 availability is protected by a retained Last Will. MQTT is disabled by default and has no command
 subscription path.
 
-The v0.5.0 runtime serialises adapter calls and reserves one adapter owner. Registered desired
+The runtime serialises adapter calls and reserves one adapter owner. Registered desired
 connections recover with jittered backoff and protected identity matching. Read failures degrade
 state before sustained failure triggers reconnect. Startup marks interrupted operations and
 restores eligible registrations. Operational events, but not telemetry history, are bounded in
 SQLite. MQTT independently retries and exposes safe status. Shutdown cancels workers, preserves
-desired state and flushes offline retained publications. Native systemd deployment remains v0.6.0.
+desired state and flushes offline retained publications. Native systemd deployment provides
+dedicated-account execution and automatic process restart. See [installation](installation.md)
+and the [integration guide](frontend-integration.md) for current constraints.
