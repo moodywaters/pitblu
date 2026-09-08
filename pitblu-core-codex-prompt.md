@@ -70,9 +70,10 @@ No spare microSD card or second Pi is currently available for clean-Pi testing.
 ## Remaining gates
 
 Finish the v0.9.0 documentation/security/provenance audit and clean-Pi acceptance.
-Keep PR 8 in draft until required evidence is recorded. Never relabel migration
-on an existing OS as a clean installation. Do not merge or tag merely to update
-the default branch documentation.
+The owner authorised merging PR 8 into main on 8 September 2026. This authorises
+source integration, not a final release or waiver of physical acceptance. Never
+relabel migration on an existing OS as a clean installation. Do not tag a final
+release until its required evidence is recorded.
 
 Before v1.0.0, run the complete physical acceptance suite and at least 16 hours
 of monitored physical operation, recording freshness, MQTT receipt, gaps and
