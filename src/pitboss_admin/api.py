@@ -189,7 +189,8 @@ def create_app(
             CORSMiddleware,
             allow_origins=config.config.server.cors_origins,
             allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE"],
-            allow_headers=["Authorization", "Content-Type", "If-Match"],
+            allow_headers=["Authorization", "Content-Type", "If-Match", "X-Correlation-ID"],
+            expose_headers=["ETag", "X-Correlation-ID"],
         )
 
     @app.middleware("http")
@@ -326,7 +327,11 @@ def create_app(
         device_id: str, body: PatchDeviceRequest, _auth: protected
     ) -> dict[str, object]:
         return service.patch_device(
-            device_id, body.friendly_name, body.automatic_reconnection, body.discovery_id
+            device_id,
+            body.friendly_name,
+            body.automatic_reconnection,
+            body.discovery_id,
+            update_friendly_name="friendly_name" in body.model_fields_set,
         )
 
     @app.delete("/api/v1/devices/{device_id}", status_code=status.HTTP_204_NO_CONTENT)

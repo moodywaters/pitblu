@@ -10,6 +10,14 @@ development history, not current installation commands. Old milestone plan files
 have been removed; consult Git history only when historical context is needed.
 The user's later instruction permits small related batches of Pi commands.
 
+Development update, 8 September 2026: partial device PATCH now distinguishes an
+omitted friendlyName from explicit null, and configured CORS exposes ETag and
+X-Correlation-ID while allowing the correlation request header. Regression tests
+reproduced both old failures and pass with the fixes. These changes are unreleased
+and not installed on the Pi. See `docs/unreleased.md`; current user guides retain
+the released v0.6.0 baseline until a validated upgrade. Continue the remaining
+audit, including authentication/resource limits, licence review and clean-Pi tests.
+
 Documentation cleanup, 8 September 2026: the six completed milestone plans are
 removed from the working tree. Any reference to them in the dated records below
 is historical and must not be followed as a current task. Dated acceptance evidence

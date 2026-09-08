@@ -4,6 +4,9 @@ All notable changes will be documented here.
 
 ## [Unreleased]
 
+- Partial device updates preserve an omitted friendly name; explicit null still clears it.
+- Configured CORS exposes ETag/correlation response headers and allows correlation request headers.
+
 - Comprehensive frontend/AI integration contract and plain-English BBQ overview/quick start.
 - Current-release documentation index, corrected runtime descriptions and troubleshooting.
 - Superseded v0.1.0 to v0.6.0 plans removed; dated acceptance evidence separated

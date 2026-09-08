@@ -30,6 +30,7 @@ runtime has been released or installed.
 
 - [Current acceptance checklist](physical-acceptance.md)
 - [Active v0.9.0 audit plan](v0.9.0-plan.md), not completed functionality
+- [Unreleased changes](unreleased.md), development-only differences from the installed release
 - [Changelog](../CHANGELOG.md), dated release history
 - [Historical acceptance evidence](history/acceptance-evidence.md), not a runbook
 - [Provenance](provenance.md), [third-party notices](../THIRD_PARTY_NOTICES.md), [licence](../LICENSE)

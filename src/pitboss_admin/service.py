@@ -280,8 +280,12 @@ class AdministrationService:
         friendly_name: str | None,
         automatic_reconnection: bool | None,
         discovery_id: str | None = None,
+        *,
+        update_friendly_name: bool = True,
     ) -> dict[str, object]:
-        values: dict[str, object] = {"friendly_name": friendly_name}
+        values: dict[str, object] = {}
+        if update_friendly_name:
+            values["friendly_name"] = friendly_name
         if discovery_id is not None:
             if self._owner == device_id:
                 raise StateConflictError("disconnect before selecting a device identity")
@@ -296,7 +300,7 @@ class AdministrationService:
             values.update({"identity": candidate._identity, "discovery_id": discovery_id})
         if automatic_reconnection is not None:
             values["auto_reconnect"] = automatic_reconnection
-        if not self.store.update_device(device_id, values):
+        if values and not self.store.update_device(device_id, values):
             raise ResourceNotFoundError("device not found")
         return self.device(device_id)
 

@@ -5,6 +5,10 @@ promise that every item in the project plan already exists. Recheck it against t
 installed version before building a client. The v0.9.0 audit and v1.0.0 physical
 acceptance, including the minimum 16-hour soak, are separate release gates.
 
+Development branch only: [unreleased changes](unreleased.md) document fixes to
+partial device updates and browser response headers. The v0.6.0 caveats below still
+apply to the released Pi installation until an explicitly validated upgrade.
+
 ## 1. Purpose and architecture
 
 `pitboss-admin` is a native Raspberry Pi hardware gateway. It discovers and manages

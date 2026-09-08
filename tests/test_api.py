@@ -184,3 +184,84 @@ def test_openapi_contains_the_v03_contract() -> None:
     }
     assert expected <= set(paths)
     store.close()
+
+
+def test_partial_device_patch_preserves_omitted_name_and_allows_explicit_clear() -> None:
+    api, store = client()
+    with api:
+        scan = api.post("/api/v1/scans", json={}).json()
+        completed_operation(api, scan["operationId"])
+        discovered = api.get(f"/api/v1/scans/{scan['operationId']}").json()["devices"][0]
+        device = api.post(
+            "/api/v1/devices",
+            json={"discoveryId": discovered["discoveryId"], "friendlyName": "Garden"},
+        ).json()
+        path = f"/api/v1/devices/{device['deviceId']}"
+        for patch in (
+            {},
+            {"automaticReconnection": False},
+            {"discoveryId": discovered["discoveryId"]},
+        ):
+            response = api.patch(path, json=patch)
+            assert response.status_code == 200
+            assert response.json()["friendlyName"] == "Garden"
+        assert api.get(path).json()["automaticReconnection"] is False
+        assert api.patch(path, json={"friendlyName": None}).json()["friendlyName"] is None
+        assert api.patch(path, json={"friendlyName": "Patio"}).json()["friendlyName"] == "Patio"
+        assert api.get(path).json()["friendlyName"] == "Patio"
+        assert api.patch("/api/v1/devices/missing", json={}).status_code == 404
+    store.close()
+
+
+def test_cors_allows_config_version_headers_without_bypassing_authentication() -> None:
+    store = AdministrativeStore()
+    origin = "https://frontend.example"
+    configuration = ConfigurationManager(
+        store,
+        environ={
+            "PITBOSS_AUTH__MODE": "token",
+            "PITBOSS_SERVER__CORS_ORIGINS": '["https://frontend.example"]',
+        },
+    )
+    app = create_app(store=store, configuration=configuration)
+    with TestClient(app) as api:
+        preflight = api.options(
+            "/api/v1/config",
+            headers={
+                "Origin": origin,
+                "Access-Control-Request-Method": "PATCH",
+                "Access-Control-Request-Headers": (
+                    "authorization,content-type,if-match,x-correlation-id"
+                ),
+            },
+        )
+        assert preflight.status_code == 200
+        assert preflight.headers["access-control-allow-origin"] == origin
+        assert api.get("/api/v1/config", headers={"Origin": origin}).status_code == 401
+        headers = {"Origin": origin, "Authorization": "Bearer " + app.state.bootstrap_token}
+        response = api.get("/api/v1/config", headers=headers)
+        assert response.status_code == 200
+        exposed = {
+            item.strip().lower()
+            for item in response.headers["access-control-expose-headers"].split(",")
+        }
+        assert {"etag", "x-correlation-id"} <= exposed
+        updated = api.patch(
+            "/api/v1/config",
+            headers=headers
+            | {"If-Match": response.headers["etag"], "X-Correlation-ID": "config-editor-test"},
+            json={"values": {"polling.probe_interval": 6}},
+        )
+        assert updated.status_code == 200
+        assert updated.headers["etag"] != response.headers["etag"]
+        assert updated.headers["x-correlation-id"] == "config-editor-test"
+        denied = api.options(
+            "/api/v1/config",
+            headers={
+                "Origin": "https://untrusted.example",
+                "Access-Control-Request-Method": "PATCH",
+            },
+        )
+        assert denied.status_code == 400
+        assert "access-control-allow-origin" not in denied.headers
+    store.close()
