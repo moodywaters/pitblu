@@ -1,8 +1,10 @@
 # Clean-Pi acceptance: v0.9.0 candidate
 
-Status: pending operator-provided clean target. Do not erase or reimage the working
-installation. Use an explicitly agreed spare microSD card or separate Pi with a
-fresh supported OS. Existing-Pi upgrade/rollback tests are not clean-install evidence.
+Status: pending operator-provided clean target. Prefer an explicitly agreed spare
+microSD card or separate Pi with a fresh supported OS. Reimaging the working card
+is an alternative only after the operator verifies a full off-device image and
+protected backups and explicitly proceeds. This document does not authorise erasure.
+Existing-Pi upgrade/rollback tests are not clean-install evidence.
 
 ## Prepare and preserve
 

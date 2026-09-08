@@ -65,7 +65,9 @@ Do not hard-code personal secrets or infer current PIDs.
 
 The operator retains disabled predecessor files and protected rollback backups.
 Cleanup is deferred and is not a prerequisite for progression.
-No spare microSD card or second Pi is currently available for clean-Pi testing.
+The operator is considering imaging and reusing the existing card for clean-Pi
+testing. They will handle the backup. Do not format or shut down anything without
+their explicit instruction; source readiness checks do not prove image restorability.
 
 ## Remaining gates
 

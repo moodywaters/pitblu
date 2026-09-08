@@ -18,7 +18,8 @@ minimum 16-hour soak are **not complete**.
 
 These are operator-supplied results on the existing OS, not clean-Pi installation,
 four-inserted-probe acceptance, a comprehensive security audit or a 16-hour soak.
-No spare card or second Pi is currently available; clean-Pi testing remains pending.
+Clean-Pi testing remains pending. Existing-card reimaging is an operator-controlled
+option only after a verified off-device backup; it has not been performed.
 
 ## v0.9.0 audit gates
 

@@ -15,7 +15,9 @@ def test_documentation_local_file_links_exist() -> None:
     ]
     for document in documents:
         content = document.read_text(encoding="utf-8")
-        for target in re.findall(r"\]\(([^)]+)\)", content):
+        targets = re.findall(r"\]\(([^)]+)\)", content)
+        targets += re.findall(r'<(?:img|a)\b[^>]*\b(?:src|href)="([^"]+)"', content)
+        for target in targets:
             target = target.strip().strip("<>")
             parsed = urlsplit(target)
             if parsed.scheme or target.startswith(("#", "//")):
