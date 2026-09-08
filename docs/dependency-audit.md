@@ -41,7 +41,7 @@ inventory artifact, not this local snapshot, when reproducing that environment.
 | Isolated build root | hatchling 1.32.0 MIT; its resolved transitive notices are included in the CI build-tool inventory |
 
 The local build environment resolved tomlkit 0.15.1 (MIT) and trove-classifiers
-2026.6.1.19 in addition to packaging/pathspec/pluggy. Check the inventory's
+2026.6.1.19 (Apache-2.0) in addition to packaging/pathspec/pluggy. Check the inventory's
 classifiers/notice files when an SPDX expression is absent. GitHub Actions are
 pinned to exact reviewed tag-target commits; Dependabot can propose updates.
 
@@ -66,6 +66,22 @@ maintainer-published version pages for [Bleak](https://pypi.org/project/bleak/3.
 [dbus-fast](https://pypi.org/project/dbus-fast/5.0.22/),
 [typing-extensions](https://pypi.org/project/typing-extensions/4.16.0/) and
 [Hatchling](https://pypi.org/project/hatchling/1.32.0/).
+
+## Publication boundary
+
+## Linux CI findings
+
+Run 34214942968 passed software tests on Python 3.11/3.12/3.13 and produced all
+three dependency inventories. Linux resolved anyio 4.15.1 and ast-serialize 0.10.0
+(both MIT), plus dbus-fast 5.0.22 (MIT); other shared project versions matched the
+local inventory. The Python 3.12/3.13 scans had no known advisories. Python 3.11's
+preinstalled setuptools 79.0.1 triggered
+[GHSA-h35f-9h28-mq5c](https://github.com/pypa/setuptools/security/advisories/GHSA-h35f-9h28-mq5c),
+an exclusion issue when building source archives on Unicode-normalising filesystems.
+It is not a declared gateway runtime dependency. CI now explicitly installs
+setuptools 83.0.0, the scanner's reported fixed version, before building/testing,
+and reruns the scan rather than ignoring the finding. Final rerun evidence follows
+in the milestone plan. The gateway itself uses Hatchling, not setuptools, to build.
 
 ## Publication boundary
 
