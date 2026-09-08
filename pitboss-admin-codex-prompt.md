@@ -2,6 +2,14 @@
 
 ## Current documentation entry point
 
+8 September 2026 candidate work: v0.9.0rc1 adds request/body/SSE limits, protected
+schema/docs routes, safe startup failures, bounded token-hash jobs, physical battery
+cadence/timestamps, host Bluetooth/clock diagnostics and managed-file symlink guards.
+Documentation and tests accompany these changes. See `docs/unreleased.md`,
+`docs/security-review.md`, `docs/dependency-audit.md` and `docs/clean-pi-acceptance.md`.
+The installed Pi remains v0.6.0. Clean-Pi acceptance requires a spare card/target;
+do not overwrite the working installation or mark v0.9.0 complete without evidence.
+
 Released baseline: v0.6.0; v0.9.0 audit in progress; v1.0.0 physical suite and
 minimum 16-hour soak pending. Use [the documentation index](docs/README.md) for
 current guides and [the active audit plan](docs/v0.9.0-plan.md) for current work.

@@ -29,6 +29,8 @@ runtime has been released or installed.
 ## Release assurance and historical records
 
 - [Current acceptance checklist](physical-acceptance.md)
+- [Security policy](../SECURITY.md) and [candidate security review](security-review.md)
+- [Dependency audit](dependency-audit.md) and [clean-Pi procedure](clean-pi-acceptance.md)
 - [Active v0.9.0 audit plan](v0.9.0-plan.md), not completed functionality
 - [Unreleased changes](unreleased.md), development-only differences from the installed release
 - [Changelog](../CHANGELOG.md), dated release history

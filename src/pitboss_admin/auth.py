@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import re
 import secrets
 from dataclasses import dataclass
 
@@ -38,6 +39,8 @@ class AdministratorTokens:
         return self._replace()
 
     def verify(self, token: str) -> bool:
+        if re.fullmatch(r"[A-Za-z0-9_-]{43}", token) is None:
+            return False
         record = self._store.auth_record()
         if record is None:
             return False

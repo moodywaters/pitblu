@@ -9,6 +9,13 @@ Development branch only: [unreleased changes](unreleased.md) document fixes to
 partial device updates and browser response headers. The v0.6.0 caveats below still
 apply to the released Pi installation until an explicitly validated upgrade.
 
+Additional unreleased settings are `security.auth_requests_per_minute`,
+`security.mutations_per_minute`, `security.maximum_body_bytes` and
+`security.maximum_sse_clients`. These do not exist in the released v0.6.0 API.
+The development branch also protects `GET /openapi.json`, `GET /docs` and
+`GET /redoc` with the configured authentication policy; released v0.6.0 leaves
+these documentation routes public.
+
 ## 1. Purpose and architecture
 
 `pitboss-admin` is a native Raspberry Pi hardware gateway. It discovers and manages

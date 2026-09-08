@@ -111,6 +111,16 @@ def test_authentication_rotation_and_safe_errors() -> None:
     store.close()
 
 
+def test_documentation_routes_require_configured_authentication() -> None:
+    api, store = client(authentication=True)
+    token: str = cast(FastAPI, api.app).state.bootstrap_token
+    with api:
+        for path in ("/openapi.json", "/docs", "/redoc"):
+            assert api.get(path).status_code == 401
+            assert api.get(path, headers={"Authorization": "Bearer " + token}).status_code == 200
+    store.close()
+
+
 def test_configuration_concurrency_validation_and_secret_redaction() -> None:
     api, store = client()
     with api:

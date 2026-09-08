@@ -13,8 +13,11 @@ config=/etc/pitboss-admin
 state=/var/lib/pitboss-admin
 backups=/var/backups/pitboss-admin
 unit=/etc/systemd/system/pitboss-admin.service
-for directory in "$app" "$config" "$state" "$backups"; do
+for directory in "$app" "$app/releases" "$config" "$state" "$backups"; do
     [[ ! -L "$directory" ]] || fail "Refusing symlink directory: $directory"
+done
+for file in "$state/state.sqlite3" "$config/config.yaml" "$config/environment" "$unit"; do
+    [[ ! -L "$file" ]] || fail "Refusing symlink managed file: $file"
 done
 if [[ -e "$app/current" && ! -L "$app/current" ]]; then
     fail 'current must be a managed release symlink.'

@@ -1,4 +1,5 @@
 import asyncio
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 
 from pitboss_admin.events import EventBus, EventType
@@ -65,3 +66,20 @@ def test_stale_threshold_must_be_positive() -> None:
         assert "positive" in str(exc)
     else:
         raise AssertionError("invalid stale threshold was accepted")
+
+
+def test_cached_battery_is_not_republished_or_given_a_new_observation_time() -> None:
+    async def exercise() -> None:
+        bus = EventBus()
+        state = TelemetryState(bus)
+        first = replace(snapshot(), battery_observed_at=NOW)
+        await state.record("device", first)
+        second = replace(first, sequence=8, observed_at=NOW + timedelta(seconds=5))
+        await state.record("device", second)
+        assert len([event for event in bus.recent() if event.type == EventType.BATTERY]) == 1
+        assert state.battery("device")["observedAt"] == NOW.isoformat()  # type: ignore[index]
+        await state.mark_stale(NOW + timedelta(seconds=30))
+        assert state.battery("device")["percentage"] is None  # type: ignore[index]
+        await state.close()
+
+    asyncio.run(exercise())

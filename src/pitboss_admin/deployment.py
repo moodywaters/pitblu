@@ -90,6 +90,10 @@ def main() -> None:
         store = AdministrativeStore(args.database)
         try:
             startup_configuration(store, os.environ)
+        except Exception:
+            raise SystemExit(
+                "Managed startup configuration is invalid; no values are displayed."
+            ) from None
         finally:
             store.close()
         print("Managed startup configuration validated.")

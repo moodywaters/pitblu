@@ -4,6 +4,11 @@ All notable changes will be documented here.
 
 ## [Unreleased]
 
+- v0.9.0rc1 candidate: request/body/stream limits, protected documentation routes,
+  safe startup errors, bounded token hashing and defensive response headers.
+- Physical battery cadence with honest cached timestamps; read-only Bluetooth/clock diagnostics.
+- Deployment symlink guards, dependency inventories/scans and documented audit/clean-Pi gates.
+
 - Partial device updates preserve an omitted friendly name; explicit null still clears it.
 - Configured CORS exposes ETag/correlation response headers and allows correlation request headers.
 

@@ -5,6 +5,8 @@ from __future__ import annotations
 import asyncio
 import contextlib
 from collections.abc import Awaitable, Callable
+from datetime import datetime
+from time import monotonic
 from typing import Any, TypeVar
 from uuid import uuid4
 
@@ -54,10 +56,12 @@ class BleakIGrillV202Adapter:
         connect_timeout: float = 10.0,
         initialise_timeout: float = 15.0,
         read_timeout: float = 5.0,
+        battery_interval: float = 300.0,
+        clock: Callable[[], float] = monotonic,
         scanner: Any = BleakScanner,
         client_factory: Callable[..., Any] = BleakClient,
     ) -> None:
-        if min(connect_timeout, initialise_timeout, read_timeout) <= 0:
+        if min(connect_timeout, initialise_timeout, read_timeout, battery_interval) <= 0:
             raise ValueError("adapter timeouts must be positive")
         self._name_prefix = name_prefix
         self._connect_timeout = connect_timeout
@@ -68,6 +72,11 @@ class BleakIGrillV202Adapter:
         self._native_by_id: dict[str, object] = {}
         self._client: Any | None = None
         self._sequence = 0
+        self._battery_interval = battery_interval
+        self._clock = clock
+        self._battery_due = 0.0
+        self._battery_percent: int | None = None
+        self._battery_observed_at: datetime | None = None
 
     @property
     def source(self) -> TelemetrySource:
@@ -142,6 +151,9 @@ class BleakIGrillV202Adapter:
                     await asyncio.wait_for(client.disconnect(), timeout=5.0)
             raise
         self._client = client
+        self._battery_due = self._clock()
+        self._battery_percent = None
+        self._battery_observed_at = None
 
     async def disconnect(self) -> None:
         client, self._client = self._client, None
@@ -156,19 +168,20 @@ class BleakIGrillV202Adapter:
 
         self._sequence += 1
         observed_at = utc_now()
-        try:
-            battery_payload = bytes(
-                await _bounded(
-                    client.read_gatt_char(BATTERY_LEVEL_UUID),
-                    self._read_timeout,
-                    "battery read",
+        if self._battery_percent is None or self._clock() >= self._battery_due:
+            try:
+                battery_payload = bytes(
+                    await _bounded(
+                        client.read_gatt_char(BATTERY_LEVEL_UUID),
+                        self._read_timeout,
+                        "battery read",
+                    )
                 )
-            )
-            battery_percent = decode_battery_percent(battery_payload)
-            battery_available = True
-        except Exception:
-            battery_percent = None
-            battery_available = False
+                self._battery_percent = decode_battery_percent(battery_payload)
+            except Exception:
+                self._battery_percent = None
+            self._battery_observed_at = utc_now()
+            self._battery_due = self._clock() + self._battery_interval
 
         probes: list[ProbeReading] = []
         for number, characteristic in enumerate(PROBE_TEMPERATURE_UUIDS, start=1):
@@ -210,8 +223,9 @@ class BleakIGrillV202Adapter:
         return DeviceSnapshot(
             model="igrill-v202",
             probes=tuple(probes),
-            battery_percent=battery_percent,
-            battery_available=battery_available,
+            battery_percent=self._battery_percent,
+            battery_available=self._battery_percent is not None,
+            battery_observed_at=self._battery_observed_at,
             observed_at=observed_at,
             sequence=self._sequence,
             source=self.source,

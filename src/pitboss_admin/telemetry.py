@@ -75,17 +75,24 @@ class TelemetryState:
                 **common,
             )
         )
-        await self.events.publish(
-            TelemetryEvent(
-                type=EventType.BATTERY,
-                sequence=self._sequence(device_id, EventType.BATTERY, None, snapshot.sequence),
-                data={
-                    "available": snapshot.battery_available,
-                    "percentage": snapshot.battery_percent,
-                },
-                **common,
-            )
+        battery_time = snapshot.battery_observed_at or snapshot.observed_at
+        previous_battery_time = (
+            current.snapshot.battery_observed_at or current.snapshot.observed_at
+            if current
+            else None
         )
+        if current is None or current.stale or battery_time != previous_battery_time:
+            await self.events.publish(
+                TelemetryEvent(
+                    type=EventType.BATTERY,
+                    sequence=self._sequence(device_id, EventType.BATTERY, None, snapshot.sequence),
+                    data={
+                        "available": snapshot.battery_available,
+                        "percentage": snapshot.battery_percent,
+                    },
+                    **(common | {"observed_at": battery_time}),
+                )
+            )
         for probe in snapshot.probes:
             await self.events.publish(
                 TelemetryEvent(
@@ -255,7 +262,7 @@ class TelemetryState:
             "available": snapshot.battery_available and not current.stale,
             "fresh": not current.stale,
             "percentage": None if current.stale else snapshot.battery_percent,
-            "observedAt": snapshot.observed_at.isoformat(),
+            "observedAt": (snapshot.battery_observed_at or snapshot.observed_at).isoformat(),
             "sequence": snapshot.sequence,
             "source": snapshot.source.value,
         }

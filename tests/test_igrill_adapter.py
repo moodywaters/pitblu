@@ -205,3 +205,33 @@ def test_adapter_and_timeout_validation() -> None:
 
     with pytest.raises(AdapterError, match="timed out"):
         run(_bounded(slow(), 0.001, "test operation"))
+
+
+def test_battery_cadence_preserves_observation_and_refreshes_after_reconnect() -> None:
+    class CountingClient(Client):
+        battery_reads = 0
+
+        async def read_gatt_char(self, uuid: str) -> bytes:
+            if uuid == BATTERY_LEVEL_UUID:
+                self.battery_reads += 1
+            return await super().read_gatt_char(uuid)
+
+    subject = adapter()
+    subject._client_factory = CountingClient
+    ticks = [0.0]
+    subject._clock = lambda: ticks[0]
+    candidate = run(subject.discover(1))[0]
+    run(subject.connect(candidate))
+    first = run(subject.read_snapshot())
+    ticks[0] = 299
+    second = run(subject.read_snapshot())
+    assert CountingClient.instances[-1].battery_reads == 1  # type: ignore[attr-defined]
+    assert second.battery_observed_at == first.battery_observed_at
+    ticks[0] = 300
+    run(subject.read_snapshot())
+    assert CountingClient.instances[-1].battery_reads == 2  # type: ignore[attr-defined]
+    run(subject.disconnect())
+    run(subject.connect(candidate))
+    run(subject.read_snapshot())
+    assert CountingClient.instances[-1].battery_reads == 1  # type: ignore[attr-defined]
+    run(subject.disconnect())

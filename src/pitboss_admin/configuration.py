@@ -66,6 +66,13 @@ class SimulationConfig(_Section):
     probe_count: int = Field(4, ge=1, le=4)
 
 
+class SecurityConfig(_Section):
+    auth_requests_per_minute: int = Field(300, ge=10, le=3600)
+    mutations_per_minute: int = Field(30, ge=1, le=300)
+    maximum_body_bytes: int = Field(16384, ge=8192, le=65536)
+    maximum_sse_clients: int = Field(8, ge=1, le=32)
+
+
 class AppConfig(_Section):
     server: ServerConfig = Field(default_factory=lambda: ServerConfig())
     auth: AuthConfig = Field(default_factory=lambda: AuthConfig())
@@ -73,6 +80,7 @@ class AppConfig(_Section):
     polling: PollingConfig = Field(default_factory=lambda: PollingConfig())
     mqtt: MqttConfig = Field(default_factory=lambda: MqttConfig())
     simulation: SimulationConfig = Field(default_factory=lambda: SimulationConfig())
+    security: SecurityConfig = Field(default_factory=lambda: SecurityConfig())
 
     @model_validator(mode="after")
     def secure_exposure(self) -> AppConfig:
@@ -82,6 +90,10 @@ class AppConfig(_Section):
 
 
 _DESCRIPTIONS = {
+    "security.auth_requests_per_minute": "Global auth requests per minute; burst at most ten.",
+    "security.mutations_per_minute": "Process-wide authenticated mutation rate; burst at most ten.",
+    "security.maximum_body_bytes": "Maximum buffered request body size in bytes.",
+    "security.maximum_sse_clients": "Maximum simultaneous SSE connections.",
     "server.bind": "API listen address; non-loopback requires token authentication.",
     "server.port": "API TCP port.",
     "server.cors_origins": "Explicit browser origins; empty disables CORS.",
@@ -111,6 +123,10 @@ _DESCRIPTIONS = {
 }
 
 _LIMITS: dict[str, tuple[float | int | None, float | int | None]] = {
+    "security.auth_requests_per_minute": (10, 3600),
+    "security.mutations_per_minute": (1, 300),
+    "security.maximum_body_bytes": (8192, 65536),
+    "security.maximum_sse_clients": (1, 32),
     "server.port": (1, 65535),
     "bluetooth.scan_duration": (0, 60),
     "bluetooth.missing_scan_interval": (0, 3600),
