@@ -1,5 +1,9 @@
 # pitblu
 
+<p align="center">
+  <img src="docs/assets/pitblu-logo.jpg" alt="pitblu logo: blue barbecue smoker with blue and green smoke" width="280">
+</p>
+
 An API-first Bluetooth gateway for Weber iGrill thermometers, built for Raspberry Pi.
 Read probe temperatures and battery state, manage connections through REST, and
 share live telemetry through MQTT and Server-Sent Events.
