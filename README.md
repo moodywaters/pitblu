@@ -1,10 +1,23 @@
-# pitboss-admin
+# pitblu
+
+One repository, `moodywaters/pitblu`, for two independently deployable components:
+
+- [pitblu-core](pitblu-core/README.md): the Raspberry Pi hardware gateway.
+- [pitblu-web](pitblu-web/README.md): reserved for the future web frontend.
+
+Shared documentation lives in `docs/`. Gateway source, tests, packaging and native
+deployment tools live in `pitblu-core/`. There is no implemented web application yet.
 
 A native Raspberry Pi gateway for the Weber iGrill V202. It reads probe temperatures
 and battery state, offers REST administration, and shares live telemetry through
 SSE and optional MQTT. There is no built-in web dashboard or cook-history database.
 
 ## Release status
+
+The new application identity is **pitblu-core**, currently an unreleased
+v0.9.0rc1 candidate. Documentation uses this identity throughout. Existing release
+archives and the running Pi predate the rename; the new commands and paths do not
+apply to them until [migration](docs/rename-migration.md) is verified.
 
 **Current released version: v0.6.0.** The v0.9.0 release audit is in progress, not
 released. Full physical acceptance and the minimum 16-hour soak remain v1.0.0 gates.
@@ -19,7 +32,7 @@ do not interpret this as completed overnight reliability or four-inserted-probe 
 - For contributors: [development and checks](docs/development.md) and [contributing](CONTRIBUTING.md).
 - For everything else: [documentation index](docs/README.md).
 
-## Current functionality
+## Current gateway functionality
 
 - Explicit discovery and registration with stable public device identifiers.
 - One active thermometer at a time, with up to four logical probe channels.

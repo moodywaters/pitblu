@@ -14,7 +14,7 @@ fresh supported OS. Existing-Pi upgrade/rollback tests are not clean-install evi
 3. On a separate Pi, stop the original gateway explicitly before testing the same
    iGrill, outside a cook. On a spare card, shut down the Pi properly before swapping.
    Never run competing gateway/proof processes against the thermometer.
-4. Confirm no pitboss-admin account, application/configuration/state roots or unit
+4. Confirm no pitblu-core account, application/configuration/state roots or unit
    already exist. Unexpected paths pause the test, not authorise deleting them.
 
 ## Candidate software checks

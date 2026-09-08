@@ -4,6 +4,11 @@ All notable changes will be documented here.
 
 ## [Unreleased]
 
+- Rename the gateway to pitblu-core and organise moodywaters/pitblu as one repository
+  with gateway source in pitblu-core, a future pitblu-web placeholder and shared docs.
+  Update Python imports, commands, environment prefixes, systemd paths and MQTT defaults.
+  Existing installations require a separately verified migration; no aliases are provided.
+
 - v0.9.0rc1 candidate: request/body/stream limits, protected documentation routes,
   safe startup errors, bounded token hashing and defensive response headers.
 - Physical battery cadence with honest cached timestamps; read-only Bluetooth/clock diagnostics.

@@ -10,6 +10,9 @@ permissions:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pitblu-core
     timeout-minutes: 10
     strategy:
       fail-fast: false
@@ -21,6 +24,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
+          cache-dependency-path: pitblu-core/pyproject.toml
       - run: python -m pip install --upgrade pip setuptools==83.0.0
       - run: python -m pip install -e ".[dev]"
       - run: python -m ruff check .
@@ -41,5 +45,5 @@ jobs:
         with:
           name: dependency-audit-python-${{ matrix.python-version }}
           path: |
-            dependency-inventory.json
-            dependency-audit.json
+            pitblu-core/dependency-inventory.json
+            pitblu-core/dependency-audit.json

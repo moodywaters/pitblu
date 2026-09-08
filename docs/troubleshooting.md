@@ -9,7 +9,7 @@ not an old milestone proof process.
 On the Pi, inspect service status without changing anything:
 
 ```bash
-systemctl status pitboss-admin --no-pager
+systemctl status pitblu-core --no-pager
 curl --fail --silent --show-error http://127.0.0.1:8080/health
 ```
 
@@ -34,7 +34,7 @@ thermometer. Use the authenticated reading check in the quick start or the
 
 ## Safe escalation
 
-Do not start `pitboss-ble-proof`, `pitboss-v202-check` or another API process against
+Do not start `pitblu-ble-proof`, `pitblu-v202-check` or another API process against
 the same thermometer while the managed service owns it. Do not reset Bluetooth,
 remove pairing, delete state or repeatedly restart the service as a first response.
 Such actions can interrupt a cook and erase useful evidence.
@@ -42,7 +42,7 @@ Such actions can interrupt a cook and erase useful evidence.
 Inspect recent service logs locally if needed:
 
 ```bash
-sudo journalctl -u pitboss-admin -n 50 --no-pager
+sudo journalctl -u pitblu-core -n 50 --no-pager
 ```
 
 Review logs before sharing. Never send tokens, MQTT passwords, database backups,

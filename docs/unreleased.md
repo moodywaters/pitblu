@@ -1,5 +1,18 @@
 # Unreleased changes
 
+## Application identity
+
+The application is now `pitblu-core` in the `moodywaters/pitblu` repository; Python imports use
+`pitblu_core`. Commands use the `pitblu-` prefix, environment variables use
+`PITBLU_`, and the systemd unit and service account are `pitblu-core`.
+Default MQTT topics start with `pitblu/`. REST paths and payload schemas are unchanged.
+There are no compatibility aliases for the previous application identity.
+
+Documentation uses the new identity throughout, including historical summaries.
+This does not rename previously installed files or rebuild historical release
+archives. Do not use renamed commands against an existing installation until its
+[migration](rename-migration.md) has been performed and verified.
+
 This page describes changes on the v0.9.0 audit branch, not a released or installed
 runtime. The audit candidate reports v0.9.0rc1. Record its Git revision when testing. Current
 release instructions and the frontend guide remain based on the v0.6.0 release tag.

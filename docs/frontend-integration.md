@@ -18,7 +18,7 @@ these documentation routes public.
 
 ## 1. Purpose and architecture
 
-`pitboss-admin` is a native Raspberry Pi hardware gateway. It discovers and manages
+`pitblu-core` is a native Raspberry Pi hardware gateway. It discovers and manages
 Weber iGrill V202 devices, reads up to four probe channels and battery state, exposes
 administration through REST, and publishes current telemetry through SSE and MQTT.
 It has no browser UI, cook sessions, temperature history, graphs, alarms, food names,
@@ -29,10 +29,10 @@ an integration interface.
 Recommended arrangement:
 
 ```text
-Browser -> separate web application's backend -> pitboss-admin REST and SSE
+Browser -> separate web application's backend -> pitblu-core REST and SSE
                                              -> MQTT broker (read-only subscription)
                                              -> web application's own history database
-pitboss-admin -> Bluetooth iGrill
+pitblu-core -> Bluetooth iGrill
              -> MQTT broker
 ```
 
@@ -391,7 +391,7 @@ means strictly greater than zero. Validate through the API, not metadata alone.
 | `mqtt.port` | 1883 | Integer 1..65535; configure TLS port explicitly. |
 | `mqtt.tls` | false | System-trust TLS; no client certificate/custom CA API. |
 | `mqtt.username` | null | Nullable string, at most 128 characters. |
-| `mqtt.base_topic` | `pitboss` | 1..128 characters; no +, # or NUL. |
+| `mqtt.base_topic` | `pitblu` | 1..128 characters; no +, # or NUL. |
 | `mqtt.qos` | 1 | Fixed at 1. |
 | `simulation.enabled` | false | Select simulator instead of physical adapter. |
 | `simulation.probe_count` | 4 | Integer 1..4. |
@@ -481,11 +481,11 @@ separate, deliberately scoped test facility.
 
 ## 12. Sources and maintenance
 
-For the cook's perspective, also read [Pitboss in plain English](bbq-overview.md)
+For the cook's perspective, also read [Pitblu in plain English](bbq-overview.md)
 and [Quick start for a cook](bbq-quick-start.md). Keep user-facing explanations
 consistent with these guides, without implying a dashboard or alarms already exist.
 
-Implementation sources: `src/pitboss_admin/api.py`, `configuration.py`, `service.py`,
+Implementation sources: `pitblu-core/src/pitblu_core/api.py`, `configuration.py`, `service.py`,
 `telemetry.py`, `events.py`, `mqtt.py`, `auth.py` and the adapter implementations.
 Read alongside [REST API](api.md), [configuration](configuration.md),
 [MQTT](mqtt.md), [installation](installation.md), [troubleshooting](troubleshooting.md)

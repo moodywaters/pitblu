@@ -1,8 +1,8 @@
-# Pitboss, in plain English
+# Pitblu, in plain English
 
 ## What is it?
 
-Think of `pitboss-admin` as a helper sitting beside your barbecue. It runs on a
+Think of `pitblu-core` as a helper sitting beside your barbecue. It runs on a
 Raspberry Pi, connects to your Weber iGrill over Bluetooth, and passes the probe
 temperatures and battery level to other software.
 
@@ -31,7 +31,7 @@ behind-the-scenes part that a separate web application will use.
 
 A future application could show graphs, organise cooks, label probes as “brisket”
 or “barbecue”, and provide alarms. Those features are not provided by
-`pitboss-admin` today. It does not keep your temperature history, send notifications,
+`pitblu-core` today. It does not keep your temperature history, send notifications,
 control the heat, or tell you that food is safely cooked.
 
 Until a separate application is available, a technical helper can check readings

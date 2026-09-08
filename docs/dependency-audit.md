@@ -6,7 +6,7 @@ exact reviewed revisions remain in [provenance](provenance.md).
 
 ## Evidence and reproducibility
 
-`scripts/dependency_inventory.py` follows the installed runtime, development and
+`pitblu-core/scripts/dependency_inventory.py` follows the installed runtime, development and
 build-tool requirements for the executing platform. It records versions, declared
 licences, upstream version-page links and hashes of installed notice files without
 including local absolute paths, credentials or application data. CI saves one
@@ -66,8 +66,6 @@ maintainer-published version pages for [Bleak](https://pypi.org/project/bleak/3.
 [dbus-fast](https://pypi.org/project/dbus-fast/5.0.22/),
 [typing-extensions](https://pypi.org/project/typing-extensions/4.16.0/) and
 [Hatchling](https://pypi.org/project/hatchling/1.32.0/).
-
-## Publication boundary
 
 ## Linux CI findings
 

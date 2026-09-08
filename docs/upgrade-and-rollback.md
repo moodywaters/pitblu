@@ -1,5 +1,9 @@
 # Backup, upgrade, rollback and uninstall
 
+These commands assume the new application identity is already installed. A deployment
+with a different identity requires [controlled migration](rename-migration.md) first.
+Run source upgrade commands from the repository's `pitblu-core/` directory.
+
 v0.6.0 procedures passed same-candidate lifecycle testing on the Pi. Never upgrade during a cook.
 All operations use a deployment lock and fixed production roots. The home-directory test installation
 is not modified. Old releases and backups are retained; there is no automatic garbage collection.
@@ -7,10 +11,10 @@ is not modified. Old releases and backups are retained; there is no automatic ga
 ## Backup
 
 ```bash
-sudo bash /opt/pitboss-admin/current/manage.sh backup
+sudo bash /opt/pitblu-core/current/manage.sh backup
 ```
 
-This creates a new root-only directory under `/var/backups/pitboss-admin`, prints its path and
+This creates a new root-only directory under `/var/backups/pitblu-core`, prints its path and
 stores a consistent SQLite snapshot, configuration/environment files, unit and selected release
 path. It never overwrites a backup. Avoid configuration edits during the snapshot/copy interval.
 Backups contain secrets. Copy them only to protected storage, never GitHub or a support transcript.
@@ -37,7 +41,7 @@ MQTT reception after every upgrade; a successful systemctl start alone is not ac
 Use the exact backup directory printed before that upgrade:
 
 ```bash
-sudo bash /opt/pitboss-admin/current/manage.sh rollback /var/backups/pitboss-admin/backup-REPLACE_ME
+sudo bash /opt/pitblu-core/current/manage.sh rollback /var/backups/pitblu-core/backup-REPLACE_ME
 ```
 
 Rollback stops the service, creates a safety backup of the current state, validates the selected
@@ -52,11 +56,11 @@ under controlled administration; this is same-host rollback, not an automated di
 ## Uninstall without data deletion
 
 ```bash
-sudo bash /opt/pitboss-admin/current/manage.sh uninstall
+sudo bash /opt/pitblu-core/current/manage.sh uninstall
 ```
 
 This disables/stops the service and moves its unit to the application directory for recovery.
 The account, code, configuration, state and backups remain. No data purge is provided. To restore
-the service, install the saved unit back to `/etc/systemd/system/pitboss-admin.service`, reload
+the service, install the saved unit back to `/etc/systemd/system/pitblu-core.service`, reload
 systemd and enable/start explicitly. If installation fails part-way, inspect retained paths before
 retrying; do not recursively delete production directories.

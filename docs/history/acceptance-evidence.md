@@ -18,7 +18,7 @@ and the [installation guide](../installation.md) for current setup.
 
 The operator and Codex use one Raspberry Pi command at a time. The repository is transferred or
 checked out, an isolated Python 3.13 environment is created, dependencies are installed, tests are
-run, and then `pitboss-ble-proof` is executed. Each step waits for the preceding output.
+run, and then `pitblu-ble-proof` is executed. Each step waits for the preceding output.
 
 ## Pass record
 
@@ -84,7 +84,7 @@ raw V202 probe values were proven directly against the Celsius display.
 
 Status: passed
 
-Run `pitboss-v202-check` from the installed v0.2.0 branch on the target Raspberry Pi with the
+Run `pitblu-v202-check` from the installed v0.2.0 branch on the target Raspberry Pi with the
 official Weber application closed. A pass requires physical source, polling connection state,
 battery availability, four logical probe results, both attached probes within 1°C of the display,
 the two unattached channels absent, and `bluetoothAddressIncluded` equal to `false`.
@@ -95,7 +95,7 @@ only its sanitised JSON and the manual display comparison. Do not record a Bluet
 ### v0.2.0 result
 
 - Date: 4 September 2026
-- Command: `pitboss-v202-check` using a 60-second diagnostic connection allowance and 15-second
+- Command: `pitblu-v202-check` using a 60-second diagnostic connection allowance and 15-second
   read allowance
 - Connection state: `polling`
 - Source and model: `physical`, `igrill-v202`

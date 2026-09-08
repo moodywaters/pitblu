@@ -39,8 +39,8 @@ runtime has been released or installed.
 - Decisions: [hardware-first](adr/0001-incremental-hardware-first.md),
   [adapter boundary](adr/0002-device-adapter-boundary.md),
   [REST/configuration/authentication](adr/0003-rest-configuration-and-auth.md)
-- [Target specification](../pitboss-admin-project-plan.md) and
-  [AI continuation record](../pitboss-admin-codex-prompt.md): development context,
+- [Target specification](../pitblu-core-project-plan.md) and
+  [AI continuation record](../pitblu-core-codex-prompt.md): development context,
   not end-user instructions. Unimplemented requirements remain targets.
 
 ## Maintenance policy

@@ -11,16 +11,16 @@ through the write-only secret API.
 
 ## Topic contract
 
-With the default `pitboss` base topic:
+With the default `pitblu` base topic:
 
 | Topic | Retained |
 | --- | --- |
-| `pitboss/v1/service/availability` | Yes, with Last Will |
-| `pitboss/v1/devices/{deviceId}/availability` | Yes |
-| `pitboss/v1/devices/{deviceId}/connection` | Yes |
-| `pitboss/v1/devices/{deviceId}/battery` | Yes |
-| `pitboss/v1/devices/{deviceId}/probes/{probe}/availability` | Yes |
-| `pitboss/v1/devices/{deviceId}/probes/{probe}/temperature` | No |
+| `pitblu/v1/service/availability` | Yes, with Last Will |
+| `pitblu/v1/devices/{deviceId}/availability` | Yes |
+| `pitblu/v1/devices/{deviceId}/connection` | Yes |
+| `pitblu/v1/devices/{deviceId}/battery` | Yes |
+| `pitblu/v1/devices/{deviceId}/probes/{probe}/availability` | Yes |
+| `pitblu/v1/devices/{deviceId}/probes/{probe}/temperature` | No |
 
 Every publication uses QoS 1 and JSON. Consumers must tolerate duplicate delivery and can
 deduplicate device telemetry by session, topic and sequence. Service availability reuses

@@ -8,6 +8,7 @@ versions. The current released baseline is v0.6.0; the active audit plan is v0.9
 From the repository root on Linux:
 
 ```bash
+cd pitblu-core
 python3 -m venv .venv
 .venv/bin/python -m pip install -e '.[dev]'
 .venv/bin/python -m ruff check .
@@ -38,4 +39,4 @@ sleeps. Connection backoff accepts an injected random source so boundary values 
 
 The fixture under `tests/fixtures/v202/` contains only protocol payloads and manual display values
 from the accepted v0.1.0 run. It must never contain a Bluetooth address or private network data.
-The manual `pitboss-v202-check` command exercises the production adapter rather than the simulator.
+The manual `pitblu-v202-check` command exercises the production adapter rather than the simulator.
