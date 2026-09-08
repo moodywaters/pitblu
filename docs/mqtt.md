@@ -1,6 +1,10 @@
 # MQTT
 
-Version 0.5.0 publishes telemetry to MQTT when `mqtt.enabled` is true. MQTT is a read-only data
+See the [frontend integration guide](frontend-integration.md) for every payload type,
+SSE differences and subscriber reconciliation rules. In particular, service
+availability reuses sequence values and must not use device-telemetry deduplication.
+
+Released v0.6.0 publishes telemetry to MQTT when `mqtt.enabled` is true. MQTT is a read-only data
 plane: the service does not subscribe to or accept administrative commands. The default broker is
 local, but host, port, TLS, username and base topic are configurable. The password is managed only
 through the write-only secret API.
@@ -19,7 +23,8 @@ With the default `pitboss` base topic:
 | `pitboss/v1/devices/{deviceId}/probes/{probe}/temperature` | No |
 
 Every publication uses QoS 1 and JSON. Consumers must tolerate duplicate delivery and can
-deduplicate a topic using its monotonically increasing `sequence`. Device topics contain a stable
+deduplicate device telemetry by session, topic and sequence. Service availability reuses
+sequence values; use the integration guide's arrival-order rules instead. Device topics contain a stable
 public identifier, never a Bluetooth address. Probe numbers are one-based.
 
 A temperature payload is shaped as follows:
@@ -32,6 +37,7 @@ A temperature payload is shaped as follows:
   "temperatureC": 20.5,
   "observedAt": "2026-09-05T12:00:00+00:00",
   "sequence": 42,
+  "sessionId": "<process session>",
   "source": "physical"
 }
 ```
@@ -43,7 +49,7 @@ unavailable state.
 
 The Last Will payload is prepared before connecting. Its `observedAt` is therefore the preparation
 time, not the eventual disconnect time. Consumers should record their own receipt time for failure
-detection. Sequence counters are scoped to the running process and topic; they reset on restart.
+detection. Device sequence counters are scoped to the running process and topic; they reset on restart.
 
 Publisher failures enter retry backoff using base delays of 2, 4, 8, 15, 30 and 60 seconds with
 20 per cent jitter. Backoff resets after a stable connection, not after every connection attempt.

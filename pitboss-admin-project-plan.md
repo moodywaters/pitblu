@@ -1,8 +1,13 @@
 # PitBoss Admin Project Plan
 
-Status: Planning
+Status: authoritative target specification; implementation released through v0.6.0.
 
-Last updated: 4 September 2026
+Documentation status reviewed: 7 September 2026.
+
+This specifies intended scope, not proof that every feature or release gate is
+complete. Use the [documentation index](docs/README.md) and
+[frontend guide](docs/frontend-integration.md) for current released behaviour.
+The v0.9.0 audit and v1.0.0 final physical gates remain pending.
 
 ## Objective
 

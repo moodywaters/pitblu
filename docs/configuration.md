@@ -1,6 +1,9 @@
 # Configuration
 
-Version 0.4.0 exposes every planned application setting through REST. Precedence is:
+The [frontend integration guide](frontend-integration.md) lists every setting and
+explains configuration-editor workflows and saved-versus-running behaviour.
+
+Released v0.6.0 exposes typed application settings through REST. Precedence is:
 
 1. package default;
 2. optional YAML startup file;
@@ -47,4 +50,8 @@ cannot enable token mode without a stored token hash.
 
 `PITBOSS_DATABASE_PATH` is a deployment-level startup override rather than an application setting.
 The development default is `pitboss-admin.sqlite3` in the working directory. The v0.6.0 native
-installer will set the production path under `/var/lib/pitboss-admin/` with restricted permissions.
+installer sets the production path under `/var/lib/pitboss-admin/` with restricted permissions.
+
+The exposed battery interval does not yet drive separate acquisition scheduling.
+Saved settings can differ from workers' startup values until restart. See the
+frontend guide for metadata limitations and saved-versus-running behaviour.

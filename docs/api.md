@@ -1,6 +1,10 @@
 # REST API
 
-Version 0.5.0 implements the administrative control plane and live telemetry stream. OpenAPI and interactive documentation
+For a complete client-development handoff, see the
+[frontend and AI integration guide](frontend-integration.md), including request and
+response shapes, workflows, browser constraints and current implementation caveats.
+
+Released v0.6.0 provides the administrative control plane and live telemetry stream. OpenAPI and interactive documentation
 are generated at `/openapi.json` and `/docs`. The package default listens only on loopback.
 
 ## Authentication and errors

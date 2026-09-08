@@ -5,9 +5,11 @@ Targeted deployment acceptance passed on the physical Pi. Do not install during 
 
 ## Before installing
 
-Keep the existing test installation and database as a separate fallback. Do not run the test API
-and production API against the same thermometer simultaneously. Stop the test API using its
-freshly verified PID before production connection testing; do not terminate arbitrary Python jobs.
+These are fresh-install instructions. For an existing managed installation, use
+[upgrade and rollback](upgrade-and-rollback.md) instead; do not reinstall over it.
+If migrating from an experimental setup, preserve its files as a separate fallback
+and stop its process before connecting the managed service. Never run two instances
+against the same thermometer or terminate arbitrary Python processes.
 
 Install prerequisites on the Pi:
 

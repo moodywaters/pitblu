@@ -1,6 +1,9 @@
 # Bluetooth protocol notes
 
-## v0.1.0 hypothesis
+Released v0.6.0 protocol and adapter behaviour. Dated supporting evidence is kept
+in [historical acceptance](history/acceptance-evidence.md).
+
+## Confirmed protocol and remaining uncertainty
 
 The V202 is identified by temperature service UUID
 `ada7590f-2e6d-469e-8f7b-1822b386a5e9`. The proof writes sixteen zero bytes to application
@@ -20,12 +23,12 @@ showed raw probe value `1400` and a simultaneous display value of 20°C. Battery
 the standard Bluetooth characteristic `00002a19-0000-1000-8000-00805f9b34fb` and is a single
 percentage byte.
 
-The UUID and initialisation details remain research hypotheses until the complete target hardware
-evidence is recorded. The three-byte probe framing and raw Celsius interpretation were observed
+The service UUID and initialisation sequence were physically confirmed. The three-byte
+probe framing and raw Celsius interpretation were observed
 directly on the target V202 on 4 September 2026. The proof reads but does not change the device's
 unit or other configuration.
 
-## Confirmed v0.1.0 findings
+## Supporting physical observations
 
 Physical acceptance confirmed the V202 service UUID and zero-challenge loopback sequence. The
 standard battery characteristic returned `3c`, or 60 per cent. An inserted 20°C probe returned
@@ -34,10 +37,10 @@ sentinel. The V202 returned `000a000002` from `06ef0001`, not a one-byte display
 
 Two inserted probes appeared correctly on the first and second logical temperature characteristics,
 both at the displayed 20°C. The third and fourth characteristics returned the unplugged sentinel.
-The production adapter reads all four logical channels in v0.2.0. Inserting probes into all four
+The production adapter reads all four logical channels. Inserting probes into all four
 physical sockets remains part of the complete v1.0.0 physical acceptance suite.
 
-## v0.2.0 production adapter
+## Production adapter
 
 The production adapter uses the confirmed V202 service and challenge sequence, reads all four
 logical probe characteristics on every snapshot and interprets the confirmed unplugged sentinel as

@@ -1,99 +1,55 @@
 # pitboss-admin
 
-`pitboss-admin` is a planned headless, API-first Raspberry Pi gateway for Weber iGrill
-thermometers. Development is deliberately gated. Version v0.5.0 adds supervised recovery,
-operation concurrency controls, persistent diagnostics and shutdown to the telemetry foundation.
+A native Raspberry Pi gateway for the Weber iGrill V202. It reads probe temperatures
+and battery state, offers REST administration, and shares live telemetry through
+SSE and optional MQTT. There is no built-in web dashboard or cook-history database.
 
-Native service installation and targeted Pi deployment acceptance are complete in v0.6.0.
-See [installation](docs/installation.md). Targeted v0.5.0 Raspberry Pi recovery acceptance passed;
-the final minimum 16-hour physical soak remains a v1.0.0 gate.
+## Release status
 
-## v0.1.0 result
+**Current released version: v0.6.0.** The v0.9.0 release audit is in progress, not
+released. Full physical acceptance and the minimum 16-hour soak remain v1.0.0 gates.
+Two physical probes and battery readings have been demonstrated on the target Pi;
+do not interpret this as completed overnight reliability or four-inserted-probe testing.
 
-Version 0.1.0 passed its Raspberry Pi physical gate on 4 September 2026, demonstrating:
+## Start here
 
-- discovery of the expected advertised name within 20 seconds;
-- connection and Weber challenge/response initialisation;
-- at least one inserted probe temperature, normalised to Celsius;
-- the standard Bluetooth battery percentage;
-- output containing no Bluetooth address.
+- For cooks: [plain-English overview](docs/bbq-overview.md) and [quick start](docs/bbq-quick-start.md).
+- For operators: [installation](docs/installation.md), [backup, upgrade and rollback](docs/upgrade-and-rollback.md), [troubleshooting](docs/troubleshooting.md).
+- For frontend builders: [complete frontend and AI integration guide](docs/frontend-integration.md).
+- For contributors: [development and checks](docs/development.md) and [contributing](CONTRIBUTING.md).
+- For everything else: [documentation index](docs/README.md).
 
-See [physical acceptance](docs/physical-acceptance.md) for the sanitised evidence. Later milestones
-are recorded below.
+## Current functionality
 
-## v0.2.0 device foundation
+- Explicit discovery and registration with stable public device identifiers.
+- One active thermometer at a time, with up to four logical probe channels.
+- Persistent desired connection state, supervised recovery and bounded diagnostics.
+- Raw Celsius readings, probe presence, battery level and explicit freshness.
+- Versioned REST, asynchronous operations, token authentication and rotation.
+- Typed, version-checked configuration and write-only MQTT password management.
+- Live SSE and MQTT JSON telemetry, QoS 1, retained availability and Last Will.
+- Native installer, dedicated account, hardened systemd supervision, protected
+  backups, upgrade, rollback and non-destructive uninstall.
+- A simulator and hardware-independent tests on Python 3.11, 3.12 and 3.13.
 
-- A production Bleak adapter discovers, connects, authenticates and reads all four V202 channels.
-- Physical and simulated devices implement the same asynchronous adapter boundary.
-- Discovery remains active through scheduled scans without keeping the radio continuously busy.
-- Desired and observed connection state are modelled explicitly.
-- The deterministic simulator supports one to four probes, temperature patterns, insertion,
-  removal, battery changes, stale samples and connection loss.
-- A sanitised recorded fixture replays the physical payloads in hardware-independent tests.
-
-The `pitboss-v202-check` command validates this production adapter on the Raspberry Pi and emits a
-privacy-safe snapshot. It is a milestone check, not a long-running service.
-
-## v0.3.0 API and configuration
-
-- FastAPI exposes versioned discovery, device, operation, telemetry and configuration resources.
-- Slow device actions run as tracked background operations and return HTTP 202.
-- SQLite persists administrative state, never temperature history.
-- Configuration layers defaults, YAML, environment and transactional persisted overrides.
-- ETags prevent lost configuration updates.
-- Bearer tokens are stored only as salted scrypt hashes and can be rotated.
-- Secret resources are write-only and validation errors never echo submitted values.
-
-Run `pitboss-api` for the native development server. Its safe package default is loopback-only with
-authentication disabled. Non-loopback binding is rejected unless token authentication is enabled.
-See [REST API](docs/api.md) and [configuration](docs/configuration.md).
-
-## v0.4.0 telemetry
-
-- One canonical event model feeds bounded recent history, SSE and MQTT.
-- MQTT uses the configurable `pitboss/v1` topic tree, JSON payloads and QoS 1.
-- Service availability has a retained Last Will; state and availability are retained while raw
-  temperatures are not.
-- Connected devices are polled continuously using the configured probe interval.
-- Probe and battery REST state explicitly reports freshness and becomes unavailable after the
-  configured stale threshold.
-- Physical and simulated events use the same schema and always identify their source.
-
-MQTT remains disabled by default. See [MQTT](docs/mqtt.md) and [REST API](docs/api.md).
-
-## Development
-
-Version v0.5.0 adds MQTT and BLE recovery, safe diagnostics, persistent operational events
-and graceful shutdown. See [v0.5.0 acceptance plan](docs/v0.5.0-plan.md) for the completed
-target checks and the historical findings that led to the recovery fixes.
-
-Python 3.11 through 3.13 is the supported range. Install the editable development environment:
-
-```console
-python -m venv .venv
-.venv/bin/python -m pip install -e '.[dev]'
-```
-
-Run the hardware-independent checks:
-
-```console
-.venv/bin/python -m ruff check .
-.venv/bin/python -m ruff format --check .
-.venv/bin/python -m mypy src tests
-.venv/bin/python -m pytest
-```
-
-There is no Docker-based installation or development path.
+See the [integration guide](docs/frontend-integration.md) for implemented behaviour
+and limitations, including restart-required settings and no replayable temperature
+history. MQTT is optional and disabled by default. There is no Docker deployment,
+heating control, alarm or notification service.
 
 ## Security
 
-Never commit Bluetooth addresses, LAN addresses, tokens, broker credentials, local configuration
-or unredacted physical evidence. The proof discovers by advertised name and redacts conventional
-Bluetooth addresses from errors. Plain HTTP is for trusted LAN use only and must never be exposed
-directly to the internet.
+The managed installer defaults to loopback with token authentication. Development
+defaults differ; follow the installation guide for a managed service. Non-loopback
+access requires a token. Plain HTTP is for trusted networks only: never expose the
+gateway directly to the internet. Keep tokens, broker passwords, Bluetooth addresses,
+private network configuration and database backups out of GitHub and support logs.
 
-## Licence
+## Project records and licence
 
-The original code in this repository is available under the MIT Licence. Research provenance and
-dependency notices are recorded in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and
-[docs/provenance.md](docs/provenance.md).
+[CHANGELOG.md](CHANGELOG.md) records releases. [Physical acceptance](docs/physical-acceptance.md)
+distinguishes completed checks from outstanding gates. Historical evidence is
+labelled separately and is not an installation guide.
+
+Original code is under the [MIT Licence](LICENSE). See [third-party notices](THIRD_PARTY_NOTICES.md)
+and [provenance](docs/provenance.md). The v0.9.0 licence audit is not yet complete.

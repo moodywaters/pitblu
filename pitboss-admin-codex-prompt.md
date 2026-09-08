@@ -1,5 +1,23 @@
 # Master Codex Prompt: Build `pitboss-admin`
 
+## Current documentation entry point
+
+Released baseline: v0.6.0; v0.9.0 audit in progress; v1.0.0 physical suite and
+minimum 16-hour soak pending. Use [the documentation index](docs/README.md) for
+current guides and [the active audit plan](docs/v0.9.0-plan.md) for current work.
+The original instructions and dated continuation records below are retained as
+development history, not current installation commands. Old milestone plan files
+have been removed; consult Git history only when historical context is needed.
+The user's later instruction permits small related batches of Pi commands.
+
+Documentation cleanup, 8 September 2026: the six completed milestone plans are
+removed from the working tree. Any reference to them in the dated records below
+is historical and must not be followed as a current task. Dated acceptance evidence
+is now `docs/history/acceptance-evidence.md`; `docs/physical-acceptance.md` is the
+current checklist. Current runbooks describe released v0.6.0, not an unreleased
+v0.9.0 runtime. Preserve licence/provenance and release records while removing
+superseded operating instructions. No Pi changes are part of this cleanup.
+
 You are implementing a new open-source-ready project called `pitboss-admin`. Work as a careful senior engineer. Build incrementally, verify every milestone, and keep documentation, tests and provenance current in the same changes as the code.
 
 ## Mission
@@ -736,3 +754,34 @@ after uninstall testing. Do not use any historic PID; inspect systemctl for curr
 start the old test API against the same thermometer. Keep the MQTT validation topic unchanged
 until the user explicitly chooses to change it. Next planned milestone is v0.9.0: clean-Pi test,
 security/documentation/provenance audits. The minimum 16-hour soak remains v1.0.0.
+
+## Frontend integration handoff requirement: 7 September 2026
+
+The user requires comprehensive documentation that another AI can use to build a
+separate web-based application leveraging every exposed gateway capability.
+`docs/frontend-integration.md` is the dedicated handoff, based on released v0.6.0
+implementation behaviour. It inventories REST, authentication, configuration,
+operations, SSE and MQTT, with payloads, client workflows and explicit limitations.
+Keep it current in the same change as any public contract alteration. Do not imply
+that OpenAPI alone describes the full response and behavioural contract.
+
+`tests/test_frontend_documentation.py` checks that API routes, configuration keys
+and canonical event types are covered. It is an inventory guard, not a semantic
+proof. Local checks after this addition: 101 tests passed, 93.83 per cent coverage,
+Ruff passed, 73 files formatted, mypy passed for 45 sources. Supported-Python CI
+and the remaining v0.9.0 audits must still run for this branch.
+
+The audit plan is `docs/v0.9.0-plan.md`. It records findings that must be resolved
+or explicitly dispositioned, including PATCH label clearing, CORS response headers,
+the unwired separate battery cadence and missing clock-health reporting. The
+running Pi service has not been changed by this documentation work. Do not claim
+v0.9.0 completion, a clean-Pi test or the v1.0.0 soak from these local checks.
+
+### Plain-English companion guides
+
+The user also requires documentation for an ordinary barbecue cook, alongside the
+AI/developer handoff. Maintain `docs/bbq-overview.md` and `docs/bbq-quick-start.md`.
+They explain what the gateway does, what still needs a separate application,
+preparation and everyday use, and an optional read-only terminal check. Keep them
+free of unnecessary jargon and do not imply that alarms, a dashboard, stored cook
+history or the minimum 16-hour soak are already available or complete.

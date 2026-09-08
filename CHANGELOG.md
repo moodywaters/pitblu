@@ -4,6 +4,12 @@ All notable changes will be documented here.
 
 ## [Unreleased]
 
+- Comprehensive frontend/AI integration contract and plain-English BBQ overview/quick start.
+- Current-release documentation index, corrected runtime descriptions and troubleshooting.
+- Superseded v0.1.0 to v0.6.0 plans removed; dated acceptance evidence separated
+  from the current release checklist. Original plans remain available in Git history.
+- Automated documentation checks for local links and route/setting/event inventory coverage.
+
 ## [0.6.0] - 2026-09-07
 
 - Native installer, dedicated service account and protected production filesystem layout.

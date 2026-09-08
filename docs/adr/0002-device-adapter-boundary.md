@@ -3,6 +3,10 @@
 - Status: accepted
 - Date: 4 September 2026
 
+Historical decision context: statements about later milestones below describe the
+decision date. The resilience controller is now implemented; consult the
+[current architecture](../architecture.md) for present behaviour.
+
 ## Decision
 
 Represent physical and simulated thermometers through the same internal `DeviceAdapter` protocol.
