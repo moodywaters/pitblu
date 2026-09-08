@@ -13,7 +13,7 @@ Migration, original-token authentication, physical probe/battery acquisition,
 new MQTT topic delivery and reboot recovery passed on the operator's Pi on
 8 September 2026. See [acceptance](physical-acceptance.md) for scope and limitations.
 
-Clean-Pi testing is pending because the operator has no spare target.
+Clean-Pi testing is pending; follow the [rebuild checklist](rebuild-checklist.md).
 The v1.0.0 full physical suite and minimum 16-hour soak remain mandatory.
 Disabled predecessor files and protected backups remain locally for recovery;
 cleanup is deferred. No destructive cleanup or release is authorised by this page.

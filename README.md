@@ -1,6 +1,16 @@
 # pitblu
 
-One repository, `moodywaters/pitblu`, for two independently deployable components:
+<p align="center">
+  <img src="docs/assets/pitblu-logo.jpg" alt="pitblu logo: blue barbecue smoker with blue and green smoke" width="280">
+</p>
+
+An API-first Bluetooth gateway for Weber iGrill thermometers, built for Raspberry Pi.
+Read probe temperatures and battery state, manage connections through REST, and
+share live telemetry through MQTT and Server-Sent Events.
+
+## Components
+
+One repository for two independently deployable components:
 
 - [pitblu-core](pitblu-core/README.md): the Raspberry Pi hardware gateway.
 - [pitblu-web](pitblu-web/README.md): reserved for the future web frontend.
@@ -8,17 +18,22 @@ One repository, `moodywaters/pitblu`, for two independently deployable component
 Shared documentation lives in `docs/`. Gateway source, tests, packaging and native
 deployment tools live in `pitblu-core/`. There is no implemented web application yet.
 
-A native Raspberry Pi gateway for the Weber iGrill V202. It reads probe temperatures
-and battery state, offers REST administration, and shares live telemetry through
-SSE and optional MQTT. There is no built-in web dashboard or cook-history database.
-
 ## Release status
 
-**Current installed candidate: v0.9.0rc1.** Migration, authentication, physical
-telemetry, MQTT delivery and reboot recovery have passed on the operator's Pi.
-This is not the final v0.9.0 release. Clean-Pi acceptance remains pending because
-no spare target is available; the full physical suite and minimum 16-hour soak
-remain mandatory v1.0.0 gates.
+**Current candidate: v0.9.0rc1.** This is pre-release software, not a final v0.9.0
+release. Clean-install validation and the full physical acceptance suite, including
+a minimum 16-hour soak, remain release requirements. See the
+[acceptance checklist](docs/physical-acceptance.md) for verified results and open gates.
+
+## Requirements
+
+- Raspberry Pi with Bluetooth and 64-bit Raspberry Pi OS Trixie.
+- Python 3.11–3.13, BlueZ and systemd; the physical target uses Python 3.13.
+- Weber iGrill V202 and compatible probes; one active thermometer at a time.
+- Optional MQTT broker. No containers or built-in web dashboard are required.
+
+Start with [native installation](docs/installation.md). For a fresh OS setup,
+use the [rebuild checklist](docs/rebuild-checklist.md).
 
 ## Start here
 

@@ -3,7 +3,7 @@
 ## Version and scope
 
 Current guides describe **v0.9.0rc1**, the installed candidate, not a final release.
-Clean-Pi acceptance is pending because no spare target is available. The v1.0.0
+Clean-Pi acceptance is pending. The v1.0.0
 physical suite and minimum 16-hour soak are also pending.
 
 ## For cooks
@@ -14,6 +14,7 @@ physical suite and minimum 16-hour soak are also pending.
 ## Setup and operation
 
 - [Installation](installation.md)
+- [Fresh-OS rebuild checklist](rebuild-checklist.md)
 - [Backup, upgrade, rollback and uninstall](upgrade-and-rollback.md)
 - [Troubleshooting](troubleshooting.md)
 
