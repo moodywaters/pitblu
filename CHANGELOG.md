@@ -1,20 +1,25 @@
 # Changelog
 
-## [0.9.0rc1] - candidate
+This file is the canonical human-readable version history. Git tags and GitHub
+releases are authoritative for published revisions.
 
-Not a final release. Current documentation begins at v0.9.0; earlier release
-records remain in Git history, not in the active guides.
+## [0.9.0] - 2026-09-10
 
-- pitblu monorepo with independently deployable pitblu-core and a future pitblu-web placeholder.
-- Native Raspberry Pi gateway with REST administration, SSE and MQTT telemetry.
-- Explicit device registration, physical and simulated adapters, recovery and administrative persistence.
-- Bearer authentication, token rotation, request/body/stream limits and protected API documentation.
-- Configuration metadata, optimistic concurrency, write-only secrets and corrected partial device updates.
-- Physical battery cadence with preserved observation timestamps and safe Bluetooth/clock diagnostics.
-- Hardened systemd deployment, protected backups, upgrades and rollback.
-- Comprehensive frontend/AI contract and plain-English BBQ guides.
-- Dependency inventory, security/provenance audit records and supported-Python CI.
-- Candidate migration, physical MQTT delivery and reboot recovery verified on the operator's Pi.
+- Added the native Raspberry Pi gateway with REST administration, SSE events and
+  optional MQTT telemetry for Weber iGrill V202 thermometers.
+- Added explicit device registration, stable public identifiers, physical and
+  simulated adapters, four logical probe channels and supervised recovery.
+- Added bearer authentication and rotation, request and stream limits, typed
+  versioned configuration, write-only secrets and safe diagnostics.
+- Added hardened systemd deployment, protected backup, upgrade, rollback and
+  non-destructive uninstall workflows.
+- Added the complete frontend integration contract, operator documentation,
+  dependency inventories, licence/provenance records and Python 3.11-3.13 CI.
+- Passed clean-Pi acceptance on Raspberry Pi OS Lite 64-bit Trixie at commit
+  `f3bc11488e72b966676c0f3a1844ea218259ab90`: 114 tests, 93.79% coverage,
+  native installation/security checks, two-probe display comparison, battery,
+  SSE, MQTT, restart/reboot recovery and maintenance workflows.
 
-Clean-Pi acceptance is pending: no spare target is currently available.
-The complete physical suite and minimum 16-hour soak remain v1.0.0 requirements.
+The accepted runtime was labelled `0.9.0rc1`. The final `0.9.0` preparation changes
+release metadata and documentation only; it does not alter gateway runtime logic.
+The complete four-probe physical suite and minimum 16-hour soak remain v1.0.0 gates.

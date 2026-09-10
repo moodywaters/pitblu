@@ -1,8 +1,7 @@
 # Frontend and AI integration guide
 
-Contract: **v0.9.0rc1**, installed and migration-tested on the operator's Pi.
-This is a candidate, not the final v0.9.0 release. Clean-Pi acceptance and the
-v1.0.0 physical suite and minimum 16-hour soak remain pending.
+Contract: **v0.9.0**, clean-installed and acceptance-tested on the target Pi.
+The v1.0.0 full four-probe physical suite and minimum 16-hour soak remain pending.
 
 ## 1. Purpose and architecture
 

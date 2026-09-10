@@ -1,6 +1,6 @@
 # Troubleshooting the current managed service
 
-Current candidate: v0.9.0rc1. For plain-English help, start with the
+Current release: v0.9.0. For plain-English help, start with the
 [cook's quick start](bbq-quick-start.md). These checks concern the installed service,
 not an old milestone proof process.
 

@@ -13,11 +13,12 @@ It intentionally does not contain administrator tokens, MQTT passwords/password
 files, broker ACLs, device registrations, private addresses, SSH configuration or
 the administrative SQLite database. Store credentials privately.
 
-The repository is currently private. Confirm authenticated GitHub access from
-another machine and download a source archive of the exact candidate revision
-before erasing the Pi. Record that revision with the test results. Do not assume
-a candidate has a published release asset. A repository source archive includes
-both components and shared docs; install from its pitblu-core directory.
+The repository is currently private. Confirm authenticated, least-privilege GitHub
+access before erasing the Pi. For the normal rebuild path, clone the repository,
+check out the exact reviewed release tag or full commit, and record its full revision
+with the test results. Do not place GitHub credentials in commands or logs. An
+archive produced by GitHub from the same revision is suitable for offline recovery,
+but GitHub tags and releases are the authoritative release history.
 
 ## Rebuild dependencies
 
@@ -26,8 +27,10 @@ and apply OS updates. Follow [native installation](installation.md) for required
 OS packages and the gateway installer. Package-index/network access is required;
 Python wheels and OS packages are not vendored in the repository.
 
-For API-only operation, leave MQTT disabled. To test MQTT, independently install
-or provision a broker with password authentication and no anonymous access.
+Git is required for the normal GitHub-source workflow. The remaining core and
+administrative prerequisites are listed in the installation guide. For API-only
+operation, leave MQTT disabled. To test MQTT, independently install or provision
+a broker and client tools with password authentication and no anonymous access.
 Give the gateway a dedicated pitblu-core publisher identity with access to
 pitblu/#. Configure broker location, TLS where appropriate, username and base topic
 through the API, and the password through the write-only secret endpoint. The

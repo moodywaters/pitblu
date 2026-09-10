@@ -1,13 +1,13 @@
 # Pitblu Admin Project Plan
 
-Status: authoritative target specification; current implementation is the installed v0.9.0rc1 candidate.
+Status: authoritative target specification; current implementation is v0.9.0 beta.
 
-Documentation status reviewed: 7 September 2026.
+Documentation status reviewed: 10 September 2026.
 
 This specifies intended scope, not proof that every feature or release gate is
 complete. Use the [documentation index](docs/README.md) and
-[frontend guide](docs/frontend-integration.md) for current candidate behaviour.
-The v0.9.0 audit and v1.0.0 final physical gates remain pending.
+[frontend guide](docs/frontend-integration.md) for implemented behaviour.
+The v0.9.0 audit and clean-Pi gate passed. The v1.0.0 final physical gates remain pending.
 
 ## Objective
 

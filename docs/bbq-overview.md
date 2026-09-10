@@ -19,10 +19,10 @@ thermometer and not a controller for your barbecue.
 - Start automatically when a properly installed Pi starts.
 - Share live readings with a separate application.
 
-The current version is the v0.9.0rc1 candidate, not a final release. Two physical
-probes return fresh readings. Display comparison, testing with all four probes inserted,
-and an uninterrupted test lasting at least 16 hours are not yet complete. Successful
-short tests are not a guarantee of reliable overnight cooking.
+The current release is v0.9.0 beta. Clean-Pi acceptance passed; the complete
+four-probe physical suite and 16-hour soak remain v1.0.0 gates. Check the
+[acceptance record](physical-acceptance.md) before relying on the gateway for an
+unattended cook.
 
 ## What will I see on my phone?
 

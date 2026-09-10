@@ -3,7 +3,7 @@
 The [frontend integration guide](frontend-integration.md) lists every setting and
 explains configuration-editor workflows and saved-versus-running behaviour.
 
-The v0.9.0rc1 candidate exposes typed application settings through REST. Precedence is:
+The v0.9.0 release exposes typed application settings through REST. Precedence is:
 
 1. package default;
 2. optional YAML startup file;

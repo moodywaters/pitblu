@@ -1,22 +1,20 @@
-# v0.9.0 candidate status
+# v0.9.0 release status
 
-The installed gateway is **0.9.0rc1**, not the final v0.9.0 release.
-The [frontend contract](frontend-integration.md) describes this candidate directly;
-there is no separate older contract to reconcile.
+The v0.9.0 beta source is prepared from the runtime accepted as v0.9.0rc1 at exact
+commit `f3bc11488e72b966676c0f3a1844ea218259ab90`. Release preparation changes only
+metadata and documentation; gateway runtime code is unchanged from that physically
+tested revision.
 
-The monorepo is moodywaters/pitblu. Gateway application identity is pitblu-core,
-Python imports use pitblu_core, command names use pitblu-, environment variables
-use PITBLU_, and MQTT defaults to the pitblu base topic. pitblu-web remains a
-placeholder for a separately deployable frontend.
+Clean-Pi installation, native security controls, REST onboarding, physical
+two-probe comparison, battery cadence, SSE, MQTT, restart/reboot recovery, backup,
+same-version upgrade/rollback and uninstall/restoration passed. The dated sanitised
+results are in [clean-Pi acceptance](clean-pi-acceptance.md).
 
-Migration, original-token authentication, physical probe/battery acquisition,
-new MQTT topic delivery and reboot recovery passed on the operator's Pi on
-8 September 2026. See [acceptance](physical-acceptance.md) for scope and limitations.
+The source is not a published release until its reviewed commit is merged and the
+matching `v0.9.0` Git tag and GitHub release exist. `CHANGELOG.md` is the canonical
+human-readable version history; Git tags and releases are authoritative for
+published revisions.
 
-Clean-Pi testing is pending; follow the [rebuild checklist](rebuild-checklist.md).
-The v1.0.0 full physical suite and minimum 16-hour soak remain mandatory.
-Disabled predecessor files and protected backups remain locally for recovery;
-cleanup is deferred. No destructive cleanup or release is authorised by this page.
-
-Current source and documentation use only the new naming convention.
-Git history and published historical artifacts are not rewritten by this cleanup.
+The full four-probe physical suite and minimum 16-hour soak are separate v1.0.0
+gates and remain pending. The [frontend contract](frontend-integration.md) describes
+implemented v0.9.0 behaviour; pitblu-web remains a separate future component.

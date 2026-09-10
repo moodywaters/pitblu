@@ -1,7 +1,7 @@
 # Development
 
 Use an isolated Python 3.11, 3.12 or 3.13 virtual environment. CI runs on all three
-versions. The current candidate is v0.9.0rc1; the active audit plan is v0.9.0.
+versions. The current release is v0.9.0.
 
 ## Setup and checks
 

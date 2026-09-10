@@ -1,11 +1,11 @@
 # Native installation
 
-These paths describe the current v0.9.0rc1 candidate.
+These paths describe the v0.9.0 release.
 Read [migration](rename-migration.md) before changing an existing deployment.
 
 Target: Raspberry Pi OS Trixie, 64-bit ARM, Python 3.13, systemd and BlueZ. Docker is not used.
-Migration and reboot checks passed on the existing Pi. Clean-OS installation is
-still pending. Do not install during an active cook.
+Clean installation and reboot recovery passed on this target. Do not install during
+an active cook.
 
 ## Before installing
 
@@ -15,19 +15,36 @@ If migrating from an experimental setup, preserve its files as a separate fallba
 and stop its process before connecting the managed service. Never run two instances
 against the same thermometer or terminate arbitrary Python processes.
 
-Install prerequisites on the Pi:
+Install core and administrative prerequisites on the Pi. Git is required when the
+source is obtained directly from GitHub:
 
 ```bash
 sudo apt-get update
-sudo apt-get install python3-venv bluez util-linux passwd curl
+sudo apt-get install git python3-venv bluez util-linux passwd curl
 ```
 
-Unpack the reviewed repository source archive. From its root, run interactively:
+Clone the private repository using an authenticated, least-privilege GitHub identity.
+Check out the reviewed release tag or full commit, verify it, and install from the
+component directory:
 
 ```bash
+git clone git@github.com:moodywaters/pitblu.git
+cd pitblu
+git checkout --detach REPLACE_WITH_REVIEWED_TAG_OR_FULL_COMMIT
+git rev-parse HEAD
+git status --short
 cd pitblu-core
 sudo bash deploy/manage.sh install
 ```
+
+Do not place GitHub tokens in command arguments or shell history. A source archive
+from the same reviewed GitHub revision remains valid for offline recovery, but
+GitHub is the normal source of release truth.
+
+Mosquitto and `mosquitto-clients` are optional broker and acceptance-test packages,
+not pitblu-core runtime prerequisites. The gateway can operate with MQTT disabled.
+When MQTT is required, provision an authenticated local, remote or hosted broker
+separately.
 
 The installer creates a system account `pitblu-core` with no login shell, adds it to the existing
 `bluetooth` group, creates a new permanent virtual environment in a versioned release directory,

@@ -19,6 +19,14 @@ is Linux/aarch64. Distribution markers select Linux dbus-fast rather than Window
 WinRT packages. OS-installed BlueZ, systemd and Mosquitto are not bundled Python
 dependencies and remain subject to the distribution's updates and notices.
 
+During clean-Pi acceptance, the same script and pinned Hatchling 1.32.0 build
+requirement produced a valid Linux/aarch64 Python 3.13.5 inventory of roughly 18 KB.
+Sanitisation checks found no home or managed-state paths, authorisation values,
+bearer tokens or password strings. The generated Pi file is not committed because
+it is a platform-specific resolved snapshot, not maintained source, a lock file or
+a signed SBOM. CI remains the normal source of per-Python inventory and audit
+artefacts.
+
 The local pip-audit 2.10.1 query returned no known advisories for installed packages.
 The private project itself is not on PyPI and was explicitly reported as skipped;
 its security review is source-based. Tooling and build dependencies are rechecked
@@ -86,6 +94,6 @@ in the milestone plan. The gateway itself uses Hatchling, not setuptools, to bui
 Source releases contain the original project and its notices, not copied external
 source or bundled site-packages. No known reviewed dependency requires changing the
 original project's MIT licence under this distribution model. Keep the repository
-private unless the owner explicitly chooses otherwise. Final licence review must
-include the actual Linux resolution and build artifact before candidate publication;
-do not claim the clean-Pi gate is complete from this document.
+private unless the owner explicitly chooses otherwise. The actual target Linux
+resolution and clean wheel installation were reviewed for v0.9.0. Future releases
+must repeat that review for their resolved dependencies and build artefacts.
