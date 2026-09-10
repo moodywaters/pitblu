@@ -2,30 +2,32 @@
 
 ## Current state
 
-Repository: https://github.com/moodywaters/pitblu (private).
-One repository contains pitblu-core, the gateway, and pitblu-web, a future frontend
-placeholder. Shared documentation is in docs/. Never make the repository public
-without the owner's explicit instruction.
+Repository: https://github.com/moodywaters/pitblu (private). One repository contains
+pitblu-core, the gateway, and pitblu-web, a future frontend placeholder. Shared
+documentation is in docs/. Never make the repository public without the owner's
+explicit instruction.
 
-The current candidate is 0.9.0rc1, revision f7d3879. It is installed on the operator's
-Raspberry Pi. It is not the final v0.9.0 release. Read docs/README.md,
-docs/frontend-integration.md and docs/v0.9.0-plan.md before continuing.
+The source version is 0.9.0 beta. Its runtime was clean-installed and physically
+accepted while labelled 0.9.0rc1 at exact commit
+`f3bc11488e72b966676c0f3a1844ea218259ab90`. Release preparation changes metadata
+and documentation only, not runtime code. Consult `docs/release-status.md` and GitHub
+before claiming that the `v0.9.0` tag or release has been published.
 
 ## Architecture and boundaries
 
-The Python gateway runs natively on Raspberry Pi OS, using FastAPI, Bleak, SQLite,
-SSE and optional MQTT. No Docker. Keep Bluetooth behind the adapter interface.
-Only explicitly registered devices may reconnect automatically. The implementation
-owns one active thermometer at a time and supports four logical probe channels.
+The Python gateway runs natively on Raspberry Pi OS using FastAPI, Bleak, SQLite,
+SSE and optional MQTT. No Docker. Keep Bluetooth behind the adapter interface. Only
+explicitly registered devices may reconnect automatically. The implementation owns
+one active thermometer at a time and supports four logical probe channels.
 
 REST owns administration. MQTT is telemetry only. Public device identifiers are
-separate from private hardware addresses. Never add cook sessions, history,
-graphs, food semantics, alarms or a browser UI to the gateway. The future web
-application owns those features and its own database.
+separate from private hardware addresses. Never add cook sessions, history, graphs,
+food semantics, alarms or a browser UI to the gateway. The future web application
+owns those features and its own database.
 
-The target specification is pitblu-core-project-plan.md. It describes release
-requirements; the integration guide describes actual implemented behaviour.
-Do not invent missing capabilities or treat an unrun acceptance test as passed.
+The target specification is `pitblu-core-project-plan.md`. The integration guide
+describes implemented behaviour. `CHANGELOG.md` is the canonical human-readable
+version history; Git tags and releases are authoritative for published revisions.
 
 ## Working rules
 
@@ -33,62 +35,68 @@ Do not invent missing capabilities or treat an unrun acceptance test as passed.
 - Keep code, tests, documentation and provenance together in reviewable commits.
 - Use British English. Do not use em dashes.
 - Windows is the development host; the operator runs supplied commands over Pi SSH.
-- Small related batches of Pi commands are permitted; wait for their output.
 - Never print or request tokens, passwords, private addresses or raw databases.
-- Native service changes are disruptive: schedule outside an active cook.
+- Native service changes are disruptive: schedule them outside an active cook.
 - No automatic updates, arbitrary command API or direct internet exposure.
 - Do not delete protected recovery data as incidental cleanup.
+- Do not infer release, tag or acceptance results that were not actually observed.
 
-## Validation recorded for the current candidate
+## v0.9.0 acceptance evidence
 
-114 hardware-independent tests pass on the Pi's Python 3.13.5, coverage 93.79%.
-Linux CI passes Python 3.11, 3.12 and 3.13, including dependency scanning.
-The Python wheel builds and contains the project licence.
+On a fresh Raspberry Pi OS Lite 64-bit Trixie system, exact commit
+`f3bc11488e72b966676c0f3a1844ea218259ab90` passed Ruff, formatting, strict typing,
+installer shell syntax and all 114 tests with 93.79% coverage on Python 3.13.5.
+BlueZ 5.82, Bluetooth and clock synchronisation were healthy.
 
-On 8 September 2026 the operator verified migrated administrator authentication,
-physical probe readings on channels 1 and 2, 50% battery, MQTT connection and
-delivery on pitblu topics. Service availability was retained at QoS 1;
-physical temperatures were non-retained at QoS 1. Reboot recovery restored
-fresh readings with no service restarts. Bluetooth power and clock synchronisation
-reported true. A simultaneous device-display comparison has not been confirmed
-for this candidate. See docs/physical-acceptance.md.
+Native install, dedicated-account permissions, systemd hardening, authentication,
+request limits and journal secret checks passed. REST-only V202 onboarding, two
+available probes at 0.0°C display delta, absent channels 3 and 4, 50% battery and
+battery cadence passed. SSE, least-privilege MQTT, QoS/retention payload behaviour,
+API-only mode, explicit controls, restart and reboot recovery, protected backup,
+same-version upgrade/rollback and non-destructive uninstall/restoration passed.
+See `docs/clean-pi-acceptance.md` for the sanitised record.
+
+The Linux/aarch64 Python 3.13.5 dependency inventory was generated and sanitised on
+the clean Pi but is not committed. CI remains the normal source of per-Python
+inventory and dependency-audit artefacts.
 
 ## Deployment
 
 Service/account: pitblu-core. Commands: pitblu-api, pitblu-state,
-pitblu-ble-proof and pitblu-v202-check. Python package: pitblu_core.
-Environment prefix: PITBLU_. Managed paths: /opt/pitblu-core,
-/etc/pitblu-core and /var/lib/pitblu-core. Backups: /var/backups/pitblu-core.
-MQTT publisher identity: pitblu-core; base topic: pitblu.
-API uses loopback port 8080 and the operator's original administrator token.
-Do not hard-code personal secrets or infer current PIDs.
+pitblu-ble-proof and pitblu-v202-check. Python package: pitblu_core. Environment
+prefix: PITBLU_. Managed paths: `/opt/pitblu-core`, `/etc/pitblu-core` and
+`/var/lib/pitblu-core`. Backups: `/var/backups/pitblu-core`. MQTT base topic:
+pitblu. The API uses loopback port 8080 by default.
 
-The operator retains disabled predecessor files and protected rollback backups.
-Cleanup is deferred and is not a prerequisite for progression.
-The operator is considering imaging and reusing the existing card for clean-Pi
-testing. They will handle the backup. Do not format or shut down anything without
-their explicit instruction; source readiness checks do not prove image restorability.
+GitHub is the release source of truth. Clone with a least-privilege authenticated
+identity, check out the reviewed tag or full commit, verify it, and install from the
+pitblu-core component. Never place GitHub or application credentials in commands,
+logs or source. Mosquitto and its clients are optional acceptance infrastructure,
+not gateway runtime prerequisites.
 
-## Remaining gates
+## Remaining work
 
-Finish the v0.9.0 documentation/security/provenance audit and clean-Pi acceptance.
-The owner authorised merging PR 8 into main on 8 September 2026. This authorises
-source integration, not a final release or waiver of physical acceptance. Never
-relabel migration on an existing OS as a clean installation. Do not tag a final
-release until its required evidence is recorded.
+Before publishing v0.9.0, the release pull request must pass supported-Python CI and
+final review, then receive explicit owner approval to merge. Do not tag or create a
+GitHub release without that approval. After the merged release and tag exist, run
+the requested final Pi deployment and focused smoke validation from that exact tag.
 
-Before v1.0.0, run the complete physical acceptance suite and at least 16 hours
-of monitored physical operation, recording freshness, MQTT receipt, gaps and
-automatic recovery. An idle running process is not a soak-test pass.
+For v1.0.0, run the complete four-inserted-probe physical acceptance suite and at
+least 16 hours of monitored physical operation, recording freshness, MQTT receipt,
+gaps and automatic recovery. An idle running process is not a soak-test pass. These
+gates are not part of v0.9.0 and remain pending.
 
 ## Development commands
 
-Run from pitblu-core/ with its development virtual environment:
+Run from pitblu-core with its development virtual environment:
+
+```text
 python -m ruff check .
 python -m ruff format --check .
 python -m mypy src tests
 python -m pytest
 bash -n deploy/manage.sh
+```
 
-Read docs/development.md for setup and docs/frontend-integration.md for every
+Read `docs/development.md` for setup and `docs/frontend-integration.md` for every
 REST resource, setting, SSE event and MQTT payload. pitblu-web is not implemented.

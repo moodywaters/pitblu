@@ -1,6 +1,6 @@
 # Native installation
 
-These paths describe the current v0.9.0rc1 candidate.
+These paths describe the v0.9.0 release.
 Read [migration](rename-migration.md) before changing an existing deployment.
 
 Target: Raspberry Pi OS Trixie, 64-bit ARM, Python 3.13, systemd and BlueZ. Docker is not used.

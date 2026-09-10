@@ -4,7 +4,8 @@ These commands assume the new application identity is already installed. A deplo
 with a different identity requires [controlled migration](rename-migration.md) first.
 Run source upgrade commands from the repository's `pitblu-core/` directory.
 
-The current candidate's migration and reboot recovery passed on the Pi. Never upgrade during a cook.
+The v0.9.0 clean-install, upgrade, rollback and reboot-recovery checks passed on the Pi.
+Never upgrade during a cook.
 All operations use a deployment lock and fixed production roots. The home-directory test installation
 is not modified. Old releases and backups are retained; there is no automatic garbage collection.
 

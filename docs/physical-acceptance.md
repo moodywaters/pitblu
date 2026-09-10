@@ -1,7 +1,8 @@
 # Physical acceptance and remaining release gates
 
-Current candidate: v0.9.0rc1, revision f3bc114. The full v1.0.0 physical suite and
-minimum 16-hour soak are **not complete**.
+The v0.9.0 runtime baseline was accepted as v0.9.0rc1 at revision f3bc114. The
+final v0.9.0 preparation changes metadata and documentation only. The full v1.0.0
+physical suite and minimum 16-hour soak are **not complete**.
 
 ## Clean-Pi v0.9.0 evidence: recorded 10 September 2026
 

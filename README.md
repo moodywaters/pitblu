@@ -20,10 +20,10 @@ deployment tools live in `pitblu-core/`. There is no implemented web application
 
 ## Release status
 
-**Current candidate: v0.9.0rc1.** This is pre-release software, not a final v0.9.0
-release. Clean-install validation and the full physical acceptance suite, including
-a minimum 16-hour soak, remain release requirements. See the
-[acceptance checklist](docs/physical-acceptance.md) for verified results and open gates.
+**Current release: v0.9.0.** Clean-Pi installation and the v0.9.0 acceptance gates
+passed. The full four-probe physical suite and minimum 16-hour soak remain v1.0.0
+requirements. See the [acceptance checklist](docs/physical-acceptance.md) for
+verified results and open gates, and the [changelog](CHANGELOG.md) for version history.
 
 ## Requirements
 
@@ -75,4 +75,4 @@ private network configuration and database backups out of GitHub and support log
 distinguishes completed checks from outstanding gates. Active documentation covers v0.9.0 onward; earlier records remain in Git history.
 
 Original code is under the [MIT Licence](LICENSE). See [third-party notices](THIRD_PARTY_NOTICES.md)
-and [provenance](docs/provenance.md). The v0.9.0 licence audit is not yet complete.
+and [provenance](docs/provenance.md). The v0.9.0 licence audit is complete.

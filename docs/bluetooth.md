@@ -1,6 +1,6 @@
 # Bluetooth protocol notes
 
-Current v0.9.0rc1 protocol and adapter behaviour. Retained protocol evidence and
+Current v0.9.0 protocol and adapter behaviour. Retained protocol evidence and
 third-party attribution are documented in [provenance](provenance.md).
 
 ## Confirmed protocol and remaining uncertainty

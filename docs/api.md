@@ -4,7 +4,7 @@ For a complete client-development handoff, see the
 [frontend and AI integration guide](frontend-integration.md), including request and
 response shapes, workflows, browser constraints and current implementation caveats.
 
-The v0.9.0rc1 candidate provides the administrative control plane and live telemetry stream. OpenAPI and interactive documentation
+The v0.9.0 release provides the administrative control plane and live telemetry stream. OpenAPI and interactive documentation
 are generated at `/openapi.json` and `/docs`. The package default listens only on loopback.
 
 ## Authentication and errors
