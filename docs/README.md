@@ -2,9 +2,11 @@
 
 ## Version and scope
 
-Current guides describe **v0.9.0rc1**, the installed candidate, not a final release.
-Clean-Pi acceptance is pending. The v1.0.0
-physical suite and minimum 16-hour soak are also pending.
+Current guides describe the v0.9.0 release candidate. Clean-Pi acceptance passed at
+the exact revision recorded in the acceptance document. Final release preparation
+and review remain pending. The v1.0.0 physical suite and minimum 16-hour soak are
+separate pending gates. `CHANGELOG.md` is the canonical human-readable version
+history; Git tags and releases are authoritative once published.
 
 ## For cooks
 

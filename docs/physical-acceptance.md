@@ -1,7 +1,17 @@
 # Physical acceptance and remaining release gates
 
-Current candidate: v0.9.0rc1, revision f7d3879. The full v1.0.0 physical suite and
+Current candidate: v0.9.0rc1, revision f3bc114. The full v1.0.0 physical suite and
 minimum 16-hour soak are **not complete**.
+
+## Clean-Pi v0.9.0 evidence: recorded 10 September 2026
+
+Clean installation at exact commit
+`f3bc11488e72b966676c0f3a1844ea218259ab90` passed on a fresh Raspberry Pi OS
+Lite 64-bit Trixie system. REST-only onboarding and connection, two available
+probe/display comparisons at 0.0°C delta, absent-probe state, battery cadence,
+SSE, MQTT security and payload behaviour, restart and reboot recovery, backup,
+same-version upgrade/rollback and non-destructive uninstall/restoration all passed.
+See the [clean-Pi record](clean-pi-acceptance.md) for the sanitised results.
 
 ## Candidate evidence: 8 September 2026
 
@@ -16,16 +26,15 @@ minimum 16-hour soak are **not complete**.
   Readiness returned 200; Bluetooth power and clock synchronisation reported true.
 - A verified protected backup was created after migration and reboot acceptance.
 
-These are operator-supplied results on the existing OS, not clean-Pi installation,
-four-inserted-probe acceptance, a comprehensive security audit or a 16-hour soak.
-Clean-Pi testing remains pending. Existing-card reimaging is an operator-controlled
-option only after a verified off-device backup; it has not been performed.
+These are historical operator-supplied results from the earlier existing-OS
+migration. They remain useful evidence but are superseded for the v0.9.0
+clean-install gate by the record above. Neither record constitutes four-inserted-
+probe acceptance, independent penetration testing or a 16-hour soak.
 
 ## v0.9.0 audit gates
 
-Follow the [current audit plan](v0.9.0-plan.md): security, documentation and
-provenance/licence reviews, plus clean-Pi installation. Agree a clean target with
-the operator; never reimage the working Pi or replace storage without approval.
+The clean-Pi gate passed. Follow the [current audit plan](v0.9.0-plan.md) for final
+documentation, provenance, CI and release review.
 
 ## v1.0.0 physical release checklist
 

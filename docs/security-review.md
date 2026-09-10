@@ -1,9 +1,8 @@
 # v0.9.0 security and correctness review
 
-Review date: 8 September 2026. Scope: source review and automated regression tests
-for the native gateway, against the v0.9.0rc1 implementation. This is an
+Review dates: 8-10 September 2026. Scope: source review, automated regression tests
+and clean installed-system checks against the v0.9.0rc1 implementation. This is an
 engineering review, not independent penetration testing or a security certification.
-No live Pi service was modified during the local review.
 
 ## Threat model
 
@@ -30,6 +29,22 @@ deployment. An authorised administrator can select an MQTT destination by design
 | Diagnostics | Bluetooth powered state and clock synchronisation are true/false/unknown, cached for 15 seconds. Unknown is not healthy. Readiness remains a broker-readiness check, not a guarantee of fresh probes. |
 | Deployment | Dedicated user, root-owned releases, private state/configuration, lock, exclusive backups and explicit rollback retained. Additional symlink rejection for the releases directory and managed database/configuration/unit files. Same-host backup/rollback, not an automated disaster-recovery mechanism. |
 | Dependencies | Local known-vulnerability query returned no advisories. Python-version/platform inventories and scans run in CI; licences/notice obligations are recorded separately. No external application source was copied or adapted. |
+
+## Clean installed-system evidence
+
+At exact commit `f3bc11488e72b966676c0f3a1844ea218259ab90`, clean-Pi
+acceptance confirmed the dedicated nologin account and Bluetooth-group membership,
+root ownership of installed code and configuration, private state and backup
+permissions, and the documented systemd restrictions. The service account could
+not modify installed code or root-owned configuration.
+
+Unauthenticated ready, OpenAPI, Swagger, ReDoc, status and configuration-schema
+requests returned 401 while health remained public. Authenticated access passed;
+oversized input returned 413 and authentication throttling returned 429. Local
+journal checks found neither the administrator token nor MQTT password. A
+loopback-only broker rejected anonymous access and a least-privilege subscriber
+could read but not publish. Full sanitised results are in
+[clean-Pi acceptance](clean-pi-acceptance.md).
 
 ## Intentional constraints, not hidden promises
 
@@ -59,9 +74,7 @@ Tests cover authentication/rotation, malformed tokens, request throttling/chunke
 size limits, SSE admission/release, PATCH semantics, CORS/authentication, cache
 headers/correlation, battery cadence/timestamps, safe host diagnostic output,
 configuration conflicts, stale readings, MQTT retry and deployment-state helpers.
-Run full lint/format/types/tests and Linux CI after the final edit; record results
-in the milestone plan. Review operating-system permissions and physical readings
-again on the clean Pi before completing v0.9.0.
-
-Clean-Pi acceptance requires an operator-provided fresh target. No clean install,
-new physical reading or final release approval is inferred from source tests.
+Run full lint, format, type, test and Linux CI checks after the final release edit.
+Clean-Pi installation, operating-system permissions and physical two-probe readings
+have passed. Final pull-request review remains required before v0.9.0 release
+approval. The v1.0.0 four-probe suite and 16-hour soak remain pending.

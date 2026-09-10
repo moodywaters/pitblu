@@ -33,8 +33,13 @@ aiomqtt installs Eclipse Paho MQTT Python 2.1.0 as its transport dependency. Pah
 `EPL-2.0 OR BSD-3-Clause`; this project relies on the BSD-3-Clause option. No aiomqtt or Paho source
 was copied or adapted.
 
-Dependency licences were reviewed from their project metadata or licence distributions. Transitive
-dependencies will be captured in a lock or installation manifest before a distributable release.
+Dependency licences were reviewed from their project metadata or licence distributions. For the
+v0.9.0 clean-Pi gate, the dependency inventory was generated on Linux/aarch64 with Python 3.13.5
+using `pitblu-core/scripts/dependency_inventory.py` after installing the pinned Hatchling 1.32.0
+build requirement. The valid JSON was checked for home and managed-state paths, authorisation
+values, bearer tokens and password strings; none were found. This resolved-environment output
+remains generated evidence rather than tracked source. CI produces and retains the normal
+inventories for every supported Python version.
 
 ## Direct physical protocol evidence
 
