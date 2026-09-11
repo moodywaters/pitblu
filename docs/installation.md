@@ -1,6 +1,6 @@
 # Native installation
 
-These paths describe the v0.9.0 release.
+The guided commands described here are v1.0 work built on the proven v0.9.0 native deployment.
 Read [migration](rename-migration.md) before changing an existing deployment.
 
 Target: Raspberry Pi OS Trixie, 64-bit ARM, Python 3.13, systemd and BlueZ. Docker is not used.
@@ -15,12 +15,13 @@ If migrating from an experimental setup, preserve its files as a separate fallba
 and stop its process before connecting the managed service. Never run two instances
 against the same thermometer or terminate arbitrary Python processes.
 
-Install core and administrative prerequisites on the Pi. Git is required when the
-source is obtained directly from GitHub:
+Install Git to obtain the reviewed source from GitHub. The guided installer checks and classifies
+all other packages, explains missing required dependencies and asks before installing them. The
+default response is No.
 
 ```bash
 sudo apt-get update
-sudo apt-get install git python3-venv bluez util-linux passwd curl
+sudo apt-get install git
 ```
 
 Clone the private repository using an authenticated, least-privilege GitHub identity.
@@ -34,19 +35,23 @@ git checkout --detach REPLACE_WITH_REVIEWED_TAG_OR_FULL_COMMIT
 git rev-parse HEAD
 git status --short
 cd pitblu-core
-sudo bash deploy/manage.sh install
+./pitblu-core-install
 ```
 
 Do not place GitHub tokens in command arguments or shell history. A source archive
 from the same reviewed GitHub revision remains valid for offline recovery, but
 GitHub is the normal source of release truth.
 
-Mosquitto and `mosquitto-clients` are optional broker and acceptance-test packages,
+Use `./pitblu-core-install check` for a non-mutating prerequisite report. Required packages are
+labelled runtime/install or deployment. `curl` is optional and `mosquitto-clients` is
+acceptance/test-only. Mosquitto and `mosquitto-clients` are optional broker and acceptance packages,
 not pitblu-core runtime prerequisites. The gateway can operate with MQTT disabled.
 When MQTT is required, provision an authenticated local, remote or hosted broker
 separately.
 
-The installer creates a system account `pitblu-core` with no login shell, adds it to the existing
+The guided command remains unprivileged and explains each escalation. It delegates the actual
+deployment to `deploy/manage.sh`, which creates a system account `pitblu-core` with no login shell,
+adds it to the existing
 `bluetooth` group, creates a new permanent virtual environment in a versioned release directory,
 and installs the package there. It requires package-index access. Application source is trusted
 code: review it before running the installer as root. It does not modify Mosquitto configuration.
@@ -57,7 +62,8 @@ hash. On ordinary service startup, a missing token or disabled authentication ca
 never token generation into journald. Initial settings are loopback, port 8080, token authentication,
 physical BLE and MQTT disabled. Configure MQTT through the API after onboarding.
 
-The installer leaves the service stopped. Start explicitly when ready:
+The installer offers to enable/start the service and then verifies service state, installed version,
+health and Bluetooth. If starting was declined, start explicitly when ready:
 
 ```bash
 sudo systemctl enable --now pitblu-core
@@ -65,8 +71,11 @@ systemctl is-active pitblu-core
 curl --fail http://127.0.0.1:8080/health
 ```
 
-The service deliberately does not connect to unregistered devices. Register the iGrill through the
-authenticated API using the [onboarding workflow](frontend-integration.md#4-discovery-registration-and-connection-workflow).
+The service deliberately does not connect to unregistered devices. Run `pitblu-core-config igrill`
+or use the guided menu to register it. `pitblu-core-config check` is the canonical verification and
+support command. The low-level REST
+[onboarding workflow](frontend-integration.md#4-discovery-registration-and-connection-workflow)
+remains available to integration developers.
 Existing databases are not imported automatically. Configure secrets through the
 write-only API over loopback. Token rotation is
 authenticated through the existing API. A lost initial token requires a planned local recovery,
@@ -95,6 +104,7 @@ polkit exceptions without diagnosing an actual permission failure.
 ## Operation
 
 ```bash
+pitblu-core-config check
 systemctl status pitblu-core --no-pager
 sudo journalctl -u pitblu-core -n 50 --no-pager
 sudo systemctl restart pitblu-core
@@ -109,3 +119,8 @@ terminates remaining processes. No automatic upgrades occur.
 For trusted-LAN use, explicitly configure bind `0.0.0.0` with token authentication; plain HTTP is
 trusted-LAN only. Never expose the API directly to the internet. The installer makes no firewall
 changes. Validate reboot startup, BLE recovery and MQTT reception before relying on the service.
+
+For normal installation and configuration examples, rerun and recovery guidance, dependency groups
+and credential handling, see [guided terminal tools](terminal-tools.md). Direct
+`sudo bash deploy/manage.sh ACTION` commands are the expert/recovery interface, not the normal first
+installation path.

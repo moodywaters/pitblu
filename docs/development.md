@@ -37,6 +37,12 @@ device-level behaviour. Tests may configure one to four probes, rising, falling 
 probe presence, battery percentage, stale snapshots and connection availability without real-time
 sleeps. Connection backoff accepts an injected random source so boundary values are deterministic.
 
+Terminal-tool tests use injected input/output, command runners and loopback API clients. Keep
+presentation in `terminal.py`, host/package checks in `system_checks.py`, HTTP details in
+`api_client.py`, and workflow orchestration in the two CLI modules. Never add a token or password
+argument for test convenience. New privileged commands must be fixed argument arrays and require a
+specific user confirmation. See [ADR 0004](adr/0004-guided-terminal-tools.md).
+
 The fixture under `tests/fixtures/v202/` contains only protocol payloads and manual display values
 from directly observed protocol evidence. It must never contain a Bluetooth address or private network data.
 The manual `pitblu-v202-check` command exercises the production adapter rather than the simulator.

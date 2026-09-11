@@ -4,18 +4,18 @@ Current release: v0.9.0. For plain-English help, start with the
 [cook's quick start](bbq-quick-start.md). These checks concern the installed service,
 not an old milestone proof process.
 
-## Start with observation
+## Start with the supported check
 
-On the Pi, inspect service status without changing anything:
+On the Pi, run:
 
 ```bash
-systemctl status pitblu-core --no-pager
-curl --fail --silent --show-error http://127.0.0.1:8080/health
+pitblu-core-config check
 ```
 
-The URL assumes the standard local port. Liveness is not proof of a connected
-thermometer. Use the authenticated reading check in the quick start or the
-[integration guide](frontend-integration.md) to inspect device/probe/broker state.
+It asks for the administrator token without echo and reports every normal support layer without
+showing secrets or Bluetooth addresses. If the port changed, use
+`pitblu-core-config --port PORT check`. Low-level service status and logs belong to safe escalation,
+after this report.
 
 ## Common symptoms
 
@@ -42,6 +42,7 @@ Such actions can interrupt a cook and erase useful evidence.
 Inspect recent service logs locally if needed:
 
 ```bash
+systemctl status pitblu-core --no-pager
 sudo journalctl -u pitblu-core -n 50 --no-pager
 ```
 
