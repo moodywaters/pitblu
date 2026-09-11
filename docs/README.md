@@ -14,6 +14,7 @@ readable version history; Git tags and releases are authoritative once published
 
 ## Setup and operation
 
+- [Guided terminal tools](terminal-tools.md): normal install, configuration and support workflow
 - [Installation](installation.md)
 - [Fresh-OS rebuild checklist](rebuild-checklist.md)
 - [Backup, upgrade, rollback and uninstall](upgrade-and-rollback.md)
@@ -38,7 +39,8 @@ readable version history; Git tags and releases are authoritative once published
 - [Provenance](provenance.md), [third-party notices](../THIRD_PARTY_NOTICES.md), [licence](../LICENSE)
 - Decisions: [hardware-first](adr/0001-incremental-hardware-first.md),
   [adapter boundary](adr/0002-device-adapter-boundary.md),
-  [REST/configuration/authentication](adr/0003-rest-configuration-and-auth.md)
+  [REST/configuration/authentication](adr/0003-rest-configuration-and-auth.md) and
+  [guided terminal boundaries](adr/0004-guided-terminal-tools.md)
 - [Target specification](../pitblu-core-project-plan.md) and
   [AI continuation record](../pitblu-core-codex-prompt.md): development context,
   not end-user instructions. Unimplemented requirements remain targets.

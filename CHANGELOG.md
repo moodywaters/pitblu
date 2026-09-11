@@ -3,6 +3,14 @@
 This file is the canonical human-readable version history. Git tags and GitHub
 releases are authoritative for published revisions.
 
+## Unreleased
+
+- Added guided, unprivileged `pitblu-core-install` and local-only `pitblu-core-config` terminal
+  workflows for v1.0 preparation, including the canonical `pitblu-core-config check` support report.
+- Preserved the v0.9 runtime/security boundaries by reusing the native deployment script, REST
+  validation/ETag contract, opaque discovery IDs and write-only MQTT secret endpoint.
+- Physical four-probe, recovery/Last Will and 16-hour soak acceptance remain pending v1.0 gates.
+
 ## [0.9.0] - 2026-09-10
 
 - Added the native Raspberry Pi gateway with REST administration, SSE events and

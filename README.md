@@ -32,7 +32,8 @@ verified results and open gates, and the [changelog](CHANGELOG.md) for version h
 - Weber iGrill V202 and compatible probes; one active thermometer at a time.
 - Optional MQTT broker. No containers or built-in web dashboard are required.
 
-Start with [native installation](docs/installation.md). For a fresh OS setup,
+Start with the [guided terminal workflow](docs/terminal-tools.md) and
+[native installation](docs/installation.md). For a fresh OS setup,
 use the [rebuild checklist](docs/rebuild-checklist.md).
 
 ## Start here
@@ -52,7 +53,7 @@ use the [rebuild checklist](docs/rebuild-checklist.md).
 - Versioned REST, asynchronous operations, token authentication and rotation.
 - Typed, version-checked configuration and write-only MQTT password management.
 - Live SSE and MQTT JSON telemetry, QoS 1, retained availability and Last Will.
-- Native installer, dedicated account, hardened systemd supervision, protected
+- Guided installer/configuration/check commands, dedicated account, hardened systemd supervision, protected
   backups, upgrade, rollback and non-destructive uninstall.
 - A simulator and hardware-independent tests on Python 3.11, 3.12 and 3.13.
 

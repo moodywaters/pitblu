@@ -36,83 +36,19 @@ interrupt monitoring.
 
 ## Check readings now, without a web dashboard
 
-If you are comfortable using the Pi terminal, the optional block below only reads
-status. Otherwise, ask your setup helper to run it. Use the Raspberry Pi terminal
-or your SSH connection to it, not Windows PowerShell.
-
-Copy the whole block at once. Enter your administrator token when asked; nothing
-will appear as you type. That is normal. It uses the standard Python installed on
-the Pi and does not install or change anything.
+Use the Raspberry Pi terminal or your SSH connection to it and run the supported check:
 
 ```bash
-python3 - <<'PY'
-import getpass
-import json
-import urllib.error
-import urllib.parse
-import urllib.request
-
-token = getpass.getpass("Administrator token (typing is hidden): ")
-base = "http://127.0.0.1:8080/api/v1"
-
-def read(path):
-    request = urllib.request.Request(
-        base + path, headers={"Authorization": "Bearer " + token}
-    )
-    with urllib.request.urlopen(request, timeout=15) as response:
-        return json.load(response)
-
-try:
-    status = read("/status")
-    print("Pi helper is responding. Version:", status["version"])
-    devices = read("/devices")
-    if not devices:
-        print("No thermometer registered. Ask your setup helper to add yours.")
-    for device in devices:
-        print("\nThermometer:", device.get("friendlyName") or device["name"])
-        print("Connection:", device["observedState"])
-        device_id = urllib.parse.quote(device["deviceId"], safe="")
-        probes = read("/devices/" + device_id + "/probes")
-        if not probes:
-            print("No probe readings received yet.")
-        for probe in probes:
-            label = "Probe " + str(probe["probe"])
-            if probe["source"] != "physical":
-                print(label + ": TEST DATA, not the thermometer")
-            elif not probe["fresh"] or not probe["available"]:
-                print(label + ": no current reading")
-            elif not probe["present"]:
-                print(label + ": not plugged in")
-            elif probe["temperatureC"] is None:
-                print(label + ": no valid temperature")
-            else:
-                print(label + ": " + str(probe["temperatureC"]) + " C")
-                print("  Measured at (UTC):", probe["observedAt"])
-        battery = read("/devices/" + device_id + "/battery")
-        if battery and battery["source"] != "physical":
-            print("Battery: TEST DATA")
-        elif (battery and battery["fresh"] and battery["available"]
-              and battery["percentage"] is not None):
-            print("Battery:", str(battery["percentage"]) + "%")
-        else:
-            print("Battery: no current reading")
-    print("\nThis is a one-time check, not a live display or alarm.")
-except urllib.error.HTTPError as error:
-    if error.code == 401:
-        print("Access key not accepted. Check the saved administrator token.")
-    else:
-        print("The helper could not complete the check. HTTP status:", error.code)
-except (urllib.error.URLError, TimeoutError):
-    print("Cannot reach the helper. Ask your setup helper to check the Pi service.")
-except (KeyError, ValueError, TypeError):
-    print("The response was not recognised. Ask your setup helper to check the version.")
-PY
+pitblu-core-config check
 ```
 
-This assumes the standard local address and port. If your installation was changed,
-ask your setup helper to adjust the check. Run it again to see a new snapshot; the
-printed numbers do not update by themselves. UTC timestamps can differ from your
-local clock by the daylight-saving offset.
+Enter your administrator token when asked; nothing appears as you type. That is normal. The check
+does not change settings. It reports the service version and health, thermometer connection, fresh
+probe readings, battery and optional MQTT state without showing tokens or Bluetooth addresses.
+
+This assumes the standard local port. If it was changed, use
+`pitblu-core-config --port PORT check`. Run it again for a new snapshot; the printed numbers do not
+update by themselves. The complete terminal workflow is in [guided terminal tools](terminal-tools.md).
 
 ## What does the result mean?
 

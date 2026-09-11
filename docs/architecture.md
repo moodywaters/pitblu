@@ -51,3 +51,26 @@ SQLite. MQTT independently retries and exposes safe status. Shutdown cancels wor
 desired state and flushes offline retained publications. Native systemd deployment provides
 dedicated-account execution and automatic process restart. See [installation](installation.md)
 and the [integration guide](frontend-integration.md) for current constraints.
+
+## Guided terminal boundary
+
+`pitblu-core-install` is an unprivileged orchestration layer over the proven deployment script. It
+classifies the host and Debian packages, obtains explicit consent before fixed `sudo apt-get`
+commands, and invokes `deploy/manage.sh` without a shell command string or captured output. This
+keeps the one-time bootstrap token on the operator's TTY. The source-checkout launcher supplies the
+trusted source root before a package exists; installed launchers follow the managed `current`
+release.
+
+`pitblu-core-config` is also unprivileged and local-only. It talks to `127.0.0.1` through the public
+REST contract rather than reading SQLite or configuration files. Mutations follow GET with ETag,
+whole-model validation, PATCH, and the separate write-only secret endpoint where needed. Only a
+confirmed service restart crosses the privilege boundary. Shared terminal code owns sanitisation,
+hidden input, TTY detection, optional colour and PASS/WARN/FAIL presentation; it contains no
+gateway business rules.
+
+iGrill onboarding uses the existing scan operation, opaque discovery ID, registration and device
+operation resources. MQTT and API prompts map only to existing typed settings. Add diagnostics by
+returning `CheckResult` values and add configuration sections by extending the service schema first,
+then presenting only that supported model in the CLI. Unit tests inject terminal input, host command
+results and API clients. Final Bluetooth, restart/reboot, broker delivery and endurance behaviour
+still require the separate Pi/iGrill acceptance gates.

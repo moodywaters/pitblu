@@ -1,6 +1,8 @@
 # Configuration
 
-The [frontend integration guide](frontend-integration.md) lists every setting and
+Use `pitblu-core-config` for supported local terminal configuration and
+`pitblu-core-config check` for diagnostics. The [guided terminal guide](terminal-tools.md) explains
+the safe workflow. The [frontend integration guide](frontend-integration.md) lists every setting and
 explains configuration-editor workflows and saved-versus-running behaviour.
 
 The v0.9.0 release exposes typed application settings through REST. Precedence is:

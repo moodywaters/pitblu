@@ -2,7 +2,9 @@
 
 These commands assume the new application identity is already installed. A deployment
 with a different identity requires [controlled migration](rename-migration.md) first.
-Run source upgrade commands from the repository's `pitblu-core/` directory.
+Run the normal guided upgrade from a reviewed GitHub checkout with
+`./pitblu-core-install upgrade`. Expert/recovery commands below run from the repository's
+`pitblu-core/` directory.
 
 The v0.9.0 clean-install, upgrade, rollback and reboot-recovery checks passed on the Pi.
 Never upgrade during a cook.
@@ -65,3 +67,8 @@ The account, code, configuration, state and backups remain. No data purge is pro
 the service, install the saved unit back to `/etc/systemd/system/pitblu-core.service`, reload
 systemd and enable/start explicitly. If installation fails part-way, inspect retained paths before
 retrying; do not recursively delete production directories.
+
+The uninstall removes `/usr/local/bin/pitblu-core-config`, because there is no running service to
+configure. It preserves `/usr/local/bin/pitblu-core-install` as a recovery entry point. Obtain a
+fresh reviewed GitHub checkout before reinstalling; the preserved command does not turn retained
+code into a new source release.
