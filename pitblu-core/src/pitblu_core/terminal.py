@@ -113,3 +113,17 @@ class Terminal:
         """Read a value without echoing it; callers must not retain it unnecessarily."""
 
         return self._secret(f"{safe_text(prompt)}: ")
+
+    def choose(self, prompt: str, options: Sequence[str]) -> int:
+        """Display a numbered choice and return its zero-based position."""
+
+        if not options:
+            raise ValueError("at least one option is required")
+        self.write(prompt)
+        for number, option in enumerate(options, start=1):
+            self.write(f"  {number}. {option}")
+        while True:
+            answer = self._input("Choose an option: ").strip()
+            if answer.isdecimal() and 1 <= int(answer) <= len(options):
+                return int(answer) - 1
+            self.write(f"Enter a number from 1 to {len(options)}.")

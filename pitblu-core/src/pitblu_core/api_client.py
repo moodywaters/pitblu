@@ -91,7 +91,7 @@ class ApiClient:
     def post(self, path: str, body: Mapping[str, Any] | None = None) -> ApiResponse:
         return self.request("POST", path, body=body)
 
-    def patch(self, path: str, body: Mapping[str, Any], *, etag: str) -> ApiResponse:
+    def patch(self, path: str, body: Mapping[str, Any], *, etag: str | None = None) -> ApiResponse:
         return self.request("PATCH", path, body=body, etag=etag)
 
     def put(self, path: str, body: Mapping[str, Any]) -> ApiResponse:

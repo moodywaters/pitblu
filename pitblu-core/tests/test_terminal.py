@@ -53,3 +53,12 @@ def test_secret_uses_hidden_input_function() -> None:
 
     assert terminal.secret("Administrator token") == "secret"
     assert prompts == ["Administrator token: "]
+
+
+def test_choose_numbers_options_and_reprompts() -> None:
+    answers = iter(["0", "2"])
+    output = StringIO()
+    terminal = Terminal(output_stream=output, input_fn=lambda _prompt: next(answers))
+
+    assert terminal.choose("Select", ["one", "two"]) == 1
+    assert "Enter a number from 1 to 2." in output.getvalue()
