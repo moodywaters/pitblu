@@ -38,11 +38,14 @@ validate_release() {
 }
 
 install_launcher_link() {
-    local path=$1 target=$2 resolved
+    local path=$1 target=$2 resolved launcher_name
+    launcher_name=${target##*/}
     if [[ -e "$path" || -L "$path" ]]; then
         resolved=$(realpath -e "$path" 2>/dev/null || true)
-        [[ "$resolved" == "$app/releases/"*/venv/bin/pitblu-core-* ]] || \
-            fail "Refusing unrelated launcher: $path"
+        case "$resolved" in
+            "$app/releases/"*/venv/bin/"$launcher_name") ;;
+            *) fail "Refusing unrelated launcher: $path" ;;
+        esac
     fi
     ln -sfn "$target" "$path"
 }

@@ -17,17 +17,26 @@ from pitblu_core.terminal import CheckResult, ResultLevel
 class Dependency:
     package: str
     purpose: str
+    category: str
+    required: bool = True
 
 
 DEPENDENCIES = (
-    Dependency("python3", "Python runtime"),
-    Dependency("python3-venv", "isolated Python environment"),
-    Dependency("bluez", "Bluetooth tools and service"),
-    Dependency("systemd", "service management"),
-    Dependency("util-linux", "deployment locking and service-account commands"),
-    Dependency("passwd", "dedicated service account"),
-    Dependency("git", "GitHub source checkout and updates"),
-    Dependency("ca-certificates", "verified HTTPS connections"),
+    Dependency("python3", "Python runtime", "runtime/install"),
+    Dependency("python3-venv", "isolated Python environment", "runtime/install"),
+    Dependency("bluez", "Bluetooth tools and service", "runtime/install"),
+    Dependency("systemd", "service management", "deployment"),
+    Dependency("util-linux", "deployment locking and service-account commands", "deployment"),
+    Dependency("passwd", "dedicated service account", "deployment"),
+    Dependency("git", "GitHub source checkout and updates", "runtime/install"),
+    Dependency("ca-certificates", "verified HTTPS connections", "runtime/install"),
+    Dependency("curl", "optional manual HTTP checks", "optional", required=False),
+    Dependency(
+        "mosquitto-clients",
+        "optional MQTT acceptance checks",
+        "acceptance/test-only",
+        required=False,
+    ),
 )
 
 
@@ -141,14 +150,20 @@ def service_checks(runner: CommandRunner | None = None) -> list[CheckResult]:
     else:
         checks.append(CheckResult(ResultLevel.FAIL, "Service", "not active"))
 
+    checks.append(bluetooth_check(command))
+    return checks
+
+
+def bluetooth_check(runner: CommandRunner | None = None) -> CheckResult:
+    """Check controller availability without exposing controller identifiers."""
+
+    command = runner or CommandRunner()
     bluetooth = command.run(("bluetoothctl", "--timeout", "2", "show"), timeout=5)
     if bluetooth.returncode != 0:
-        checks.append(CheckResult(ResultLevel.WARN, "Bluetooth", "controller status unavailable"))
-    elif any(line.strip() == "Powered: yes" for line in bluetooth.stdout.splitlines()):
-        checks.append(CheckResult(ResultLevel.PASS, "Bluetooth", "controller powered"))
-    else:
-        checks.append(CheckResult(ResultLevel.FAIL, "Bluetooth", "controller is not powered"))
-    return checks
+        return CheckResult(ResultLevel.WARN, "Bluetooth", "controller status unavailable")
+    if any(line.strip() == "Powered: yes" for line in bluetooth.stdout.splitlines()):
+        return CheckResult(ResultLevel.PASS, "Bluetooth", "controller powered")
+    return CheckResult(ResultLevel.FAIL, "Bluetooth", "controller is not powered")
 
 
 def command_available(name: str) -> bool:
@@ -169,10 +184,13 @@ def dependency_checks(
         checks.append(
             CheckResult(
                 ResultLevel.PASS if installed else ResultLevel.WARN,
-                f"Package {dependency.package}",
-                dependency.purpose if installed else f"missing: {dependency.purpose}",
+                f"Package {dependency.package} [{dependency.category}]",
+                dependency.purpose
+                if installed
+                else f"missing: {dependency.purpose}"
+                + ("" if dependency.required else " (not required for normal operation)"),
             )
         )
-        if not installed:
+        if not installed and dependency.required:
             missing.append(dependency)
     return checks, missing

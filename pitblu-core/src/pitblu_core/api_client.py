@@ -116,6 +116,22 @@ class ApiClient:
                 self._sleep(interval)
         raise ApiError("The local operation did not finish before the timeout")
 
+    def wait_for_health(self, *, attempts: int = 15, interval: float = 1.0) -> ApiResponse:
+        """Wait briefly for a newly started local service to answer its liveness endpoint."""
+
+        last_error: ApiError | None = None
+        for attempt in range(attempts):
+            try:
+                response = self.get("/health", authenticated=False)
+                if isinstance(response.data, dict) and response.data.get("status") == "ok":
+                    return response
+                last_error = ApiError("The local service returned an unexpected health response")
+            except ApiError as exc:
+                last_error = exc
+            if attempt + 1 < attempts:
+                self._sleep(interval)
+        raise last_error or ApiError("The local service did not become healthy")
+
     @staticmethod
     def _http_error(exc: HTTPError) -> ApiError:
         code = None

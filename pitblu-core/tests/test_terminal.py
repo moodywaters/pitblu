@@ -49,7 +49,12 @@ def test_confirm_defaults_to_no_and_reprompts() -> None:
 
 def test_secret_uses_hidden_input_function() -> None:
     prompts: list[str] = []
-    terminal = Terminal(secret_fn=lambda prompt: prompts.append(prompt) or "secret")
+
+    def read_secret(prompt: str) -> str:
+        prompts.append(prompt)
+        return "secret"
+
+    terminal = Terminal(secret_fn=read_secret)
 
     assert terminal.secret("Administrator token") == "secret"
     assert prompts == ["Administrator token: "]

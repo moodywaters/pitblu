@@ -94,3 +94,41 @@ def test_wait_for_operation_polls_to_completion() -> None:
 
     assert response.data["status"] == "succeeded"
     assert sleeps == [0.25]
+
+
+def test_client_rejects_invalid_ports_and_paths() -> None:
+    with pytest.raises(ValueError, match="port"):
+        ApiClient(port=0)
+    with pytest.raises(ValueError, match="paths"):
+        ApiClient().get("health")
+
+
+def test_operation_timeout_is_bounded() -> None:
+    client = ApiClient(opener=lambda *_args, **_kwargs: FakeResponse({"status": "running"}))
+
+    with pytest.raises(ApiError, match="did not finish"):
+        client.wait_for_operation("operation", attempts=1)
+
+
+def test_convenience_methods_use_expected_http_verbs() -> None:
+    methods: list[str] = []
+
+    def open_request(request: object, *, timeout: float) -> FakeResponse:
+        methods.append(request.get_method())  # type: ignore[attr-defined]
+        return FakeResponse({})
+
+    client = ApiClient(opener=open_request)
+    client.post("/one", {})
+    client.put("/two", {})
+    client.delete("/three")
+
+    assert methods == ["POST", "PUT", "DELETE"]
+
+
+def test_health_wait_retries_until_service_is_ready() -> None:
+    responses = iter([FakeResponse({"status": "starting"}), FakeResponse({"status": "ok"})])
+    sleeps: list[float] = []
+    client = ApiClient(opener=lambda *_args, **_kwargs: next(responses), sleep=sleeps.append)
+
+    assert client.wait_for_health(interval=0.1).data == {"status": "ok"}
+    assert sleeps == [0.1]

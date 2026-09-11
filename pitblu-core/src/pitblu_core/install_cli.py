@@ -7,12 +7,12 @@ import os
 import subprocess
 from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import Protocol
 
 from pitblu_core.api_client import ApiClient, ApiError
 from pitblu_core.system_checks import (
     CommandRunner,
     Dependency,
+    bluetooth_check,
     dependency_checks,
     platform_checks,
     service_checks,
@@ -20,10 +20,6 @@ from pitblu_core.system_checks import (
 from pitblu_core.terminal import CheckResult, ResultLevel, Terminal
 
 _EFFECTIVE_UID: Callable[[], int] | None = getattr(os, "geteuid", None)
-
-
-class ForegroundExecutor(Protocol):
-    def __call__(self, arguments: Sequence[str]) -> int: ...
 
 
 def execute_foreground(arguments: Sequence[str]) -> int:
@@ -44,7 +40,7 @@ class InstallApplication:
         source_root: Path | None,
         terminal: Terminal | None = None,
         command_runner: CommandRunner | None = None,
-        foreground: ForegroundExecutor = execute_foreground,
+        foreground: Callable[[Sequence[str]], int] = execute_foreground,
         deployment_root: Path = Path("/opt/pitblu-core"),
         unit_path: Path = Path("/etc/systemd/system/pitblu-core.service"),
         effective_uid: Callable[[], int] | None = _EFFECTIVE_UID,
@@ -65,7 +61,7 @@ class InstallApplication:
         self.terminal.heading("pitblu-core installation check")
         checks = platform_checks()
         dependencies, _missing = dependency_checks(self._commands)
-        level = self.terminal.results([*checks, *dependencies])
+        level = self.terminal.results([*checks, *dependencies, bluetooth_check(self._commands)])
         return 1 if level is ResultLevel.FAIL else 0
 
     def guided(self) -> int:
@@ -109,18 +105,35 @@ class InstallApplication:
         script = self._deployment_script()
         checks = platform_checks()
         dependencies, missing = dependency_checks(self._commands)
-        level = self.terminal.results([*checks, *dependencies])
+        level = self.terminal.results([*checks, *dependencies, bluetooth_check(self._commands)])
         if level is ResultLevel.FAIL:
             return 1
         if missing and not self._install_dependencies(missing):
             self.terminal.write("Dependencies were not installed. No deployment changes were made.")
             return 1
+        if missing:
+            repeated, still_missing = dependency_checks(self._commands)
+            self.terminal.heading("Dependency recheck")
+            self.terminal.results(repeated)
+            if still_missing:
+                self.terminal.result(
+                    CheckResult(
+                        ResultLevel.FAIL,
+                        "Dependencies",
+                        "required packages are still missing; deployment was not started",
+                    )
+                )
+                return 1
         if action == "install":
             self.terminal.heading("Administrator token")
             self.terminal.write(
                 "The administrator token will be shown once by the installer. Save it now in a "
                 "secure password manager; it cannot be displayed again."
             )
+        self.terminal.write(
+            "The next step uses sudo for the dedicated service account, protected application "
+            "directories, versioned installation and systemd service."
+        )
         if self._foreground(("sudo", "bash", str(script), action)) != 0:
             self.terminal.result(CheckResult(ResultLevel.FAIL, "Deployment", f"{action} failed"))
             return 1
@@ -169,16 +182,26 @@ class InstallApplication:
     def _post_install_check(self) -> int:
         self.terminal.heading("Post-install checks")
         checks = service_checks(self._commands)
-        try:
-            health = ApiClient().get("/health", authenticated=False)
-            healthy = isinstance(health.data, dict) and health.data.get("status") == "ok"
-            checks.append(
-                CheckResult(
-                    ResultLevel.PASS if healthy else ResultLevel.FAIL,
-                    "Local API",
-                    "healthy" if healthy else "unexpected response",
-                )
+        version = self._commands.run(
+            (
+                "/opt/pitblu-core/current/venv/bin/python",
+                "-c",
+                "from importlib.metadata import version; print(version('pitblu-core'))",
+            ),
+            timeout=10,
+        )
+        checks.append(
+            CheckResult(
+                ResultLevel.PASS
+                if version.returncode == 0 and bool(version.stdout)
+                else ResultLevel.FAIL,
+                "Installed version",
+                version.stdout if version.returncode == 0 and version.stdout else "unavailable",
             )
+        )
+        try:
+            ApiClient().wait_for_health()
+            checks.append(CheckResult(ResultLevel.PASS, "Local API", "healthy"))
         except ApiError as exc:
             checks.append(CheckResult(ResultLevel.FAIL, "Local API", str(exc)))
         return 1 if self.terminal.results(checks) is ResultLevel.FAIL else 0
@@ -205,3 +228,8 @@ def main(arguments: Sequence[str] | None = None, *, source_root: Path | None = N
     except ApiError as exc:
         application.terminal.result(CheckResult(ResultLevel.FAIL, "Installer", str(exc)))
         return 1
+    except KeyboardInterrupt:
+        application.terminal.write(
+            "\nInstallation cancelled. Review the messages above before retrying."
+        )
+        return 130

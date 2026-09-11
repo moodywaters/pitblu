@@ -5,6 +5,7 @@ from pathlib import Path
 from pitblu_core.system_checks import (
     DEPENDENCIES,
     CommandResult,
+    CommandRunner,
     dependency_checks,
     platform_checks,
     read_os_release,
@@ -90,7 +91,28 @@ def test_dependency_checks_report_fixed_missing_packages() -> None:
 
     assert [dependency.package for dependency in missing] == ["bluez"]
     assert (
-        next(result for result in results if result.name == "Package bluez").level
+        next(result for result in results if result.name.startswith("Package bluez ")).level
         is ResultLevel.WARN
     )
     assert all(command[:3] == ("dpkg-query", "-W", "-f=${Status}") for command in runner.commands)
+
+
+def test_command_runner_bounds_execution_failures() -> None:
+    def unavailable(*_args: object, **_kwargs: object) -> None:
+        raise OSError("not installed")
+
+    runner = CommandRunner(unavailable)  # type: ignore[arg-type]
+    assert runner.run(("missing",)).returncode == 127
+
+
+def test_missing_os_release_is_empty(tmp_path: Path) -> None:
+    assert read_os_release(tmp_path / "missing") == {}
+
+
+def test_service_failures_are_classified_without_raw_output() -> None:
+    runner = FakeRunner([CommandResult(1, "private detail"), CommandResult(1, "private detail")])
+
+    results = service_checks(runner)  # type: ignore[arg-type]
+
+    assert [result.level for result in results] == [ResultLevel.FAIL, ResultLevel.WARN]
+    assert all("private detail" not in result.detail for result in results)

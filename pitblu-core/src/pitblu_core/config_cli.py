@@ -180,7 +180,16 @@ class ConfigApplication:
             self.terminal.result(
                 CheckResult(ResultLevel.PASS, "MQTT", "configuration saved; QoS remains fixed at 1")
             )
-            return 0 if self._offer_restart() else 1
+            restarted = self._offer_restart(health_port=port)
+            if restarted is False:
+                return 1
+            if restarted is True:
+                mqtt_status = client.get("/api/v1/status").data
+                mqtt = mqtt_status.get("mqtt") if isinstance(mqtt_status, dict) else None
+                state = mqtt.get("state") if isinstance(mqtt, dict) else "unknown"
+                level = ResultLevel.PASS if state in {"connected", "disabled"} else ResultLevel.WARN
+                self.terminal.result(CheckResult(level, "MQTT verification", safe_text(state)))
+            return 0
         except ApiError as exc:
             self.terminal.result(CheckResult(ResultLevel.FAIL, "MQTT", str(exc)))
             return 1
@@ -228,12 +237,12 @@ class ConfigApplication:
                 self.terminal.write(
                     f"After restart, use pitblu-core-config --port {new_port} check."
                 )
-            return 0 if self._offer_restart() else 1
+            return 0 if self._offer_restart(health_port=new_port) is not False else 1
         except ApiError as exc:
             self.terminal.result(CheckResult(ResultLevel.FAIL, "API", str(exc)))
             return 1
 
-    def restart(self) -> int:
+    def restart(self, *, port: int = 8080) -> int:
         if not self.terminal.interactive:
             self.terminal.result(
                 CheckResult(ResultLevel.FAIL, "Restart", "run this command in a terminal")
@@ -247,6 +256,11 @@ class ConfigApplication:
         )
         if result.returncode != 0:
             self.terminal.result(CheckResult(ResultLevel.FAIL, "Restart", "systemctl failed"))
+            return 1
+        try:
+            self._client_factory(port=port).wait_for_health()
+        except ApiError as exc:
+            self.terminal.result(CheckResult(ResultLevel.FAIL, "API health", str(exc)))
             return 1
         self.terminal.result(CheckResult(ResultLevel.PASS, "Restart", "service restarted"))
         return 0
@@ -274,7 +288,7 @@ class ConfigApplication:
                 lambda: self.igrill(port=port),
                 lambda: self.mqtt(port=port),
                 lambda: self.api(port=port),
-                self.restart,
+                lambda: self.restart(port=port),
             ]
             handlers[selected]()
 
@@ -332,7 +346,7 @@ class ConfigApplication:
         operation_id = operation.get("operationId") if isinstance(operation, dict) else None
         if not isinstance(operation_id, str):
             raise ApiError("The local service did not return a scan operation")
-        completed = client.wait_for_operation(operation_id)
+        completed = client.wait_for_operation(operation_id, attempts=75)
         if not isinstance(completed.data, dict) or completed.data.get("status") != "succeeded":
             raise ApiError("The Bluetooth scan failed")
         scan = client.get(f"/api/v1/scans/{operation_id}").data
@@ -354,6 +368,7 @@ class ConfigApplication:
         if not isinstance(discovery_id, str):
             raise ApiError("The selected discovery result was invalid")
         friendly_name = self.terminal.ask("Friendly name (blank to keep device name)") or None
+        automatic_reconnection = self.terminal.confirm("Reconnect automatically?", default=True)
         connect = self.terminal.confirm("Connect now?", default=True)
         try:
             result = client.post(
@@ -361,7 +376,7 @@ class ConfigApplication:
                 {
                     "discoveryId": discovery_id,
                     "friendlyName": friendly_name,
-                    "automaticReconnection": True,
+                    "automaticReconnection": automatic_reconnection,
                     "connect": connect,
                 },
             ).data
@@ -374,7 +389,22 @@ class ConfigApplication:
         if connect and isinstance(result, dict) and isinstance(result.get("operation"), dict):
             connection_id = result["operation"].get("operationId")
             if isinstance(connection_id, str):
-                client.wait_for_operation(connection_id)
+                connected = client.wait_for_operation(connection_id, attempts=250)
+                if (
+                    not isinstance(connected.data, dict)
+                    or connected.data.get("status") != "succeeded"
+                ):
+                    self.terminal.result(
+                        CheckResult(ResultLevel.FAIL, "iGrill", "registered but connection failed")
+                    )
+                    return 1
+        registered = result.get("device") if isinstance(result, dict) else None
+        if not isinstance(registered, dict):
+            registered = result if isinstance(result, dict) else None
+        device_id = registered.get("deviceId") if isinstance(registered, dict) else None
+        if isinstance(device_id, str):
+            final_device = client.get(client.device_path(device_id)).data
+            self.terminal.results(self._device_results(client, [final_device]))
         self.terminal.result(CheckResult(ResultLevel.PASS, "iGrill", "registered"))
         return 0
 
@@ -396,7 +426,7 @@ class ConfigApplication:
             operation_id = operation.get("operationId") if isinstance(operation, dict) else None
             if not isinstance(operation_id, str):
                 raise ApiError("The local service did not return an operation")
-            completed = client.wait_for_operation(operation_id)
+            completed = client.wait_for_operation(operation_id, attempts=250)
             success = (
                 isinstance(completed.data, dict) and completed.data.get("status") == "succeeded"
             )
@@ -423,7 +453,7 @@ class ConfigApplication:
                 return int(value)
             self.terminal.write("Enter a port from 1 to 65535.")
 
-    def _offer_restart(self) -> bool:
+    def _offer_restart(self, *, health_port: int) -> bool | None:
         if self.terminal.confirm("Restart now to apply the saved settings?"):
             result = self._runner.run(
                 ("sudo", "systemctl", "restart", "pitblu-core.service"), timeout=45
@@ -433,7 +463,13 @@ class ConfigApplication:
             else:
                 self.terminal.result(CheckResult(ResultLevel.FAIL, "Restart", "systemctl failed"))
                 return False
-        return True
+            try:
+                self._client_factory(port=health_port).wait_for_health()
+            except ApiError as exc:
+                self.terminal.result(CheckResult(ResultLevel.FAIL, "API health", str(exc)))
+                return False
+            return True
+        return None
 
     def _status_results(self, status: dict[str, Any]) -> list[CheckResult]:
         version = safe_text(status.get("version", "unknown"))
@@ -532,18 +568,24 @@ def build_parser() -> argparse.ArgumentParser:
 def main(arguments: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(arguments)
     application = ConfigApplication()
-    if args.command is None:
-        return application.menu(port=args.port)
-    if args.command == "check":
-        return application.check(port=args.port)
-    if args.command == "show":
-        return application.show(port=args.port)
-    if args.command == "igrill":
-        return application.igrill(port=args.port)
-    if args.command == "mqtt":
-        return application.mqtt(port=args.port)
-    if args.command == "api":
-        return application.api(port=args.port)
-    if args.command == "restart":
-        return application.restart()
-    return 2
+    try:
+        if args.command is None:
+            return application.menu(port=args.port)
+        if args.command == "check":
+            return application.check(port=args.port)
+        if args.command == "show":
+            return application.show(port=args.port)
+        if args.command == "igrill":
+            return application.igrill(port=args.port)
+        if args.command == "mqtt":
+            return application.mqtt(port=args.port)
+        if args.command == "api":
+            return application.api(port=args.port)
+        if args.command == "restart":
+            return application.restart(port=args.port)
+        return 2
+    except KeyboardInterrupt:
+        application.terminal.write(
+            "\nConfiguration cancelled; incomplete changes were not submitted."
+        )
+        return 130
