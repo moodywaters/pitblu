@@ -13,6 +13,8 @@ config=/etc/pitblu-core
 state=/var/lib/pitblu-core
 backups=/var/backups/pitblu-core
 unit=/etc/systemd/system/pitblu-core.service
+install_launcher=/usr/local/bin/pitblu-core-install
+config_launcher=/usr/local/bin/pitblu-core-config
 for directory in "$app" "$app/releases" "$config" "$state" "$backups"; do
     [[ ! -L "$directory" ]] || fail "Refusing symlink directory: $directory"
 done
@@ -33,6 +35,26 @@ validate_release() {
     resolved=$(realpath -e "$1")
     [[ "$resolved" == "$app/releases/"* && -x "$resolved/venv/bin/pitblu-api" ]] || fail 'Invalid managed release.'
     printf '%s' "$resolved"
+}
+
+install_launcher_link() {
+    local path=$1 target=$2 resolved
+    if [[ -e "$path" || -L "$path" ]]; then
+        resolved=$(realpath -e "$path" 2>/dev/null || true)
+        [[ "$resolved" == "$app/releases/"*/venv/bin/pitblu-core-* ]] || \
+            fail "Refusing unrelated launcher: $path"
+    fi
+    ln -sfn "$target" "$path"
+}
+
+remove_config_launcher() {
+    local resolved
+    if [[ -e "$config_launcher" || -L "$config_launcher" ]]; then
+        resolved=$(realpath -e "$config_launcher" 2>/dev/null || true)
+        [[ "$resolved" == "$app/releases/"*/venv/bin/pitblu-core-config ]] || \
+            fail "Refusing unrelated launcher: $config_launcher"
+        rm "$config_launcher"
+    fi
 }
 
 backup() {
@@ -70,6 +92,7 @@ case "$action" in
         ;;
     uninstall)
         systemctl disable --now pitblu-core.service
+        remove_config_launcher
         if [[ -f "$unit" ]]; then
             mv "$unit" "$app/pitblu-core.service.disabled.$(date -u +%Y%m%dT%H%M%SZ)"
         fi
@@ -136,6 +159,8 @@ fi
 runuser -u pitblu-core -- env PITBLU_MANAGED=true PITBLU_CONFIG_FILE="$config/config.yaml" \
     "$release/venv/bin/pitblu-state" validate "$state/state.sqlite3"
 ln -sfn "$release" "$app/current"
+install_launcher_link "$install_launcher" "$app/current/venv/bin/pitblu-core-install"
+install_launcher_link "$config_launcher" "$app/current/venv/bin/pitblu-core-config"
 install -m 0644 "$release/pitblu-core.service" "$unit"
 systemctl daemon-reload
 if [[ "$action" == upgrade ]]; then

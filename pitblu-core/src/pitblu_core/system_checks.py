@@ -14,6 +14,24 @@ from pitblu_core.terminal import CheckResult, ResultLevel
 
 
 @dataclass(frozen=True, slots=True)
+class Dependency:
+    package: str
+    purpose: str
+
+
+DEPENDENCIES = (
+    Dependency("python3", "Python runtime"),
+    Dependency("python3-venv", "isolated Python environment"),
+    Dependency("bluez", "Bluetooth tools and service"),
+    Dependency("systemd", "service management"),
+    Dependency("util-linux", "deployment locking and service-account commands"),
+    Dependency("passwd", "dedicated service account"),
+    Dependency("git", "GitHub source checkout and updates"),
+    Dependency("ca-certificates", "verified HTTPS connections"),
+)
+
+
+@dataclass(frozen=True, slots=True)
 class CommandResult:
     returncode: int
     stdout: str = ""
@@ -135,3 +153,26 @@ def service_checks(runner: CommandRunner | None = None) -> list[CheckResult]:
 
 def command_available(name: str) -> bool:
     return shutil.which(name) is not None
+
+
+def dependency_checks(
+    runner: CommandRunner | None = None,
+) -> tuple[list[CheckResult], list[Dependency]]:
+    """Report required Debian packages using fixed dpkg-query arguments."""
+
+    command = runner or CommandRunner()
+    checks: list[CheckResult] = []
+    missing: list[Dependency] = []
+    for dependency in DEPENDENCIES:
+        result = command.run(("dpkg-query", "-W", "-f=${Status}", dependency.package), timeout=5)
+        installed = result.returncode == 0 and result.stdout == "install ok installed"
+        checks.append(
+            CheckResult(
+                ResultLevel.PASS if installed else ResultLevel.WARN,
+                f"Package {dependency.package}",
+                dependency.purpose if installed else f"missing: {dependency.purpose}",
+            )
+        )
+        if not installed:
+            missing.append(dependency)
+    return checks, missing

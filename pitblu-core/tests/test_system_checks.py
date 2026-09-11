@@ -3,7 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 
 from pitblu_core.system_checks import (
+    DEPENDENCIES,
     CommandResult,
+    dependency_checks,
     platform_checks,
     read_os_release,
     service_checks,
@@ -72,3 +74,23 @@ def test_service_and_bluetooth_checks() -> None:
 
     assert [result.level for result in results] == [ResultLevel.PASS, ResultLevel.PASS]
     assert runner.commands[1] == ("bluetoothctl", "--timeout", "2", "show")
+
+
+def test_dependency_checks_report_fixed_missing_packages() -> None:
+    runner = FakeRunner(
+        [
+            CommandResult(0, "install ok installed")
+            if dependency.package != "bluez"
+            else CommandResult(1)
+            for dependency in DEPENDENCIES
+        ]
+    )
+
+    results, missing = dependency_checks(runner)  # type: ignore[arg-type]
+
+    assert [dependency.package for dependency in missing] == ["bluez"]
+    assert (
+        next(result for result in results if result.name == "Package bluez").level
+        is ResultLevel.WARN
+    )
+    assert all(command[:3] == ("dpkg-query", "-W", "-f=${Status}") for command in runner.commands)

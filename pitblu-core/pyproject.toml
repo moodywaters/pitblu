@@ -42,6 +42,7 @@ pitblu-v202-check = "pitblu_core.physical_check:main"
 pitblu-api = "pitblu_core.api:run"
 pitblu-state = "pitblu_core.deployment:main"
 pitblu-core-config = "pitblu_core.config_cli:main"
+pitblu-core-install = "pitblu_core.install_cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/pitblu_core"]
