@@ -86,13 +86,11 @@ def test_transport_error_does_not_include_request_or_token() -> None:
 
 
 def test_wait_for_operation_polls_to_completion() -> None:
-    responses = iter(
-        [FakeResponse({"state": "running"}), FakeResponse({"state": "succeeded"})]
-    )
+    responses = iter([FakeResponse({"status": "running"}), FakeResponse({"status": "succeeded"})])
     sleeps: list[float] = []
     client = ApiClient(opener=lambda *_args, **_kwargs: next(responses), sleep=sleeps.append)
 
     response = client.wait_for_operation("op/id", interval=0.25)
 
-    assert response.data["state"] == "succeeded"
+    assert response.data["status"] == "succeeded"
     assert sleeps == [0.25]

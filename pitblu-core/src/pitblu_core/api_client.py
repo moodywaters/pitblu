@@ -109,7 +109,7 @@ class ApiClient:
         path = f"/api/v1/operations/{quote(operation_id, safe='')}"
         for attempt in range(attempts):
             response = self.get(path)
-            state = response.data.get("state") if isinstance(response.data, dict) else None
+            state = response.data.get("status") if isinstance(response.data, dict) else None
             if state in {"succeeded", "failed", "cancelled"}:
                 return response
             if attempt + 1 < attempts:
