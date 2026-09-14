@@ -66,7 +66,11 @@ def create_app(
                                     probeChannel=probe["probe"],
                                     temperatureC=probe.get("temperatureC"),
                                     observedAt=probe["observedAt"],
-                                    available=bool(probe.get("available") and probe.get("fresh")),
+                                    available=bool(
+                                        probe.get("available")
+                                        and probe.get("fresh")
+                                        and probe.get("present", True)
+                                    ),
                                     eventId=(
                                         f"reconcile:{device['deviceId']}:{probe['probe']}:"
                                         f"{probe['observedAt']}"

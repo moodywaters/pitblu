@@ -12,7 +12,10 @@ const cook: Cook = {
 };
 
 const system: SystemState = {
-  core: {available: true, devices: [{deviceId: 'igrill-a', probes: [{probe: 1, temperatureC: 68, available: true, fresh: true}]}]},
+  core: {available: true, devices: [{deviceId: 'igrill-a', probes: [
+    {probe: 1, temperatureC: 68, available: true, present: true, fresh: true},
+    {probe: 2, temperatureC: null, available: true, present: false, fresh: true}
+  ]}]},
   activeCook: {id: cook.id, name: cook.name, state: cook.state},
   latestCook: {id: cook.id, name: cook.name, state: cook.state}
 };
@@ -37,6 +40,7 @@ describe('application surfaces', () => {
 
     render(<App/>);
     await screen.findByRole('heading', {name: 'Start a cook'});
+    expect(screen.getByText(/1 ready probe$/)).toBeInTheDocument();
     await userEvent.type(screen.getByPlaceholderText('Saturday Brisket'), 'Sunday ribs');
     await userEvent.click(screen.getByRole('button', {name: 'Create Cook'}));
 

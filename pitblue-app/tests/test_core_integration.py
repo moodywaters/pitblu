@@ -23,7 +23,15 @@ class ReconciledGateway:
                         "fresh": True,
                         "temperatureC": 68,
                         "observedAt": "2026-09-12T10:00:00+00:00",
-                    }
+                    },
+                    {
+                        "probe": 2,
+                        "available": True,
+                        "present": False,
+                        "fresh": True,
+                        "temperatureC": None,
+                        "observedAt": "2026-09-12T10:00:00+00:00",
+                    },
                 ],
             },
             {
@@ -126,8 +134,12 @@ def test_startup_reconciliation_keeps_same_channel_on_two_devices_distinct():
         readings = client.get("/api/v1/cooks/cook/telemetry").json()
         assert {(row["coreDeviceId"], row["probeChannel"]) for row in readings} == {
             ("device-a", 1),
+            ("device-a", 2),
             ("device-b", 1),
         }
+        absent = next(row for row in readings if row["probeChannel"] == 2)
+        assert absent["available"] is False
+        assert absent["temperatureC"] is None
     store.close()
 
 

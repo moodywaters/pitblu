@@ -5,6 +5,7 @@ export interface ProbeState {
   probe: number;
   temperatureC: number | null;
   available: boolean;
+  present?: boolean;
   fresh?: boolean;
   observedAt?: string;
 }
