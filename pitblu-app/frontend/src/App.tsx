@@ -4,6 +4,7 @@ import {AlertList} from './components/AlertList';
 import {CookHeader} from './components/CookHeader';
 import {MeasurementCard} from './components/MeasurementCard';
 import {TemperatureChart} from './components/TemperatureChart';
+import {HomeScreen} from './components/HomeScreen';
 import type {Alert, Cook, CookEvent, CookerProfile, Measurement, NamedResource, Share, ShareSummary, SystemState, TemperatureReading} from './types/api';
 
 type Tab = 'overview' | 'chart' | 'timeline' | 'setup';
@@ -31,6 +32,7 @@ export default function App() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState(new Date());
+  const [showCookSetup, setShowCookSetup] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -89,6 +91,7 @@ export default function App() {
   if (!system && !cook && identity.role !== 'follower') return <Shell now={now}><Loading /></Shell>;
   if (!cook) {
     if (identity.role === 'display') return <Shell now={now}><section className="empty"><span className="pulse"/><h1>Ready for the next cook</h1><p>Pitblu is standing by.</p></section></Shell>;
+    if (!showCookSetup) return <Shell now={now} home><HomeScreen system={system!} history={history} onStart={() => setShowCookSetup(true)}/></Shell>;
     return <Shell now={now}><StartCook history={history} system={system!} cookers={cookerProfiles} api={api} onRefresh={load} onCreate={async (name, cookerProfileId, anticipatedServeAt, plans) => {
       const created = await mutate<Cook>('/api/v1/cooks', {name, cookerProfileId: cookerProfileId || null, anticipatedServeAt});
       for (const plan of plans) {
@@ -125,9 +128,9 @@ export default function App() {
   </Shell>;
 }
 
-function Shell({now, children}: {now: Date; children: React.ReactNode}) {
+function Shell({now, children, home = false}: {now: Date; children: React.ReactNode; home?: boolean}) {
   const publicView = route().role !== 'operator';
-  return <div className="app-shell"><header><a href="/" className="brand"><img src="/pitblu-logo.png" alt="Pitblu home"/></a><time>{now.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</time></header><main>{children}</main><footer>Pitblu · Open source{publicView && <> · <a href="https://github.com/moodywaters/pitblu" target="_blank" rel="noreferrer">View Pitblu on GitHub</a></>}</footer></div>;
+  return <div className={`app-shell ${home ? 'home-shell' : ''}`}><header><a href="/" className="brand" aria-label="Pitblu home"><span aria-hidden="true">♨</span><strong>pit<span>blu</span></strong></a><nav aria-label="Primary"><a className="active" href="/">⌂ <span>Home</span></a><a href="#journal">▤ <span>Cooks</span></a><a href="#journal">◷ <span>History</span></a><a href="#more">••• <span>More</span></a></nav><div className="header-status"><i className="status-dot live"/> Pitblu connected</div><time>{now.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</time></header><main>{children}</main><footer>Pitblu · Open source{publicView && <> · <a href="https://github.com/moodywaters/pitblu" target="_blank" rel="noreferrer">View Pitblu on GitHub</a></>}</footer></div>;
 }
 
 function Loading() { return <section className="empty"><span className="pulse"/><h1>Connecting to Pitblu…</h1></section>; }

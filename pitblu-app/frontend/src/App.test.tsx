@@ -44,6 +44,11 @@ describe('application surfaces', () => {
     });
 
     render(<App/>);
+    await screen.findByRole('heading', {name: 'Everything’s ready'});
+    expect(screen.getByText('Probe 1')).toBeInTheDocument();
+    expect(screen.getByText('68')).toBeInTheDocument();
+    expect(screen.getByText('Not connected')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', {name: /start a cook/i}));
     await screen.findByRole('heading', {name: 'Set up the probes'});
     expect(screen.getByAltText('Pitblu smoker logo')).toBeInTheDocument();
     expect(screen.getByText(/1 ready probe$/)).toBeInTheDocument();

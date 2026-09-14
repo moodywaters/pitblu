@@ -10,6 +10,7 @@ htmlcov/
 build/
 dist/
 node_modules/
+test-results/
 *.tar.gz
 pitblu-core.sqlite3*
 pitblu-app.sqlite3*

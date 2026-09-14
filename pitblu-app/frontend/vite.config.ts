@@ -39,6 +39,7 @@ export default defineConfig({
     }
   },
   test: {
+    exclude: ['visual-tests/**', 'node_modules/**'],
     environment: 'jsdom',
     globals: true,
     setupFiles: './src/test/setup.ts',

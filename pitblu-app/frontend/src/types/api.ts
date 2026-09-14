@@ -13,7 +13,9 @@ export interface ProbeState {
 export interface CoreDevice {
   deviceId: string;
   name?: string;
+  friendlyName?: string;
   probes: ProbeState[];
+  battery?: {available: boolean; fresh: boolean; percentage: number | null};
 }
 
 export interface SystemState {

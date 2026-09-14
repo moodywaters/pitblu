@@ -36,6 +36,7 @@ def test_public_surfaces_do_not_issue_credentials(tmp_path):
         assert "set-cookie" not in display.headers
         assert client.get("/manifest.webmanifest").status_code == 200
         assert client.get("/pitblu-logo.png").status_code == 200
+        assert client.get("/pitblu-home-background.png").status_code == 200
         assert client.get("/sw.js").status_code == 200
         assert client.get("/index.html").status_code == 200
         asset_name = next(

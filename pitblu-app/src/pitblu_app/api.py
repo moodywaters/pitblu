@@ -186,7 +186,7 @@ def create_app(
             or request.url.path in {"/", "/display"}
             or request.url.path.startswith("/assets/")
             or request.url.path
-            in {"/index.html", "/manifest.webmanifest", "/icon.svg", "/pitblu-logo.png", "/sw.js"}
+            in {"/index.html", "/manifest.webmanifest", "/icon.svg", "/pitblu-logo.png", "/pitblu-home-background.png", "/sw.js"}
             or request.url.path.startswith("/workbox-")
             or request.url.path.startswith("/follow/")
             or request.url.path.startswith("/api/v1/follow/")
@@ -513,7 +513,7 @@ def create_app(
     @app.get("/{asset_name}", include_in_schema=False)
     async def pwa_asset(asset_name: str) -> FileResponse:
         if not re.fullmatch(
-            r"(?:index\.html|manifest\.webmanifest|icon\.svg|pitblu-logo\.png|sw\.js|workbox-[a-zA-Z0-9_-]+\.js)",
+            r"(?:index\.html|manifest\.webmanifest|icon\.svg|pitblu-logo\.png|pitblu-home-background\.png|sw\.js|workbox-[a-zA-Z0-9_-]+\.js)",
             asset_name,
         ):
             raise DomainError("resource not found", 404, "not_found")
