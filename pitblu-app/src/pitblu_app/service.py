@@ -42,18 +42,24 @@ class CookService:
         return cook
 
     async def create_cook(self, body: CookCreate) -> dict[str, Any]:
-        item_id, now = self.store.ident("cook"), utc_now().isoformat()
-        profile = (
-            self.store.require("cooker_profiles", body.cooker_profile_id)
-            if body.cooker_profile_id
-            else None
+        item_id, created = self.store.ident("cook"), utc_now()
+        now = created.isoformat()
+        name = body.name or f"Cook {created.strftime('%d %b %Y').lstrip('0')}"
+        profile_ids = list(
+            dict.fromkeys(
+                [
+                    *body.cooker_profile_ids,
+                    *([body.cooker_profile_id] if body.cooker_profile_id else []),
+                ]
+            )
         )
+        profiles = [self.store.require("cooker_profiles", profile_id) for profile_id in profile_ids]
         with self.store.transaction() as db:
             db.execute(
                 "INSERT INTO cooks(id,name,state,anticipated_serve_at,created_at) VALUES(?,?,?,?,?)",
-                (item_id, body.name, CookState.DRAFT, self._dt(body.anticipated_serve_at), now),
+                (item_id, name, CookState.DRAFT, self._dt(body.anticipated_serve_at), now),
             )
-            if profile:
+            for profile in profiles:
                 db.execute(
                     "INSERT INTO cookers(id,cook_id,name,profile_id) VALUES(?,?,?,?)",
                     (self.store.ident("cooker"), item_id, profile["name"], profile["id"]),

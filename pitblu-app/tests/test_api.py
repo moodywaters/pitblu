@@ -36,6 +36,20 @@ def test_one_active_cook_and_full_lifecycle(client):
     assert client.post(f"/api/v1/cooks/{cook['id']}/close").json()["state"] == "closed"
 
 
+def test_cook_name_defaults_to_current_date(client):
+    response = client.post("/api/v1/cooks", json={})
+    assert response.status_code == 201
+    assert response.json()["name"].startswith("Cook ")
+
+
+def test_cook_can_snapshot_multiple_reusable_cookers(client):
+    first = client.post("/api/v1/cooker-profiles", json={"name": "Kettle"}).json()
+    second = client.post("/api/v1/cooker-profiles", json={"name": "WSM"}).json()
+    response = client.post("/api/v1/cooks", json={"cookerProfileIds": [first["id"], second["id"]]})
+    assert response.status_code == 201
+    assert [item["name"] for item in response.json()["cookers"]] == ["Kettle", "WSM"]
+
+
 def test_closed_cook_is_read_only(client):
     cook = create_active_cook(client)
     food = client.post(f"/api/v1/cooks/{cook['id']}/food-items", json={"name": "Brisket"}).json()

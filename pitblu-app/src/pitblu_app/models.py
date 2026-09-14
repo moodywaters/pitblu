@@ -43,9 +43,10 @@ class AlertStatus(StrEnum):
 
 
 class CookCreate(ApiModel):
-    name: str = Field(min_length=1, max_length=120)
+    name: str | None = Field(None, min_length=1, max_length=120)
     anticipated_serve_at: datetime | None = Field(None, alias="anticipatedServeAt")
     cooker_profile_id: str | None = Field(None, alias="cookerProfileId")
+    cooker_profile_ids: list[str] = Field(default_factory=list, alias="cookerProfileIds")
 
 
 class CookPatch(ApiModel):

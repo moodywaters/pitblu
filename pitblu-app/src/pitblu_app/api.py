@@ -186,7 +186,14 @@ def create_app(
             or request.url.path in {"/", "/display"}
             or request.url.path.startswith("/assets/")
             or request.url.path
-            in {"/index.html", "/manifest.webmanifest", "/icon.svg", "/pitblu-logo.png", "/pitblu-home-background.png", "/sw.js"}
+            in {
+                "/index.html",
+                "/manifest.webmanifest",
+                "/icon.svg",
+                "/pitblu-logo.png",
+                "/pitblu-home-background.png",
+                "/sw.js",
+            }
             or request.url.path.startswith("/workbox-")
             or request.url.path.startswith("/follow/")
             or request.url.path.startswith("/api/v1/follow/")

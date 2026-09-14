@@ -24,7 +24,7 @@ export interface SystemState {
   latestCook: Pick<Cook, 'id' | 'name' | 'state'> | null;
 }
 
-export interface NamedResource { id: string; name: string; }
+export interface NamedResource { id: string; name: string; profileId?: string | null; }
 
 export interface CookerProfile extends NamedResource {
   description: string | null;

@@ -50,10 +50,10 @@ describe('application surfaces', () => {
     expect(screen.getByText('Not connected')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', {name: /start a cook/i}));
     await screen.findByRole('heading', {name: 'Set up the probes'});
-    expect(screen.getByAltText('Pitblu smoker logo')).toBeInTheDocument();
+    expect(screen.getByRole('link', {name: 'Pitblu home'})).toBeInTheDocument();
     expect(screen.getByText(/1 ready probe$/)).toBeInTheDocument();
-    await userEvent.type(screen.getByPlaceholderText('Sunday ribs'), 'Sunday ribs');
-    await userEvent.selectOptions(screen.getByLabelText('Barbecue'), 'wsm');
+    await userEvent.type(screen.getByPlaceholderText('Defaults to today’s date'), 'Sunday ribs');
+    await userEvent.click(screen.getByRole('checkbox', {name: /WSM 57/i}));
     await userEvent.click(screen.getByRole('button', {name: /start cooking/i}));
 
     await screen.findByText('Saturday brisket');
@@ -110,6 +110,7 @@ describe('application surfaces', () => {
     vi.spyOn(PitbluApi.prototype, 'request').mockImplementation(async path => {
       if (path === '/api/v1/system') return {...system, activeCook: null, latestCook: {...system.latestCook!, state: 'closed'}};
       if (path === '/api/v1/cooker-profiles') return [];
+      if (path === '/api/v1/cooks') return [];
       if (path === `/api/v1/cooks/${cook.id}`) return {...cook, state: 'closed'};
       if (path.includes('/telemetry') || path.endsWith('/events') || path.startsWith('/api/v1/alerts')) return [];
       throw new Error(`Unexpected request: ${path}`);

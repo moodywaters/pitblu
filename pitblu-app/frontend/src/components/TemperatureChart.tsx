@@ -1,8 +1,8 @@
 import {useEffect, useRef} from 'react';
 import type {Cook, CookEvent, TemperatureReading} from '../types/api';
 
-export function TemperatureChart({readings, cook, events}: {
-  readings: TemperatureReading[]; cook: Cook; events: CookEvent[];
+export function TemperatureChart({readings, cook, events, measurementId = null}: {
+  readings: TemperatureReading[]; cook: Cook; events: CookEvent[]; measurementId?: string | null;
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -21,9 +21,11 @@ export function TemperatureChart({readings, cook, events}: {
     const x = (stamp: string) => 44 + (new Date(stamp).getTime() - first) / span * (width - 64);
     const y = (temp: number) => 310 - (temp - low) / (high - low) * 270;
     const colors = ['#0878e8', '#27a77d', '#ee9d34', '#a56ce6', '#e95572', '#087f8c'];
-    cook.measurements.forEach((measurement, index) => {
+    cook.measurements.filter(measurement => !measurementId || measurement.id === measurementId).forEach((measurement, index) => {
       const rows = readings.filter(row => row.measurementId === measurement.id);
-      context.beginPath(); context.strokeStyle = colors[index % colors.length]; context.lineWidth = 3;
+      const channel = cook.assignments?.find(item => item.measurementId === measurement.id && !item.endedAt)?.probeChannel;
+      const probeColors = ['#ff454f', '#1688ff', '#42e56f', '#ffbd2e'];
+      context.beginPath(); context.strokeStyle = channel ? probeColors[(channel - 1) % probeColors.length] : colors[index % colors.length]; context.lineWidth = 3;
       let active = false;
       rows.forEach(row => {
         if (!row.available || row.temperatureC == null) { active = false; return; }
@@ -44,7 +46,7 @@ export function TemperatureChart({readings, cook, events}: {
       context.beginPath(); context.moveTo(x(event.occurredAt), 30); context.lineTo(x(event.occurredAt), 310); context.stroke();
     });
     context.restore();
-  }, [readings, cook, events]);
+  }, [readings, cook, events, measurementId]);
   return readings.length ? <canvas ref={ref} aria-label="Temperature history chart" />
     : <p className="muted">No telemetry recorded yet.</p>;
 }

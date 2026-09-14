@@ -7,13 +7,13 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg', 'pitblu-logo.png'],
+      includeAssets: ['icon.svg', 'pitblu-logo.png', 'pitblu-home-background.png'],
       manifest: {
         name: 'Pitblu',
         short_name: 'Pitblu',
         description: 'Calm, cook-aware temperature monitoring',
-        theme_color: '#0868d7',
-        background_color: '#eef6ff',
+        theme_color: '#03141d',
+        background_color: '#03141d',
         display: 'standalone',
         start_url: '/',
         scope: '/',
@@ -21,6 +21,7 @@ export default defineConfig({
       },
       workbox: {
         navigateFallback: '/index.html',
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         runtimeCaching: [],
         navigateFallbackDenylist: [/^\/api\//, /^\/health$/, /^\/ready$/]
       }

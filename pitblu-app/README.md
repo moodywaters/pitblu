@@ -231,6 +231,20 @@ All state and interpretation remain in the typed backend. React owns presentatio
 temporary form state and live invalidation only; TypeScript models API payloads and
 application SSE envelopes without reimplementing domain rules.
 
+### Pitblu 0.3 operator workflow
+
+The 0.3 frontend replaces the proving UI across the complete primary workflow:
+Home, start Cook, live Cook, Cook setup, history and application configuration.
+Saved barbecue profiles are reusable across Cooks. A Cook may select multiple
+barbecues, and every connected physical probe (`device ID + channel`) can be left
+unused or assigned to a semantic food, barbecue-temperature or other measurement.
+The Live Display and follower views reuse the live Cook presentation in read-only
+mode; they do not acquire operator mutations or frontend-owned domain behavior.
+
+Responsive visual regression tests live in `frontend/visual-tests/` and cover the
+operator surfaces at phone, tablet and desktop sizes. Run them with
+`npm run test:visual` after installing Playwright's Chromium browser.
+
 The adapter boundary is intentionally concrete. A future `pitblu-blower-core` is a
 separate sibling with its own safety and control loop; no blower or generic hardware
 plugin framework is implemented here.
