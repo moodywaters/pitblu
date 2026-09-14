@@ -27,6 +27,81 @@ shell. The app listens on port 8081 by default. Open `/` for the operator client
 `/display` for the permanent wallboard, `/docs` for OpenAPI, and a generated
 `/follow/{token}` path for a mobile follower.
 
+### Windows development with the real Raspberry Pi thermometer
+
+This is a first-class development configuration. Run `pitblu-app`, its development
+SQLite database, and the Vite frontend on Windows while `pitblu-core` and the real
+iGrill remain on the Raspberry Pi. No simulator is required.
+
+First verify from Windows that the authenticated Core API is reachable over the
+trusted LAN. Core must use bearer authentication when listening beyond loopback;
+do not expose it to the internet or disable authentication for LAN access.
+
+```powershell
+$PiAddress = "192.168.1.50"
+$CoreToken = "replace-with-the-real-core-token"
+Invoke-RestMethod -Uri "http://${PiAddress}:8080/api/v1/devices" `
+  -Headers @{Authorization = "Bearer $CoreToken"}
+```
+
+If that cannot connect, confirm the Pi address, firewall, and the existing
+`pitblu-core` API bind configuration before changing `pitblu-app`. This topology
+requires configuration of the deployed Core service, not different application
+code.
+
+Start the application backend from `pitblu-app` in one PowerShell window:
+
+```powershell
+py -3.13 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e ".[dev]"
+$env:PITBLU_CORE_URL = "http://${PiAddress}:8080"
+$env:PITBLU_CORE_TOKEN = $CoreToken
+$env:PITBLU_APP_DATABASE = "$PWD\pitblu-app.dev.sqlite3"
+$env:PITBLU_APP_OPERATOR_TOKEN = (.\.venv\Scripts\python.exe -c "import secrets; print(secrets.token_hex(32))")
+$env:PITBLU_APP_DISPLAY_TOKEN = (.\.venv\Scripts\python.exe -c "import secrets; print(secrets.token_hex(32))")
+.\.venv\Scripts\pitblu-app.exe
+```
+
+Then start Vite from `pitblu-app\frontend` in a second PowerShell window:
+
+```powershell
+npm install
+npm run dev
+```
+
+Open the Vite address and enter the operator token created in the backend window.
+Vite proxies browser API/SSE requests to the Windows backend on port 8081. Only
+the backend connects to the Pi, using `PITBLU_CORE_URL` for Core REST and SSE and
+`PITBLU_CORE_TOKEN` for their bearer authentication.
+
+### Windows development with the optional local simulator
+
+When hardware is unavailable, run `pitblu-core` locally with its existing
+simulation adapter enabled, bound to loopback. For example, use a local Core YAML
+configuration containing:
+
+```yaml
+server:
+  bind: 127.0.0.1
+  port: 8080
+auth:
+  mode: disabled
+simulation:
+  enabled: true
+  probe_count: 4
+```
+
+Start that local Core instance using its documented `PITBLU_CONFIG_FILE` startup
+configuration. Then use the same application and frontend commands above with:
+
+```powershell
+$env:PITBLU_CORE_URL = "http://127.0.0.1:8080"
+Remove-Item Env:PITBLU_CORE_TOKEN -ErrorAction SilentlyContinue
+```
+
+The simulator is optional and implements the same Core REST/SSE contract. There is
+no fake telemetry or simulator-specific domain logic in React or `pitblu-app`.
+
 Configuration variables:
 
 | Variable | Default | Purpose |

@@ -4,6 +4,12 @@ from typing import Any
 from pitblu_app.core_client import PitbluCoreClient
 
 
+def test_remote_core_address_and_bearer_token_are_configuration_only():
+    client = PitbluCoreClient("http://192.0.2.42:8080/", "core-secret")
+    assert client.base_url == "http://192.0.2.42:8080"
+    assert client.headers == {"Authorization": "Bearer core-secret"}
+
+
 class FakeResponse:
     def __init__(self, data: Any = None, lines: list[str] | None = None) -> None:
         self.data = data

@@ -9,6 +9,9 @@ site-specific check with a real thermometer and display.
 - Platform-neutral FastAPI service using only pitblu-core REST and SSE through a
   concrete `PitbluCoreClient` boundary. No Bluetooth, GPIO, Raspberry Pi, ARM or
   blower dependency exists in pitblu-app.
+- First-class Windows development with the app backend, Vite and a local SQLite
+  database consuming either a real authenticated Pi-hosted Core over the LAN or
+  an optional local simulated Core through the identical configured boundary.
 - Versioned REST, OpenAPI and application SSE for all Cook, setup, lifecycle,
   telemetry, event, Alert, history and follower capabilities.
 - SQLite migrations and a collection-based domain. A physical source is always a

@@ -48,3 +48,12 @@ def test_cook_domain_does_not_depend_on_gateway_client():
     assert "class PitbluCoreClient" in adapter
     assert "class ThermometerGateway" in adapter
     assert "Blower" not in adapter
+
+
+def test_windows_remote_core_and_optional_simulator_workflows_are_documented():
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert "Windows development with the real Raspberry Pi thermometer" in readme
+    assert '$env:PITBLU_CORE_URL = "http://${PiAddress}:8080"' in readme
+    assert '$env:PITBLU_CORE_TOKEN = $CoreToken' in readme
+    assert "Windows development with the optional local simulator" in readme
+    assert "simulator-specific domain logic" in readme
