@@ -17,4 +17,4 @@ published revisions.
 
 The full four-probe physical suite and minimum 16-hour soak are separate v1.0.0
 gates and remain pending. The [frontend contract](frontend-integration.md) describes
-implemented v0.9.0 behaviour; pitblu-web remains a separate future component.
+implemented v0.9.0 behaviour; pitblue-app is a separate application component.

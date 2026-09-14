@@ -24,12 +24,14 @@ readable version history; Git tags and releases are authoritative once published
 
 - [Complete frontend/AI handoff](frontend-integration.md): all endpoints, settings,
   SSE/MQTT schemas, examples, workflows and implementation limitations.
+- [pitblue-app API and integration guide](pitblue-app-api.md)
 - [REST](api.md), [configuration](configuration.md), [MQTT](mqtt.md)
 - [Architecture](architecture.md), [Bluetooth protocol](bluetooth.md)
 - [Development](development.md), [contributing](../CONTRIBUTING.md)
 
 ## Release assurance
 
+- [pitblue-app Milestone 1 acceptance](pitblue-app-milestone-1.md)
 - [Current acceptance checklist](physical-acceptance.md)
 - [Security policy](../SECURITY.md) and [candidate security review](security-review.md)
 - [Dependency audit](dependency-audit.md) and [clean-Pi procedure](clean-pi-acceptance.md)
@@ -40,7 +42,9 @@ readable version history; Git tags and releases are authoritative once published
 - Decisions: [hardware-first](adr/0001-incremental-hardware-first.md),
   [adapter boundary](adr/0002-device-adapter-boundary.md),
   [REST/configuration/authentication](adr/0003-rest-configuration-and-auth.md) and
-  [guided terminal boundaries](adr/0004-guided-terminal-tools.md)
+  [guided terminal boundaries](adr/0004-guided-terminal-tools.md), and
+  [pitblue-app platform and service boundaries](adr/0005-pitblue-app-boundaries.md), and
+  [React/TypeScript/PWA frontend](adr/0006-react-typescript-pwa-frontend.md)
 - [Target specification](../pitblu-core-project-plan.md) and
   [AI continuation record](../pitblu-core-codex-prompt.md): development context,
   not end-user instructions. Unimplemented requirements remain targets.

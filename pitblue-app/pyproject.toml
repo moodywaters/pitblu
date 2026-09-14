@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling==1.32.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pitblue-app"
+version = "0.1.0"
+description = "Pitblu cook application, API, history and user experiences"
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+license = "MIT"
+dependencies = [
+  "fastapi==0.141.1",
+  "httpx2==2.12.0",
+  "qrcode==8.2",
+  "uvicorn==0.52.4",
+]
+
+[project.optional-dependencies]
+dev = ["pytest==9.1.1", "pytest-cov==7.1.0", "ruff==0.16.6", "mypy==2.3.1"]
+
+[project.scripts]
+pitblue-app = "pitblue_app.api:run"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pitblue_app"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+ignore = ["E501"]

@@ -4,19 +4,23 @@
   <img src="docs/assets/pitblu-logo.jpg" alt="pitblu logo: blue barbecue smoker with blue and green smoke" width="280">
 </p>
 
-An API-first Bluetooth gateway for Weber iGrill thermometers, built for Raspberry Pi.
-Read probe temperatures and battery state, manage connections through REST, and
-share live telemetry through MQTT and Server-Sent Events.
+An API-first, LAN-first cook-monitoring platform. Pitblu combines a trustworthy
+Weber iGrill gateway with a persistent cook application, responsive operator UI,
+headless display and temporary read-only follower view.
 
 ## Components
 
 One repository for two independently deployable components:
 
-- [pitblu-core](pitblu-core/README.md): the Raspberry Pi hardware gateway.
-- [pitblu-web](pitblu-web/README.md): reserved for the future web frontend.
+- [pitblu-core](pitblu-core/README.md): thermometer integration and trustworthy telemetry.
+- [pitblue-app](pitblue-app/README.md): cook API, history, alerts and user experiences.
 
-Shared documentation lives in `docs/`. Gateway source, tests, packaging and native
-deployment tools live in `pitblu-core/`. There is no implemented web application yet.
+The application has completed its Milestone 1 implementation gate; see the
+[pitblue-app acceptance record](docs/pitblue-app-milestone-1.md) for delivered scope
+and the remaining installation-specific real-device check.
+
+Shared documentation lives in `docs/`. Each service is independently buildable and
+deployable. The browser talks only to `pitblue-app`; core credentials stay server-side.
 
 ## Release status
 
@@ -25,11 +29,14 @@ passed. The full four-probe physical suite and minimum 16-hour soak remain v1.0.
 requirements. See the [acceptance checklist](docs/physical-acceptance.md) for
 verified results and open gates, and the [changelog](CHANGELOG.md) for version history.
 
-## Requirements
+## Deployment requirements
 
-- Raspberry Pi with Bluetooth and 64-bit Raspberry Pi OS Trixie.
-- Python 3.11–3.13, BlueZ and systemd; the physical target uses Python 3.13.
-- Weber iGrill V202 and compatible probes; one active thermometer at a time.
+- `pitblue-app` runs on any supported Python host that can reach `pitblu-core` over
+  REST and SSE. It has no Raspberry Pi, ARM, Bluetooth, BlueZ or GPIO dependency.
+- `pitblu-core` currently targets a Raspberry Pi with Bluetooth and 64-bit
+  Raspberry Pi OS Trixie; the two services do not have to run on the same host.
+- Python 3.11–3.13 for the current supported release environment.
+- Weber iGrill V202 and compatible probes connected through `pitblu-core`.
 - Optional MQTT broker. No containers or built-in web dashboard are required.
 
 Start with the [guided terminal workflow](docs/terminal-tools.md) and

@@ -1,6 +1,37 @@
 # Architecture
 
-The authoritative target is a native, headless Raspberry Pi gateway with separate control and
+Pitblu is split by responsibility: **pitblu-core owns the thermometer** and
+**pitblue-app owns the cook**. Browsers, the permanent display, QR followers and
+integrations consume pitblue-app's versioned API and application SSE stream. The
+application obtains current hardware truth from pitblu-core REST, then consumes its
+SSE stream and reconciles again after any reconnect. It never consumes core MQTT.
+
+The cook database uses collections and identifies a physical source with the pair
+`core device ID + probe channel`. Semantic measurements are linked to those sources
+through time-bound assignments, so reassignment never rewrites old history. SQLite
+persists cooks, cookers, foods, readings, events, alerts and follower capabilities.
+
+The concrete `PitbluCoreClient` sits behind a thermometer-gateway boundary. A future
+independent `pitblu-blower-core` can have its own hardware lifecycle, safety system,
+watchdog and real-time control loop, with a separate app adapter. It is not part of
+Milestone 1, and pitblu-core is not a generic hardware layer.
+
+```text
+iGrill --BLE--> pitblu-core --REST/SSE--> pitblue-app --> operator/display/followers
+                                              |
+                                              +--> SQLite history and cook intelligence
+```
+
+The API owns every capability; each UI is only a client.
+
+`pitblue-app` is platform-neutral. It depends on network contracts, Python and its
+own application database—not GPIO, BLE, BlueZ, ARM, Raspberry Pi OS, systemd or
+pitblu-core's host filesystem. Running both services on one Pi is supported, but so
+is running the application on any other host that can reach the gateway.
+
+## Thermometer gateway internals
+
+The remainder of this section describes pitblu-core specifically. Its authoritative target is a native, headless Raspberry Pi gateway with separate control and
 telemetry planes. The v0.9.0 release implements both planes over the shared device boundary.
 
 `DeviceAdapter` is the only device-facing boundary. The production and simulated V202 adapters

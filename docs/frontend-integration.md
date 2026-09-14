@@ -1,4 +1,4 @@
-# Frontend and AI integration guide
+# pitblu-core integration contract for pitblue-app
 
 Contract: **v0.9.0**, clean-installed and acceptance-tested on the target Pi.
 The v1.0.0 full four-probe physical suite and minimum 16-hour soak remain pending.
@@ -13,20 +13,19 @@ probe roles or notifications. A separate application must own those features and
 own database. Do not add cook semantics to the gateway or use its SQLite database as
 an integration interface.
 
-Recommended arrangement:
+Required arrangement:
 
 ```text
-Browser -> separate web application's backend -> pitblu-core REST and SSE
-                                             -> MQTT broker (read-only subscription)
-                                             -> web application's own history database
+Browser -> pitblue-app -> pitblu-core REST and SSE
+                      -> pitblue-app history database
 pitblu-core -> Bluetooth iGrill
              -> MQTT broker
 ```
 
-Keep the gateway administrator token in the web backend's protected credentials,
-not browser storage, JavaScript bundles, URLs or logs. Give the web application its
-own least-privilege MQTT subscriber identity. Do not reuse the gateway publisher's
-credentials. REST is the only command interface; MQTT never accepts commands.
+Keep the gateway administrator token in pitblue-app's protected credentials, not
+browser storage, JavaScript bundles, URLs or logs. pitblue-app uses core SSE as its
+single live ingest path and REST for startup/reconnect reconciliation; it does not
+consume core MQTT. REST is the only command interface; MQTT never accepts commands.
 
 The gateway defaults to port 8080 and loopback. `127.0.0.1` refers to the machine
 making a request, not automatically to the Pi. A backend elsewhere needs explicitly
@@ -465,7 +464,8 @@ Stale device data invalidates numeric values. Simulator output remains test data
 
 Provide a gateway health panel; a registered-device list; explicit scan/select/add
 workflow; editable friendly names and recovery preference; connect/disconnect/
-reconnect/delete with confirmation; four probe tiles; battery and freshness; an
+reconnect/delete with confirmation; a collection of probe sources grouped by device;
+battery and freshness; an
 operation progress/error panel; recent operational events; live stream status;
 a schema-driven configuration editor with version-conflict handling and pending-
 restart notices; write-only MQTT password management; and protected token rotation.
