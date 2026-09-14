@@ -3,7 +3,7 @@
 ## Current state
 
 Repository: https://github.com/moodywaters/pitblu (private). One repository contains
-pitblu-core, the gateway, and pitblue-app, the cook application. Shared
+pitblu-core, the gateway, and pitblu-app, the cook application. Shared
 documentation is in docs/. Never make the repository public without the owner's
 explicit instruction.
 
@@ -99,4 +99,4 @@ bash -n deploy/manage.sh
 ```
 
 Read `docs/development.md` for setup and `docs/frontend-integration.md` for every
-REST resource, setting, SSE event and MQTT payload. pitblue-app remains a separate service.
+REST resource, setting, SSE event and MQTT payload. pitblu-app remains a separate service.

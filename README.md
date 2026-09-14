@@ -13,14 +13,14 @@ headless display and temporary read-only follower view.
 One repository for two independently deployable components:
 
 - [pitblu-core](pitblu-core/README.md): thermometer integration and trustworthy telemetry.
-- [pitblue-app](pitblue-app/README.md): cook API, history, alerts and user experiences.
+- [pitblu-app](pitblu-app/README.md): cook API, history, alerts and user experiences.
 
 The application has completed its Milestone 1 implementation gate; see the
-[pitblue-app acceptance record](docs/pitblue-app-milestone-1.md) for delivered scope
+[pitblu-app acceptance record](docs/pitblu-app-milestone-1.md) for delivered scope
 and the remaining installation-specific real-device check.
 
 Shared documentation lives in `docs/`. Each service is independently buildable and
-deployable. The browser talks only to `pitblue-app`; core credentials stay server-side.
+deployable. The browser talks only to `pitblu-app`; core credentials stay server-side.
 
 ## Release status
 
@@ -31,7 +31,7 @@ verified results and open gates, and the [changelog](CHANGELOG.md) for version h
 
 ## Deployment requirements
 
-- `pitblue-app` runs on any supported Python host that can reach `pitblu-core` over
+- `pitblu-app` runs on any supported Python host that can reach `pitblu-core` over
   REST and SSE. It has no Raspberry Pi, ARM, Bluetooth, BlueZ or GPIO dependency.
 - `pitblu-core` currently targets a Raspberry Pi with Bluetooth and 64-bit
   Raspberry Pi OS Trixie; the two services do not have to run on the same host.

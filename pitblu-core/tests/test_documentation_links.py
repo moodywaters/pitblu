@@ -11,7 +11,7 @@ def test_documentation_local_file_links_exist() -> None:
         *root.glob("*.md"),
         *(root / "docs").rglob("*.md"),
         *(root / "pitblu-core").glob("*.md"),
-        *(root / "pitblue-app").glob("*.md"),
+        *(root / "pitblu-app").glob("*.md"),
     ]
     for document in documents:
         content = document.read_text(encoding="utf-8")

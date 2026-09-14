@@ -1,0 +1,8 @@
+PITBLU_APP_DATABASE=/var/lib/pitblu-app/state.sqlite3
+PITBLU_APP_BIND=0.0.0.0
+PITBLU_APP_PORT=8081
+# Set distinct, randomly generated PITBLU_APP_OPERATOR_TOKEN and
+# PITBLU_APP_DISPLAY_TOKEN values of at least 32 characters locally.
+# PITBLU_APP_INTEGRATION_TOKEN is optional and restricted to event/lifecycle actions.
+PITBLU_CORE_URL=http://127.0.0.1:8080
+# Add PITBLU_CORE_TOKEN locally. Never commit the real token.

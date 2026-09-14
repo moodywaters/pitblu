@@ -4,7 +4,7 @@
 
 ## Context
 
-The first `pitblue-app` browser client proved the API-first operator, display and
+The first `pitblu-app` browser client proved the API-first operator, display and
 follower journeys with dependency-free JavaScript. It is not intended to become
 the long-term interface foundation. Pitblu needs typed API payloads, reusable
 responsive components and an installable application while retaining a small
@@ -20,7 +20,7 @@ server-side JavaScript framework or component suite is introduced.
 Frontend source is isolated from the Python package:
 
 ```text
-pitblue-app/
+pitblu-app/
   frontend/
     src/
       api/          typed REST and authenticated SSE client
@@ -32,13 +32,13 @@ pitblue-app/
     package.json
     tsconfig.json
     vite.config.ts
-  src/pitblue_app/static/  generated production assets only
+  src/pitblu_app/static/  generated production assets only
 ```
 
 During development, Vite provides hot module replacement and proxies `/api`,
 `/health`, `/ready` and follower requests to FastAPI. Both processes are development
 tools. `npm run build` type-checks and produces versioned static assets directly in
-`src/pitblue_app/static`. The Python wheel includes those assets, and FastAPI alone
+`src/pitblu_app/static`. The Python wheel includes those assets, and FastAPI alone
 serves them in production. Node.js is therefore a build dependency, not a runtime
 or deployment architecture requirement.
 

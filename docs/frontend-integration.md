@@ -1,4 +1,4 @@
-# pitblu-core integration contract for pitblue-app
+# pitblu-core integration contract for pitblu-app
 
 Contract: **v0.9.0**, clean-installed and acceptance-tested on the target Pi.
 The v1.0.0 full four-probe physical suite and minimum 16-hour soak remain pending.
@@ -16,14 +16,14 @@ an integration interface.
 Required arrangement:
 
 ```text
-Browser -> pitblue-app -> pitblu-core REST and SSE
-                      -> pitblue-app history database
+Browser -> pitblu-app -> pitblu-core REST and SSE
+                      -> pitblu-app history database
 pitblu-core -> Bluetooth iGrill
              -> MQTT broker
 ```
 
-Keep the gateway administrator token in pitblue-app's protected credentials, not
-browser storage, JavaScript bundles, URLs or logs. pitblue-app uses core SSE as its
+Keep the gateway administrator token in pitblu-app's protected credentials, not
+browser storage, JavaScript bundles, URLs or logs. pitblu-app uses core SSE as its
 single live ingest path and REST for startup/reconnect reconciliation; it does not
 consume core MQTT. REST is the only command interface; MQTT never accepts commands.
 

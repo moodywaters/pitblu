@@ -12,8 +12,8 @@ dist/
 node_modules/
 *.tar.gz
 pitblu-core.sqlite3*
-pitblue-app.sqlite3*
-pitblue-app/frontend/coverage/
+pitblu-app.sqlite3*
+pitblu-app/frontend/coverage/
 .env
 config.local.yaml
 physical-evidence.local.json

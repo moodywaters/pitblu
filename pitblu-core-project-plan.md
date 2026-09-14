@@ -292,7 +292,7 @@ The local broker is the deployment default, not a hard-coded dependency. Additio
 
 ## GitHub and documentation
 
-- Repository: `moodywaters/pitblu`, with independent `pitblu-core/` and `pitblue-app/` components
+- Repository: `moodywaters/pitblu`, with independent `pitblu-core/` and `pitblu-app/` components
 - Owner: John's personal GitHub account
 - Initially private
 - May be made public later

@@ -1,0 +1,24 @@
+[Unit]
+Description=Pitblu cook application
+After=network-online.target pitblu-core.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pitblu-app
+Group=pitblu-app
+EnvironmentFile=/etc/pitblu-app/environment
+ExecStart=/opt/pitblu-app/venv/bin/pitblu-app
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/pitblu-app
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target
