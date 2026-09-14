@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pitblu-app"
-version = "0.2.0"
+version = "0.2.1"
 description = "Pitblu cook application, API, history and user experiences"
 readme = "README.md"
 requires-python = ">=3.11,<3.14"
