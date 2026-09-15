@@ -52,6 +52,8 @@ describe('application surfaces', () => {
     await userEvent.click(screen.getByRole('button', {name: /start a cook/i}));
     await screen.findByRole('heading', {name: 'Set up the probes'});
     expect(screen.getByRole('link', {name: 'Pitblu home'})).toBeInTheDocument();
+    expect(screen.getByAltText('Pitblu')).toHaveClass('brand-lockup');
+    expect(screen.getByAltText('Pitblu')).toHaveAttribute('src', '/pitblu-header-logo.png');
     expect(screen.getByText(/1 ready probe$/)).toBeInTheDocument();
     await userEvent.type(screen.getByPlaceholderText('Defaults to today’s date'), 'Sunday ribs');
     await userEvent.click(screen.getByRole('checkbox', {name: /WSM 57/i}));

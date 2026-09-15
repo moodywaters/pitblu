@@ -184,6 +184,12 @@ details.advanced[open] summary { margin-bottom: 1.2rem; }
   .home-shell footer { display: none; }
 }
 
+/* At phone widths, frame the official lock-up to show its wordmark only. */
+@media (max-width: 600px) {
+  .home-shell .brand { position: relative; flex: 0 0 92px; width: 92px; height: 30px; overflow: hidden; }
+  .home-shell .brand .brand-lockup { position: absolute; top: -9px; left: -40px; width: auto; max-width: none; height: 44px; object-fit: contain; }
+}
+
 /* Complete application surfaces use the same instrument language as Home. */
 .app-shell.home-shell main:has(.live-cook-screen), .app-shell.home-shell main:has(.cook-setup) { width: min(1220px, 100%); padding: 0; }
 .live-cook-screen { min-height: calc(100vh - 5rem); padding: clamp(1rem, 2.5vw, 2rem); background: #03141de8; }
