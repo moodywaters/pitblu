@@ -128,6 +128,7 @@ details.advanced[open] summary { margin-bottom: 1.2rem; }
 .home-shell::after { content: ""; position: fixed; inset: 0; z-index: -1; background: #03141d99; backdrop-filter: blur(2px); }
 .home-shell header { min-height: 5rem; padding: 0 clamp(1rem, 3vw, 2.5rem); border: 0; border-bottom: 1px solid var(--pb-border); color: var(--pb-text); background: #03131ded; backdrop-filter: blur(18px); }
 .home-shell .brand { width: auto; height: auto; display: flex; align-items: center; gap: .55rem; color: white; }
+.home-shell .brand img { width: auto; height: 3.1rem; object-fit: contain; mix-blend-mode: normal; }
 .home-shell .brand > span { color: var(--pb-brand); font-size: 2rem; line-height: 1; }
 .home-shell .brand strong { font-size: 1.75rem; letter-spacing: -.06em; }
 .home-shell .brand strong span { color: var(--pb-brand); }

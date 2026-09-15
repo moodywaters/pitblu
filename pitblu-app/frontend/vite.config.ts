@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg', 'pitblu-logo.png', 'pitblu-home-background.png'],
+      includeAssets: ['favicon-32.png', 'apple-touch-icon.png', 'pwa-192.png', 'pwa-512.png', 'pitblu-app-icon.png', 'pitblu-header-logo.png', 'pitblu-logo.png', 'pitblu-home-background.png'],
       manifest: {
         name: 'Pitblu',
         short_name: 'Pitblu',
@@ -17,7 +17,11 @@ export default defineConfig({
         display: 'standalone',
         start_url: '/',
         scope: '/',
-        icons: [{src: '/pitblu-logo.png', sizes: '1536x1536', type: 'image/png', purpose: 'any maskable'}]
+        icons: [
+          {src: '/pwa-192.png', sizes: '192x192', type: 'image/png', purpose: 'any'},
+          {src: '/pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'any'},
+          {src: '/pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable'}
+        ]
       },
       workbox: {
         navigateFallback: '/index.html',

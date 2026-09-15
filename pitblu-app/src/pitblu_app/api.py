@@ -190,6 +190,12 @@ def create_app(
                 "/index.html",
                 "/manifest.webmanifest",
                 "/icon.svg",
+                "/favicon-32.png",
+                "/apple-touch-icon.png",
+                "/pwa-192.png",
+                "/pwa-512.png",
+                "/pitblu-app-icon.png",
+                "/pitblu-header-logo.png",
                 "/pitblu-logo.png",
                 "/pitblu-home-background.png",
                 "/sw.js",
@@ -520,7 +526,7 @@ def create_app(
     @app.get("/{asset_name}", include_in_schema=False)
     async def pwa_asset(asset_name: str) -> FileResponse:
         if not re.fullmatch(
-            r"(?:index\.html|manifest\.webmanifest|icon\.svg|pitblu-logo\.png|pitblu-home-background\.png|sw\.js|workbox-[a-zA-Z0-9_-]+\.js)",
+            r"(?:index\.html|manifest\.webmanifest|icon\.svg|favicon-32\.png|apple-touch-icon\.png|pwa-(?:192|512)\.png|pitblu-app-icon\.png|pitblu-header-logo\.png|pitblu-logo\.png|pitblu-home-background\.png|sw\.js|workbox-[a-zA-Z0-9_-]+\.js)",
             asset_name,
         ):
             raise DomainError("resource not found", 404, "not_found")
