@@ -2,6 +2,7 @@ import {FormEvent, useCallback, useEffect, useMemo, useState} from 'react';
 import {PitbluApi, type ClientRole} from './api/client';
 import {HomeScreen} from './components/HomeScreen';
 import {LiveCookScreen} from './components/LiveCookScreen';
+import {ThermometerScreen} from './components/ThermometerScreen';
 import type {Alert, Cook, CookEvent, CookerProfile, Measurement, NamedResource, Share, ShareSummary, SystemState, TemperatureReading} from './types/api';
 
 type Tab = 'overview' | 'chart' | 'timeline' | 'setup';
@@ -91,6 +92,7 @@ export default function App() {
   if (!system && !cook && identity.role !== 'follower') return <Shell now={now}><Loading /></Shell>;
   if (identity.role === 'operator' && view === 'history') return <Shell now={now} home activeNav="history"><Journal cooks={history}/></Shell>;
   if (identity.role === 'operator' && view === 'more') return <Shell now={now} home activeNav="more"><More cookers={cookerProfiles} api={api} onRefresh={load}/></Shell>;
+  if (identity.role === 'operator' && view === 'thermometer') return <Shell now={now} home activeNav="more"><ThermometerScreen initialCore={system!.core} api={api} onRefresh={load}/></Shell>;
   if (!cook) {
     if (identity.role === 'display') return <Shell now={now}><section className="empty"><span className="pulse"/><h1>Ready for the next cook</h1><p>Pitblu is standing by.</p></section></Shell>;
     if (!showCookSetup && view !== 'start') return <Shell now={now} home activeNav="home"><HomeScreen system={system!} history={history} onStart={() => setShowCookSetup(true)}/></Shell>;

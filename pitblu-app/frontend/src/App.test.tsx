@@ -48,6 +48,7 @@ describe('application surfaces', () => {
     expect(screen.getByText('Probe 1')).toBeInTheDocument();
     expect(screen.getByText('68')).toBeInTheDocument();
     expect(screen.getByText('Not connected')).toBeInTheDocument();
+    expect(screen.getByRole('link', {name: 'Manage igrill-a'})).toHaveAttribute('href', '/?view=thermometer');
     await userEvent.click(screen.getByRole('button', {name: /start a cook/i}));
     await screen.findByRole('heading', {name: 'Set up the probes'});
     expect(screen.getByRole('link', {name: 'Pitblu home'})).toBeInTheDocument();

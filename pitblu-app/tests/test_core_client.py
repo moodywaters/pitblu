@@ -52,6 +52,10 @@ class FakeClient:
         self.calls.append(url)
         return FakeResponse(self.responses[url])
 
+    async def request(self, method: str, url: str, **_kwargs: object) -> FakeResponse:
+        self.calls.append(f"{method} {url}")
+        return FakeResponse(self.responses[url])
+
     def stream(self, method: str, url: str) -> StreamContext:
         self.calls.append(f"{method} {url}")
         return StreamContext(FakeResponse(lines=self.responses[url]))
@@ -109,3 +113,28 @@ def test_event_stream_parses_core_sse_data_frames():
         "probe": 1,
     }
     assert calls == [f"GET {base}/api/v1/events/stream"]
+
+
+def test_administration_operations_stay_inside_server_side_core_client():
+    base = "http://core"
+    calls: list[str] = []
+    responses = {
+        f"{base}/api/v1/scans": {"operationId": "scan"},
+        f"{base}/api/v1/scans/scan": {"operationId": "scan", "devices": []},
+        f"{base}/api/v1/devices": {"device": {"deviceId": "igrill"}},
+        f"{base}/api/v1/devices/igrill/reconnect": {"operationId": "reconnect"},
+        f"{base}/api/v1/operations/reconnect": {"operationId": "reconnect", "status": "succeeded"},
+    }
+    client = PitbluCoreClient(base, "secret", client_factory=factory(responses, calls))
+    asyncio.run(client.start_scan())
+    asyncio.run(client.scan_result("scan"))
+    asyncio.run(client.register_device("opaque", "Garden iGrill"))
+    asyncio.run(client.reconnect_device("igrill"))
+    asyncio.run(client.operation("reconnect"))
+    assert calls == [
+        f"POST {base}/api/v1/scans",
+        f"GET {base}/api/v1/scans/scan",
+        f"POST {base}/api/v1/devices",
+        f"POST {base}/api/v1/devices/igrill/reconnect",
+        f"GET {base}/api/v1/operations/reconnect",
+    ]

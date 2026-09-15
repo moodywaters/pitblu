@@ -17,7 +17,7 @@ from fastapi.staticfiles import StaticFiles
 
 from pitblu_app import __version__
 from pitblu_app.auth import AccessControl, Scope
-from pitblu_app.core_client import PitbluCoreClient, ThermometerGateway
+from pitblu_app.core_client import CoreRequestError, PitbluCoreClient, ThermometerGateway
 from pitblu_app.events import ApplicationEvents
 from pitblu_app.models import (
     AssignmentCreate,
@@ -33,6 +33,8 @@ from pitblu_app.models import (
     NamedPatch,
     ShareCreate,
     TelemetryIn,
+    ThermometerRegistration,
+    utc_now,
 )
 from pitblu_app.service import CookService
 from pitblu_app.store import Store, public_row
@@ -51,14 +53,28 @@ def create_app(
     events = ApplicationEvents()
     service = CookService(database, events, access_control.follower_signing_secret())
     core_task: asyncio.Task[None] | None = None
-    core_state: dict[str, Any] = {"available": False, "devices": [], "lastError": None}
+    core_state: dict[str, Any] = {
+        "available": False,
+        "devices": [],
+        "lastError": None,
+        "lastSuccessfulContact": None,
+        "lastEventAt": None,
+        "liveEvents": False,
+        "state": "reconnecting" if core else "unavailable",
+    }
 
     async def ingest_core() -> None:
         assert core is not None
         while True:
             try:
                 devices = await core.reconcile()
-                core_state.update(available=True, devices=devices, lastError=None)
+                core_state.update(
+                    available=True,
+                    devices=devices,
+                    lastError=None,
+                    lastSuccessfulContact=utc_now().isoformat(),
+                    state="connected",
+                )
                 for device in devices:
                     for probe in device.get("probes", []):
                         if probe.get("observedAt"):
@@ -80,6 +96,13 @@ def create_app(
                                 )
                             )
                 async for event in core.events():
+                    core_state.update(
+                        available=True,
+                        liveEvents=True,
+                        lastEventAt=utc_now().isoformat(),
+                        lastSuccessfulContact=utc_now().isoformat(),
+                        state="connected",
+                    )
                     kind = event.get("type")
                     if kind == "probe.temperature":
                         await service.ingest(
@@ -108,12 +131,17 @@ def create_app(
                                 }
                             )
                         )
-                core_state["available"] = False
+                core_state.update(available=False, liveEvents=False, state="reconnecting")
                 await service.mark_feed_unavailable()
             except asyncio.CancelledError:
                 raise
             except Exception as exc:
-                core_state.update(available=False, lastError=type(exc).__name__)
+                core_state.update(
+                    available=False,
+                    liveEvents=False,
+                    state="reconnecting" if core else "unavailable",
+                    lastError=type(exc).__name__,
+                )
                 await service.mark_feed_unavailable()
                 await asyncio.sleep(core_retry_seconds)
 
@@ -282,6 +310,15 @@ def create_app(
     async def unexpected_error(request: Request, _exc: Exception) -> JSONResponse:
         return error_response(request, "internal_error", "internal service error", 500)
 
+    @app.exception_handler(CoreRequestError)
+    async def core_request_error(request: Request, _exc: CoreRequestError) -> JSONResponse:
+        return error_response(
+            request,
+            "core_request_failed",
+            "pitblu-core could not complete that action",
+            502,
+        )
+
     @app.get("/health", tags=["system"])
     async def health() -> dict[str, str]:
         return {"status": "ok"}
@@ -303,6 +340,45 @@ def create_app(
             "activeCook": public_row(active) if active else None,
             "latestCook": public_row(latest) if latest else None,
         }
+
+    def require_core() -> ThermometerGateway:
+        if core is None:
+            raise DomainError("pitblu-core is unavailable", 503, "core_unavailable")
+        return core
+
+    @app.get("/api/v1/thermometer", tags=["thermometer"])
+    async def thermometer() -> dict[str, Any]:
+        return {"core": core_state, "devices": core_state["devices"]}
+
+    @app.post("/api/v1/thermometer/scans", status_code=202, tags=["thermometer"])
+    async def start_thermometer_scan() -> dict[str, Any]:
+        if not core_state["available"]:
+            raise DomainError("pitblu-core is unavailable", 503, "core_unavailable")
+        return await require_core().start_scan()
+
+    @app.get("/api/v1/thermometer/scans/{scan_id}", tags=["thermometer"])
+    async def thermometer_scan(scan_id: str) -> dict[str, Any]:
+        return await require_core().scan_result(scan_id)
+
+    @app.post("/api/v1/thermometer/devices", status_code=201, tags=["thermometer"])
+    async def register_thermometer(body: ThermometerRegistration) -> dict[str, Any]:
+        if not core_state["available"]:
+            raise DomainError("pitblu-core is unavailable", 503, "core_unavailable")
+        return await require_core().register_device(body.discovery_id, body.friendly_name)
+
+    @app.post(
+        "/api/v1/thermometer/devices/{device_id}/reconnect",
+        status_code=202,
+        tags=["thermometer"],
+    )
+    async def reconnect_thermometer(device_id: str) -> dict[str, Any]:
+        if not core_state["available"]:
+            raise DomainError("pitblu-core is unavailable", 503, "core_unavailable")
+        return await require_core().reconnect_device(device_id)
+
+    @app.get("/api/v1/thermometer/operations/{operation_id}", tags=["thermometer"])
+    async def thermometer_operation(operation_id: str) -> dict[str, Any]:
+        return await require_core().operation(operation_id)
 
     @app.get("/api/v1/cooks", tags=["cooks"])
     async def cooks() -> list[dict[str, Any]]:

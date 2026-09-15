@@ -14,15 +14,25 @@ export interface CoreDevice {
   deviceId: string;
   name?: string;
   friendlyName?: string;
+  model?: string;
+  desiredState?: string;
+  observedState?: string;
+  automaticReconnection?: boolean;
+  createdAt?: string;
   probes: ProbeState[];
   battery?: {available: boolean; fresh: boolean; percentage: number | null};
 }
 
 export interface SystemState {
-  core: {available: boolean; devices: CoreDevice[]; lastError?: string | null};
+  core: {available: boolean; devices: CoreDevice[]; lastError?: string | null; state?: 'connected' | 'reconnecting' | 'unavailable'; lastSuccessfulContact?: string | null; lastEventAt?: string | null; liveEvents?: boolean};
   activeCook: Pick<Cook, 'id' | 'name' | 'state'> | null;
   latestCook: Pick<Cook, 'id' | 'name' | 'state'> | null;
 }
+
+export interface ThermometerState { core: SystemState['core']; devices: CoreDevice[]; }
+export interface CoreOperation { operationId: string; status: 'queued' | 'running' | 'succeeded' | 'failed'; errorCode?: string | null; }
+export interface DiscoveredThermometer { discoveryId: string; name: string; model?: string; signalStrength?: number | null; }
+export interface ThermometerScan extends CoreOperation { devices?: DiscoveredThermometer[]; }
 
 export interface NamedResource { id: string; name: string; profileId?: string | null; }
 

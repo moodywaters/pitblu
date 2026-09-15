@@ -49,6 +49,11 @@ class CookCreate(ApiModel):
     cooker_profile_ids: list[str] = Field(default_factory=list, alias="cookerProfileIds")
 
 
+class ThermometerRegistration(ApiModel):
+    discovery_id: str = Field(alias="discoveryId", min_length=1, max_length=200)
+    friendly_name: str | None = Field(None, alias="friendlyName", min_length=1, max_length=120)
+
+
 class CookPatch(ApiModel):
     name: str | None = Field(None, min_length=1, max_length=120)
     anticipated_serve_at: datetime | None = Field(None, alias="anticipatedServeAt")

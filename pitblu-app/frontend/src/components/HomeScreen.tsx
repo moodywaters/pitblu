@@ -3,12 +3,13 @@ import type {Cook, CoreDevice, SystemState} from '../types/api';
 const probeColours = ['red', 'blue', 'green', 'amber'];
 
 function DeviceStatus({device}: {device: CoreDevice}) {
-  const connected = device.probes.some(probe => probe.available && probe.present !== false);
-  return <article className="device-status" aria-label={`${device.friendlyName ?? device.name ?? device.deviceId} status`}>
+  const connected = device.observedState ? ['connected', 'polling'].includes(device.observedState) : device.probes.some(probe => probe.available && probe.present !== false);
+  const reconnecting = ['connecting', 'reconnecting', 'backoff', 'discovering'].includes(device.observedState ?? '');
+  return <a className="device-status" href="/?view=thermometer" aria-label={`Manage ${device.friendlyName ?? device.name ?? device.deviceId}`}>
     <span className="device-symbol" aria-hidden="true">♨</span>
-    <span><strong>{device.friendlyName ?? device.name ?? device.deviceId}</strong><small><i className={connected ? 'status-dot live' : 'status-dot'}/>{connected ? 'Connected' : 'Unavailable'}</small></span>
+    <span><strong>{device.friendlyName ?? device.name ?? device.deviceId}</strong><small><i className={connected ? 'status-dot live' : 'status-dot'}/>{connected ? 'Connected' : reconnecting ? 'Reconnecting' : 'Unavailable'}</small></span>
     {device.battery?.available && <span className="battery" aria-label={`${device.battery.percentage}% battery`}>▭ {device.battery.percentage}%</span>}
-  </article>;
+  </a>;
 }
 
 function ProbeReading({probe, deviceId}: {probe: CoreDevice['probes'][number]; deviceId: string}) {
@@ -34,6 +35,7 @@ export function HomeScreen({system, history, onStart}: {system: SystemState; his
       </div>
       <aside className="home-action">
         {devices.map(device => <DeviceStatus key={device.deviceId} device={device}/>)}
+        {!devices.length && <a className="device-status" href="/?view=thermometer" aria-label="Manage thermometer"><span className="device-symbol" aria-hidden="true">♨</span><span><strong>Thermometer</strong><small><i className="status-dot"/>No device connected</small></span><span aria-hidden="true">›</span></a>}
         <div><h2>Ready to cook?</h2><p>Start a new cook to track temperatures, events and notes.</p></div>
         <button className="primary-action" onClick={onStart}>🔥 Start a cook</button>
       </aside>
