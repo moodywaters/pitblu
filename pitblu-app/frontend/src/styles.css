@@ -126,9 +126,12 @@ details.advanced[open] summary { margin-bottom: 1.2rem; }
 .home-shell { color: var(--pb-text); background: var(--pb-bg); font-family: var(--pb-font); }
 .home-shell::before { content: ""; position: fixed; inset: 0; z-index: -2; background: url('/pitblu-home-background.png') center/cover no-repeat; }
 .home-shell::after { content: ""; position: fixed; inset: 0; z-index: -1; background: #03141d99; backdrop-filter: blur(2px); }
-.home-shell header { min-height: 5rem; padding: 0 clamp(1rem, 3vw, 2.5rem); border: 0; border-bottom: 1px solid var(--pb-border); color: var(--pb-text); background: #03131ded; backdrop-filter: blur(18px); }
-.home-shell .brand { width: auto; height: auto; display: flex; align-items: center; gap: .55rem; color: white; }
+.home-shell header { min-height: 5rem; padding: 0 clamp(1rem, 3vw, 2.5rem); border: 0; border-bottom: 1px solid var(--pb-border); color: var(--pb-text); background: #0a2531; backdrop-filter: blur(18px); }
+.home-shell .brand { position: relative; width: auto; height: auto; display: flex; align-items: center; gap: .55rem; color: white; }
 .home-shell .brand img { width: auto; height: 3.1rem; object-fit: contain; mix-blend-mode: normal; }
+.home-shell .brand::before, .home-shell .brand::after { content: ""; position: absolute; z-index: 1; top: 21.6px; width: 9.8px; height: 9.8px; border-radius: 50%; background: #0a2531; pointer-events: none; }
+.home-shell .brand::before { left: 54.4px; }
+.home-shell .brand::after { left: 101.2px; }
 .home-shell .brand > span { color: var(--pb-brand); font-size: 2rem; line-height: 1; }
 .home-shell .brand strong { font-size: 1.75rem; letter-spacing: -.06em; }
 .home-shell .brand strong span { color: var(--pb-brand); }
@@ -188,6 +191,9 @@ details.advanced[open] summary { margin-bottom: 1.2rem; }
 @media (max-width: 600px) {
   .home-shell .brand { position: relative; flex: 0 0 92px; width: 92px; height: 30px; overflow: hidden; }
   .home-shell .brand .brand-lockup { position: absolute; top: -9px; left: -40px; width: auto; max-width: none; height: 44px; object-fit: contain; }
+  .home-shell .brand::before, .home-shell .brand::after { top: 10px; width: 8.7px; height: 8.7px; }
+  .home-shell .brand::before { left: 8.2px; }
+  .home-shell .brand::after { left: 49.8px; }
 }
 
 /* Complete application surfaces use the same instrument language as Home. */
