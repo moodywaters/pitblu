@@ -175,8 +175,8 @@ details.advanced[open] summary { margin-bottom: 1.2rem; }
 @media (max-width: 800px) {
   .home-shell { padding-bottom: calc(4.3rem + env(safe-area-inset-bottom)); }
   .home-shell header { position: relative; min-height: 4.5rem; padding: .7rem 1rem; backdrop-filter: none; }
-  .home-shell header nav { position: fixed; inset: auto 0 0; z-index: 20; justify-content: space-around; padding: .45rem .35rem calc(.45rem + env(safe-area-inset-bottom)); border-top: 1px solid var(--pb-border); background: #03131df7; backdrop-filter: blur(18px); }
-  .home-shell header nav a { min-width: 4rem; display: grid; place-items: center; gap: .15rem; padding: .35rem; color: var(--pb-text-muted); font-size: 1rem; }.home-shell header nav a.active { color: var(--pb-brand); background: #0b2838; }.home-shell header nav a span { font-size: .7rem; }
+  .home-shell header nav { position: fixed; inset: auto 0 0; z-index: 20; justify-content: space-around; padding: .45rem .35rem calc(.45rem + env(safe-area-inset-bottom)); border-top: 1px solid #102a3633; background: #d8d3c8; backdrop-filter: blur(18px); }
+  .home-shell header nav a { min-width: 4rem; display: grid; place-items: center; gap: .15rem; padding: .35rem; color: #102a36; font-size: 1rem; }.home-shell header nav a.active { color: #102a36; background: #102a3614; }.home-shell header nav a span { font-size: .7rem; }
   .header-status { display: none; }.home-shell header time { font-size: .8rem; }
   .home-hero { min-height: auto; grid-template-columns: 1fr; grid-template-rows: auto; gap: 1.25rem; padding: 2rem 1rem 1.25rem; background: linear-gradient(#03141d56, #03141df5 37%), url('/pitblu-home-background.png') 68% top/auto 300px no-repeat, var(--pb-bg); }
   .hero-copy { grid-column: auto; padding-top: 4.25rem; }.script-line { display: none; }.hero-copy h1 { font-size: 2rem; }.hero-copy > p:last-child { font-size: .95rem; }
