@@ -126,7 +126,7 @@ details.advanced[open] summary { margin-bottom: 1.2rem; }
 .home-shell { color: var(--pb-text); background: var(--pb-bg); font-family: var(--pb-font); }
 .home-shell::before { content: ""; position: fixed; inset: 0; z-index: -2; background: url('/pitblu-home-background.png') center/cover no-repeat; }
 .home-shell::after { content: ""; position: fixed; inset: 0; z-index: -1; background: #03141d99; backdrop-filter: blur(2px); }
-.home-shell header { min-height: 5rem; padding: 0 clamp(1rem, 3vw, 2.5rem); border: 0; border-bottom: 1px solid #102a3633; color: #102a36; background: #7d7c7c; backdrop-filter: blur(18px); }
+.home-shell header { min-height: 5rem; padding: 0 clamp(1rem, 3vw, 2.5rem); border: 0; border-bottom: 1px solid #102a3633; color: #fff; background: #7d7c7c; backdrop-filter: blur(18px); }
 .home-shell .brand { position: relative; width: auto; height: auto; display: flex; align-items: center; gap: .55rem; color: white; }
 .home-shell .brand img { width: auto; height: 3.1rem; object-fit: contain; mix-blend-mode: normal; }
 .home-shell .brand::before, .home-shell .brand::after { content: ""; position: absolute; z-index: 1; top: 21.6px; width: 9.8px; height: 9.8px; border-radius: 50%; background: #7d7c7c; pointer-events: none; }
@@ -136,9 +136,9 @@ details.advanced[open] summary { margin-bottom: 1.2rem; }
 .home-shell .brand strong { font-size: 1.75rem; letter-spacing: -.06em; }
 .home-shell .brand strong span { color: var(--pb-brand); }
 .home-shell header nav { display: flex; align-items: center; gap: .7rem; }
-.home-shell header nav a { display: flex; gap: .45rem; padding: .65rem .85rem; border-radius: var(--pb-radius-sm); color: #102a36; text-decoration: none; }
-.home-shell header nav a.active { color: #102a36; background: #102a3614; }
-.header-status { color: #102a36; font-size: .85rem; }
+.home-shell header nav a { display: flex; gap: .45rem; padding: .65rem .85rem; border-radius: var(--pb-radius-sm); color: #fff; text-decoration: none; }
+.home-shell header nav a.active { color: #fff; background: #102a3630; }
+.header-status { color: #fff; font-size: .85rem; }
 .status-dot { display: inline-block; width: .65rem; height: .65rem; margin-right: .4rem; border-radius: 50%; background: var(--pb-unavailable); }
 .status-dot.live { background: var(--pb-live); box-shadow: 0 0 14px #42e56f66; }
 .home-shell main { width: min(1180px, 100%); padding: 0; }
@@ -176,7 +176,7 @@ details.advanced[open] summary { margin-bottom: 1.2rem; }
   .home-shell { padding-bottom: calc(4.3rem + env(safe-area-inset-bottom)); }
   .home-shell header { position: relative; min-height: 4.5rem; padding: .7rem 1rem; backdrop-filter: none; }
   .home-shell header nav { position: fixed; inset: auto 0 0; z-index: 20; justify-content: space-around; padding: .45rem .35rem calc(.45rem + env(safe-area-inset-bottom)); border-top: 1px solid #102a3633; background: #7d7c7c; backdrop-filter: blur(18px); }
-  .home-shell header nav a { min-width: 4rem; display: grid; place-items: center; gap: .15rem; padding: .35rem; color: #102a36; font-size: 1rem; }.home-shell header nav a.active { color: #102a36; background: #102a3614; }.home-shell header nav a span { font-size: .7rem; }
+  .home-shell header nav a { min-width: 4rem; display: grid; place-items: center; gap: .15rem; padding: .35rem; color: #fff; font-size: 1rem; }.home-shell header nav a.active { color: #fff; background: #102a3630; }.home-shell header nav a span { font-size: .7rem; }
   .header-status { display: none; }.home-shell header time { font-size: .8rem; }
   .home-hero { min-height: auto; grid-template-columns: 1fr; grid-template-rows: auto; gap: 1.25rem; padding: 2rem 1rem 1.25rem; background: linear-gradient(#03141d56, #03141df5 37%), url('/pitblu-home-background.png') 68% top/auto 300px no-repeat, var(--pb-bg); }
   .hero-copy { grid-column: auto; padding-top: 4.25rem; }.script-line { display: none; }.hero-copy h1 { font-size: 2rem; }.hero-copy > p:last-child { font-size: .95rem; }
