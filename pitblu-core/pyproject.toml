@@ -23,7 +23,7 @@ dependencies = [
   "bleak==3.0.2",
   "fastapi==0.141.1",
   "PyYAML==6.0.3",
-  "uvicorn==0.52.4",
+  "uvicorn==0.53.0",
 ]
 
 [project.optional-dependencies]
