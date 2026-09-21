@@ -214,6 +214,7 @@ def public_row(row: dict[str, Any]) -> dict[str, Any]:
         "current_temperature_c": "currentTemperatureC",
         "current_observed_at": "currentObservedAt",
         "measurement_id": "measurementId",
+        "assignment_id": "assignmentId",
         "core_device_id": "coreDeviceId",
         "probe_channel": "probeChannel",
         "ended_at": "endedAt",

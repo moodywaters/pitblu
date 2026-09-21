@@ -1,5 +1,5 @@
 import asyncio
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, timedelta, timezone
 
 from conftest import create_active_cook
 
@@ -69,6 +69,99 @@ def test_device_plus_channel_identity_and_reassignment_history(client):
     assert len(assignments) == 3
 
 
+def test_assignment_history_uses_observation_time_and_preserves_unassigned_gaps(client):
+    cook, brisket = setup_measurement(client)
+    ambient = client.post(
+        f"/api/v1/cooks/{cook['id']}/measurements",
+        json={"label": "WSM Ambient", "kind": "cooker", "rangeMinC": 120, "rangeMaxC": 135},
+    ).json()
+    first = client.post(
+        f"/api/v1/cooks/{cook['id']}/assignments",
+        json={"measurementId": brisket["id"], "coreDeviceId": "igrill-a", "probeChannel": 17},
+    ).json()
+    base = datetime(2026, 9, 21, 10, 0, tzinfo=UTC)
+    store = client.app.state.store
+    with store.transaction() as database:
+        database.execute(
+            "UPDATE assignments SET started_at=?,ended_at=? WHERE id=?",
+            (base.isoformat(), (base + timedelta(minutes=10)).isoformat(), first["id"]),
+        )
+    second = client.post(
+        f"/api/v1/cooks/{cook['id']}/assignments",
+        json={"measurementId": ambient["id"], "coreDeviceId": "igrill-a", "probeChannel": 17},
+    ).json()
+    with store.transaction() as database:
+        database.execute(
+            "UPDATE assignments SET started_at=? WHERE id=?",
+            ((base + timedelta(minutes=20)).isoformat(), second["id"]),
+        )
+
+    ingest(client, "igrill-a", 17, 68, base + timedelta(minutes=5), "brisket-live")
+    ingest(client, "igrill-a", 17, 70, base + timedelta(minutes=9), "brisket-newest")
+    ingest(client, "igrill-a", 17, 25, base + timedelta(minutes=15), "unassigned-gap")
+    ingest(client, "igrill-a", 17, 122, base + timedelta(minutes=25), "ambient-live")
+    # This older sample arrives after reassignment but still belongs to the first assignment.
+    delayed = (base + timedelta(minutes=8)).astimezone(timezone(timedelta(hours=2)))
+    ingest(client, "igrill-a", 17, 69, delayed, "brisket-delayed")
+
+    readings = client.get(f"/api/v1/cooks/{cook['id']}/telemetry").json()
+    assert [(row["measurementId"], row["assignmentId"]) for row in readings] == [
+        (brisket["id"], first["id"]),
+        (brisket["id"], first["id"]),
+        (brisket["id"], first["id"]),
+        (None, None),
+        (ambient["id"], second["id"]),
+    ]
+    assert all(row["coreDeviceId"] == "igrill-a" for row in readings)
+    assert all(row["probeChannel"] == 17 for row in readings)
+    assignments = client.get(f"/api/v1/cooks/{cook['id']}/assignments").json()
+    assert [item["id"] for item in assignments] == [first["id"], second["id"]]
+    assert client.get(f"/api/v1/measurements/{brisket['id']}").json()["currentTemperatureC"] == 70
+
+
+def test_explicit_replacement_ends_conflicting_assignment_at_new_start(client):
+    cook, first_measurement = setup_measurement(client)
+    second_measurement = client.post(
+        f"/api/v1/cooks/{cook['id']}/measurements",
+        json={"label": "WSM Ambient", "kind": "cooker"},
+    ).json()
+    first = client.post(
+        f"/api/v1/cooks/{cook['id']}/assignments",
+        json={"measurementId": first_measurement["id"], "coreDeviceId": "igrill", "probeChannel": 11},
+    ).json()
+    second = client.post(
+        f"/api/v1/cooks/{cook['id']}/assignments",
+        json={"measurementId": second_measurement["id"], "coreDeviceId": "igrill", "probeChannel": 11},
+    ).json()
+
+    assignments = client.get(f"/api/v1/cooks/{cook['id']}/assignments").json()
+    assert assignments[0]["id"] == first["id"]
+    assert assignments[0]["endedAt"] == second["startedAt"]
+    assert assignments[1]["id"] == second["id"]
+    assert assignments[1]["endedAt"] is None
+
+
+def test_one_measurement_can_be_fed_by_different_physical_probes(client):
+    cook, measurement = setup_measurement(client)
+    first = client.post(
+        f"/api/v1/cooks/{cook['id']}/assignments",
+        json={"measurementId": measurement["id"], "coreDeviceId": "device-a", "probeChannel": 2},
+    ).json()
+    client.delete(f"/api/v1/assignments/{first['id']}")
+    second = client.post(
+        f"/api/v1/cooks/{cook['id']}/assignments",
+        json={"measurementId": measurement["id"], "coreDeviceId": "device-b", "probeChannel": 4},
+    ).json()
+    assignments = client.get(f"/api/v1/cooks/{cook['id']}/assignments").json()
+    assert assignments[0]["endedAt"] is not None
+    assert assignments[1]["endedAt"] is None
+    assert {(item["coreDeviceId"], item["probeChannel"]) for item in assignments} == {
+        ("device-a", 2),
+        ("device-b", 4),
+    }
+    assert second["measurementId"] == measurement["id"]
+
+
 def test_targets_alerts_stale_and_idempotence(client):
     cook, measurement = setup_measurement(client)
     client.post(
@@ -97,10 +190,21 @@ def test_targets_alerts_stale_and_idempotence(client):
         client.get(f"/api/v1/measurements/{measurement['id']}").json()["interpretedState"]
         == "unavailable"
     )
+    assignments = client.get(f"/api/v1/cooks/{cook['id']}/assignments").json()
+    assert len(assignments) == 1
+    assert assignments[0]["endedAt"] is None
 
 
 def test_event_retry_is_safe(client):
     cook = create_active_cook(client)
+    measurement = client.post(
+        f"/api/v1/cooks/{cook['id']}/measurements",
+        json={"label": "Brisket", "kind": "food"},
+    ).json()
+    assignment = client.post(
+        f"/api/v1/cooks/{cook['id']}/assignments",
+        json={"measurementId": measurement["id"], "coreDeviceId": "abc", "probeChannel": 9},
+    ).json()
     headers = {"Idempotency-Key": "button-press-1"}
     one = client.post(
         f"/api/v1/cooks/{cook['id']}/events", json={"type": "wrapped"}, headers=headers
@@ -111,6 +215,8 @@ def test_event_retry_is_safe(client):
     assert one["id"] == two["id"]
     events = client.get(f"/api/v1/cooks/{cook['id']}/events").json()
     assert len([event for event in events if event["type"] == "wrapped"]) == 1
+    current = client.get(f"/api/v1/cooks/{cook['id']}/assignments").json()
+    assert current == [assignment]
 
 
 def test_repeated_alert_cycles_are_retained(client):

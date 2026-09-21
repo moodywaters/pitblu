@@ -101,6 +101,8 @@ class MeasurementCreate(ApiModel):
 
 class MeasurementPatch(ApiModel):
     label: str | None = Field(None, min_length=1, max_length=120)
+    cooker_id: str | None = Field(None, alias="cookerId")
+    food_item_id: str | None = Field(None, alias="foodItemId")
     target_temperature_c: float | None = Field(None, alias="targetTemperatureC")
     approaching_margin_c: float | None = Field(None, ge=0, le=50, alias="approachingMarginC")
     range_min_c: float | None = Field(None, alias="rangeMinC")

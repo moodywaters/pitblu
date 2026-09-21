@@ -5,7 +5,7 @@ import hashlib
 import hmac
 import secrets
 import sqlite3
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from pitblu_app.events import ApplicationEvents
@@ -206,7 +206,7 @@ class CookService:
                 if action == "close":
                     db.execute(
                         "UPDATE assignments SET ended_at=? WHERE cook_id=? AND ended_at IS NULL",
-                        (utc_now().isoformat(), cook_id),
+                        (transition_time, cook_id),
                     )
                     db.execute(
                         "UPDATE follower_shares SET expires_at=? WHERE cook_id=? AND expires_at IS NULL",
@@ -322,6 +322,12 @@ class CookService:
         existing = self.store.require("measurements", measurement_id)
         self.require_mutable_cook(existing["cook_id"])
         values = body.model_dump(exclude_unset=True)
+        for table, key in (("cookers", "cooker_id"), ("food_items", "food_item_id")):
+            item_id = values.get(key)
+            if item_id and self.store.require(table, item_id)["cook_id"] != existing["cook_id"]:
+                raise DomainError(
+                    "related item belongs to a different cook", 422, "validation_error"
+                )
         merged_min = values.get("range_min_c", existing["range_min_c"])
         merged_max = values.get("range_max_c", existing["range_max_c"])
         if merged_min is not None and merged_max is not None and merged_min >= merged_max:
@@ -398,11 +404,25 @@ class CookService:
         )
         if not cook:
             return None
+        observed_at = body.observed_at
+        if observed_at.tzinfo is None:
+            observed_at = observed_at.replace(tzinfo=UTC)
+        observed = observed_at.astimezone(UTC).isoformat()
         assignment = self.store.one(
-            "SELECT * FROM assignments WHERE core_device_id=? AND probe_channel=? AND ended_at IS NULL",
-            (body.core_device_id, body.probe_channel),
+            "SELECT * FROM assignments WHERE cook_id=? AND core_device_id=? "
+            "AND probe_channel=? AND started_at<=? "
+            "AND (ended_at IS NULL OR ended_at>?) ORDER BY started_at DESC,id DESC LIMIT 1",
+            (cook["id"], body.core_device_id, body.probe_channel, observed, observed),
         )
         received = utc_now().isoformat()
+        update_current = False
+        if assignment:
+            measurement = self.store.require("measurements", assignment["measurement_id"])
+            update_current = (
+                measurement["current_observed_at"] is None
+                or datetime.fromisoformat(observed)
+                >= datetime.fromisoformat(measurement["current_observed_at"])
+            )
         try:
             with self.store.transaction() as db:
                 db.execute(
@@ -415,18 +435,18 @@ class CookService:
                         body.core_device_id,
                         body.probe_channel,
                         body.temperature_c,
-                        body.observed_at.isoformat(),
+                        observed,
                         received,
                         body.available,
                         body.event_id,
                     ),
                 )
-                if assignment:
+                if assignment and update_current:
                     db.execute(
                         "UPDATE measurements SET current_temperature_c=?,current_observed_at=?,available=? WHERE id=?",
                         (
                             body.temperature_c,
-                            body.observed_at.isoformat(),
+                            observed,
                             body.available,
                             assignment["measurement_id"],
                         ),
@@ -435,7 +455,8 @@ class CookService:
             return None
         if not assignment:
             return None
-        await self.evaluate_alerts(assignment["measurement_id"])
+        if update_current:
+            await self.evaluate_alerts(assignment["measurement_id"])
         item = self.measurement(assignment["measurement_id"])
         await self.events.publish("measurement.updated", item)
         return item
@@ -609,7 +630,7 @@ class CookService:
         return [
             public_row(row)
             for row in self.store.all(
-                "SELECT * FROM assignments WHERE cook_id=? ORDER BY started_at",
+                "SELECT * FROM assignments WHERE cook_id=? ORDER BY started_at,id",
                 (cook_id,),
             )
         ]

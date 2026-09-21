@@ -7,7 +7,7 @@ const viewports = [
 ];
 
 const system = {
-  product: 'Pitblu', version: '0.4.0', activeCook: null, latestCook: null,
+  product: 'Pitblu', version: '0.5.0', activeCook: null, latestCook: null,
   core: {available: true, lastError: null, devices: [{
     deviceId: 'igrill-2', name: 'iGrill 2', friendlyName: 'iGrill 2',
     probes: [

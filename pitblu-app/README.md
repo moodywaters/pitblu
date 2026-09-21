@@ -245,6 +245,25 @@ Responsive visual regression tests live in `frontend/visual-tests/` and cover th
 operator surfaces at phone, tablet and desktop sizes. Run them with
 `npm run test:visual` after installing Playwright's Chromium browser.
 
+### Pitblu 0.5 Cook domain foundation
+
+The canonical monitoring relationship is Physical Probe → Probe Assignment →
+Measurement. A physical source is identified only by its pitblu-core device ID and
+channel. It does not own a food, cooker, target or temperature range.
+
+Assignments are explicit chef-controlled intervals. Creating a replacement ends
+only the conflicting active assignment; ending an assignment leaves a valid
+unassigned gap. Targets, alerts, stale telemetry and Cook Events never end an
+assignment. Closing the Cook explicitly ends all remaining active assignments at
+the Cook close timestamp.
+
+Each raw reading retains its physical source and observation time. Its assignment
+and Measurement snapshot are selected from the assignment interval covering that
+observation time—not from whichever assignment happens to be active when delayed
+telemetry arrives. Reassignment therefore does not rewrite historical meaning.
+The same Probe can feed different Measurements over time, and the same Measurement
+can be continued with a replacement Probe.
+
 The adapter boundary is intentionally concrete. A future `pitblu-blower-core` is a
 separate sibling with its own safety and control loop; no blower or generic hardware
 plugin framework is implemented here.

@@ -13,7 +13,7 @@ const cook = {id: 'cook-1', name: 'Weekend BBQ', state: 'active', startedAt: '20
   {id: 'm4', cookId: 'cook-1', label: 'Pork shoulder', kind: 'food', cookerId: 'wsm', foodItemId: 'pork', targetTemperatureC: 93, rangeMinC: null, rangeMaxC: null, approachingMarginC: 3, rangePersistenceSeconds: 60, currentTemperatureC: 68, currentObservedAt: '2026-09-14T13:42:00Z', available: true, interpretedState: 'heating', trendCPerHour: 2}
 ]};
 const closedCook = {...cook, id: 'closed-1', name: 'Saturday Brisket', state: 'closed', closedAt: '2026-09-13T20:00:00Z'};
-const system = {product: 'Pitblu', version: '0.3.0', activeCook: {id: cook.id, name: cook.name, state: cook.state}, latestCook: {id: cook.id, name: cook.name, state: cook.state}, core: {available: true, lastError: null, devices: [{deviceId: 'igrill-2', friendlyName: 'iGrill 2', probes: [1, 2, 3, 4].map((probe, index) => ({probe, available: true, present: true, fresh: true, temperatureC: [182, 71, 126, 68][index]})), battery: {available: true, fresh: true, percentage: 82}}]}};
+const system = {product: 'Pitblu', version: '0.5.0', activeCook: {id: cook.id, name: cook.name, state: cook.state}, latestCook: {id: cook.id, name: cook.name, state: cook.state}, core: {available: true, lastError: null, devices: [{deviceId: 'igrill-2', friendlyName: 'iGrill 2', probes: [1, 2, 3, 4].map((probe, index) => ({probe, available: true, present: true, fresh: true, temperatureC: [182, 71, 126, 68][index]})), battery: {available: true, fresh: true, percentage: 82}}]}};
 
 async function mock(page: Page, active = true) {
   await page.addInitScript(() => { Date.now = () => new Date('2026-09-14T18:41:00Z').getTime(); });

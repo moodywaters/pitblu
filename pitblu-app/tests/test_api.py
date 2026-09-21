@@ -10,7 +10,9 @@ def test_health_openapi_and_system(client):
     assert health.headers["X-Frame-Options"] == "DENY"
     assert "default-src 'self'" in health.headers["Content-Security-Policy"]
     assert client.get("/openapi.json").status_code == 200
-    assert client.get("/api/v1/system").json()["product"] == "Pitblu"
+    system = client.get("/api/v1/system").json()
+    assert system["product"] == "Pitblu"
+    assert system["version"] == "0.5.0"
 
 
 def test_system_exposes_latest_cook_for_completed_display_state(client):
@@ -152,6 +154,53 @@ def test_invalid_range_patch_is_rejected(client):
     ).json()
     response = client.patch(f"/api/v1/measurements/{measurement['id']}", json={"rangeMinC": 140})
     assert response.status_code == 422
+
+
+def test_measurement_cooker_context_can_change_without_reassigning_probe(client):
+    cook = client.post("/api/v1/cooks", json={"name": "Brisket"}).json()
+    first = client.post(f"/api/v1/cooks/{cook['id']}/cookers", json={"name": "WSM"}).json()
+    second = client.post(f"/api/v1/cooks/{cook['id']}/cookers", json={"name": "Oven"}).json()
+    measurement = client.post(
+        f"/api/v1/cooks/{cook['id']}/measurements",
+        json={"label": "Brisket", "kind": "food", "cookerId": first["id"]},
+    ).json()
+    assignment = client.post(
+        f"/api/v1/cooks/{cook['id']}/assignments",
+        json={"measurementId": measurement["id"], "coreDeviceId": "igrill", "probeChannel": 6},
+    ).json()
+
+    changed = client.patch(
+        f"/api/v1/measurements/{measurement['id']}", json={"cookerId": second["id"]}
+    ).json()
+
+    assert changed["cookerId"] == second["id"]
+    assert client.get(f"/api/v1/cooks/{cook['id']}/assignments").json() == [assignment]
+    other_cook = client.post("/api/v1/cooks", json={"name": "Other"}).json()
+    foreign = client.post(
+        f"/api/v1/cooks/{other_cook['id']}/cookers", json={"name": "Foreign cooker"}
+    ).json()
+    rejected = client.patch(
+        f"/api/v1/measurements/{measurement['id']}", json={"cookerId": foreign["id"]}
+    )
+    assert rejected.status_code == 422
+
+
+def test_close_ends_active_assignments_at_the_close_timestamp(client):
+    cook = create_active_cook(client)
+    measurement = client.post(
+        f"/api/v1/cooks/{cook['id']}/measurements",
+        json={"label": "Brisket", "kind": "food"},
+    ).json()
+    client.post(
+        f"/api/v1/cooks/{cook['id']}/assignments",
+        json={"measurementId": measurement["id"], "coreDeviceId": "igrill", "probeChannel": 12},
+    )
+    client.post(f"/api/v1/cooks/{cook['id']}/finish-cooking")
+
+    closed = client.post(f"/api/v1/cooks/{cook['id']}/close").json()
+    assignments = client.get(f"/api/v1/cooks/{cook['id']}/assignments").json()
+
+    assert assignments[0]["endedAt"] == closed["closedAt"]
 
 
 def test_draft_cook_cannot_steal_source_from_active_cook(client):

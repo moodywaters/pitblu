@@ -51,6 +51,7 @@ def test_follower_is_random_read_only_revocable_and_expires(client):
     assert "coreDeviceId" not in follower_readings[0]
     assert "probeChannel" not in follower_readings[0]
     assert "assignmentId" not in follower_readings[0]
+    assert "assignment_id" not in follower_readings[0]
     assert "receivedAt" not in follower_readings[0]
     follower_events = client.get(f"{follower_api}/events").json()
     assert follower_events[-1]["type"] == "wrapped"
