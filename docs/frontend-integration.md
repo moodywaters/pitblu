@@ -86,6 +86,11 @@ request bodies with `Content-Type: application/json`; unknown model fields are r
 | `POST /api/v1/devices/{deviceId}/connect` | No body; 202 operation. |
 | `POST /api/v1/devices/{deviceId}/disconnect` | No body; 202 operation. |
 | `POST /api/v1/devices/{deviceId}/reconnect` | No body; 202 operation; bypasses recovery backoff. |
+
+Device representations also contain a `heartbeat` object with `status`, nullable
+`lastSuccessfulCommunicationAt`, `fresh`, `staleAfterSeconds`, `sequence`, nullable `source`,
+and `sessionId`. Do not infer it from `observedState` or probe freshness. Calculate display age
+from the timestamp; after a session change treat it as unknown until new evidence arrives.
 | `GET /api/v1/devices/{deviceId}/probes` | Probe array, or `[]` before the first snapshot. |
 | `GET /api/v1/devices/{deviceId}/battery` | Battery object, or JSON `null` before the first snapshot. |
 | `GET /api/v1/operations` | Bounded array of recent persistent operations. |
@@ -374,6 +379,14 @@ means strictly greater than zero. Validate through the API, not metadata alone.
 | `polling.degraded_after_failures` | 3 | Integer 1..100 failed cycles. |
 | `polling.forced_reconnect_after` | 30 | Seconds, >0..3600 without valid readings. |
 | `polling.availability_heartbeat` | 60 | Seconds, >0..3600; SSE idle comments/MQTT idle heartbeat. |
+| `polling.thermometer_heartbeat_stale_after` | 15 | Seconds, >0..3600; age of real thermometer communication. |
+
+`thermometer.heartbeat` is emitted for every new successful communication and transitions to
+unknown, stale, or disconnected. It has dedicated per-device sequence within `sessionId`. It is
+not the SSE `: heartbeat` transport comment. Reconcile from REST after stream connection or
+reconnection. MQTT maps it to the retained QoS 1 device `/heartbeat` topic; validate retained
+service availability, session and timestamp. Full semantics are in
+[thermometer heartbeat](thermometer-heartbeat.md).
 | `polling.stable_backoff_reset` | 60 | Seconds, >0..3600. |
 | `mqtt.enabled` | false | Enable publisher. |
 | `mqtt.host` | `127.0.0.1` | Non-empty string, at most 253 characters. |
