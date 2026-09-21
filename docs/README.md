@@ -26,6 +26,7 @@ readable version history; Git tags and releases are authoritative once published
   SSE/MQTT schemas, examples, workflows and implementation limitations.
 - [pitblu-app API and integration guide](pitblu-app-api.md)
 - [REST](api.md), [configuration](configuration.md), [MQTT](mqtt.md)
+- [Thermometer communication heartbeat](thermometer-heartbeat.md)
 - [Architecture](architecture.md), [Bluetooth protocol](bluetooth.md)
 - [Development](development.md), [contributing](../CONTRIBUTING.md)
 
@@ -46,6 +47,7 @@ readable version history; Git tags and releases are authoritative once published
   [pitblu-app platform and service boundaries](adr/0005-pitblu-app-boundaries.md), and
   [React/TypeScript/PWA frontend](adr/0006-react-typescript-pwa-frontend.md), and
   [reusable cooker profiles](adr/0007-reusable-cooker-profiles.md)
+  and [thermometer heartbeat](adr/0008-thermometer-heartbeat.md)
 - [Target specification](../pitblu-core-project-plan.md) and
   [AI continuation record](../pitblu-core-codex-prompt.md): development context,
   not end-user instructions. Unimplemented requirements remain targets.

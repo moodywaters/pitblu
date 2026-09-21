@@ -55,6 +55,12 @@ def test_device_and_operation_contract() -> None:
         assert created.json()["device"]["desiredState"] == "connected"
         connection = created.json()["operation"]
         assert completed_operation(api, connection["operationId"])["status"] == "succeeded"
+        heartbeat = api.get(f"/api/v1/devices/{device_id}").json()["heartbeat"]
+        assert heartbeat["status"] == "healthy"
+        assert heartbeat["fresh"] is True
+        assert heartbeat["source"] == "simulated"
+        assert heartbeat["lastSuccessfulCommunicationAt"]
+        assert heartbeat["sessionId"] == api.get("/api/v1/status").json()["sessionId"]
         assert len(api.get(f"/api/v1/devices/{device_id}/probes").json()) == 4
         assert api.get(f"/api/v1/devices/{device_id}/battery").json()["percentage"] == 100
 
@@ -75,6 +81,7 @@ def test_device_and_operation_contract() -> None:
         assert {event["source"] for event in events} == {"simulated"}
         assert api.get("/api/v1/events/operations").json()
         assert "probe.temperature" in {event["type"] for event in events}
+        assert "thermometer.heartbeat" in {event["type"] for event in events}
         assert all(
             event["deviceId"] == device_id
             for event in events

@@ -117,7 +117,11 @@ def create_app(
         )
     )
     events = EventBus(persist=database.append_event)
-    telemetry = TelemetryState(events, stale_after=config.config.polling.stale_after)
+    telemetry = TelemetryState(
+        events,
+        stale_after=config.config.polling.stale_after,
+        heartbeat_stale_after=(config.config.polling.thermometer_heartbeat_stale_after),
+    )
     service = AdministrationService(
         selected_adapter,
         database,

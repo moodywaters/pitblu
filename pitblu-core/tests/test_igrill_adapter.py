@@ -117,7 +117,7 @@ def test_physical_adapter_discovers_connects_reads_and_disconnects() -> None:
     assert "AA:BB" not in repr(discovered[0])
     assert subject.source is TelemetrySource.PHYSICAL
 
-    run(subject.connect(discovered[0]))
+    assert run(subject.connect(discovered[0])) is not None
     assert subject.is_connected
     client = Client.instances[0]
     assert client.kwargs["pair"] is True
@@ -134,6 +134,7 @@ def test_physical_adapter_discovers_connects_reads_and_disconnects() -> None:
     assert [probe.temperature_c for probe in first.probes] == [20.0, 21.0, None, None]
     assert [probe.available for probe in first.probes] == [True, True, True, False]
     assert first.probes[3].error_code == "ProtocolError"
+    assert first.successful_communication_at is not None
     assert all(probe.source is TelemetrySource.PHYSICAL for probe in first.probes)
     assert run(subject.read_snapshot()).sequence == 2
 
@@ -191,6 +192,23 @@ def test_adapter_handles_battery_failure_and_disconnect_callback() -> None:
     assert not subject.is_connected
     with pytest.raises(AdapterDisconnectedError):
         run(subject.read_snapshot())
+
+
+def test_failed_gatt_reads_do_not_create_communication_evidence() -> None:
+    class ReadFailureClient(Client):
+        async def read_gatt_char(self, uuid: str) -> bytes:
+            if uuid == DEVICE_CHALLENGE_UUID:
+                return await super().read_gatt_char(uuid)
+            raise RuntimeError("read unavailable")
+
+    subject = adapter()
+    subject._client_factory = ReadFailureClient
+    candidate = run(subject.discover(1))[0]
+    assert run(subject.connect(candidate)) is not None
+    snapshot = run(subject.read_snapshot())
+    assert snapshot.successful_communication_at is None
+    assert not snapshot.battery_available
+    assert not any(probe.available for probe in snapshot.probes)
 
 
 def test_adapter_and_timeout_validation() -> None:

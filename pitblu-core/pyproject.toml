@@ -23,7 +23,7 @@ dependencies = [
   "bleak==3.0.2",
   "fastapi==0.141.1",
   "PyYAML==6.0.3",
-  "uvicorn==0.52.4",
+  "uvicorn==0.53.0",
 ]
 
 [project.optional-dependencies]
@@ -32,8 +32,8 @@ dev = [
   "mypy==2.3.1",
   "pytest==9.1.1",
   "pytest-cov==7.1.0",
-  "ruff==0.16.6",
-  "types-PyYAML==6.0.12.20260815",
+  "ruff==0.16.8",
+  "types-PyYAML==6.0.12.20260906",
 ]
 
 [project.scripts]

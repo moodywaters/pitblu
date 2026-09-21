@@ -21,6 +21,7 @@ class EventType(StrEnum):
     SERVICE_AVAILABILITY = "service.availability"
     DEVICE_AVAILABILITY = "device.availability"
     DEVICE_CONNECTION = "device.connection"
+    THERMOMETER_HEARTBEAT = "thermometer.heartbeat"
     BATTERY = "device.battery"
     PROBE_AVAILABILITY = "probe.availability"
     PROBE_TEMPERATURE = "probe.temperature"
