@@ -1,5 +1,17 @@
 # Development
 
+## Thermometer communication evidence
+
+Device adapters must timestamp only recognised validated thermometer exchanges. Completed
+model-specific authentication, decoded probe reads (including the absent sentinel), and decoded
+battery reads count for the V202. Connection flags, timers, cached data and exceptions do not.
+Populate `DeviceSnapshot.successful_communication_at` with the newest successful read in that
+cycle; return initialisation evidence from `connect`. `TelemetryState` owns ageing and mappings.
+
+Do not reconnect from telemetry or heartbeat code. Recovery remains in `AdministrationService`.
+New adapters require success/failure/no-probe/simulation tests and must document their operations
+in [the heartbeat guide](thermometer-heartbeat.md).
+
 Use an isolated Python 3.11, 3.12 or 3.13 virtual environment. CI runs on all three
 versions. The current release is v0.9.0.
 

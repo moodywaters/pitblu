@@ -69,6 +69,13 @@ authenticated SSE subscribers and the optional MQTT publisher consume that same 
 subscribers have bounded queues and lose their oldest queued event rather than blocking device
 sampling.
 
+Thermometer communication is explicit adapter evidence, not a snapshot or timer side effect.
+`TelemetryState` separately owns its session-scoped heartbeat and stale deadline. The layers are
+process health, transport health, Bluetooth adapter, device connection, thermometer heartbeat and
+probe freshness; each proves only the next narrower fact. Heartbeat ageing publishes state but
+never initiates recovery. The administration service and connection state machine remain the sole
+automatic-recovery owner. See the [heartbeat contract](thermometer-heartbeat.md).
+
 The MQTT adapter maps canonical events onto the independent `v1` topic contract. All publications
 use QoS 1. Availability, connection and battery state are retained; temperature is not. Service
 availability is protected by a retained Last Will. MQTT is disabled by default and has no command

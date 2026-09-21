@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 from collections.abc import Callable, Sequence
+from datetime import UTC, datetime
 from typing import Any
 
 from pitblu_core.api_client import ApiClient, ApiError
@@ -134,6 +135,36 @@ class ConfigApplication:
             return self._manage_device(client, valid_devices[selected - 1])
         except ApiError as exc:
             self.terminal.result(CheckResult(ResultLevel.FAIL, "iGrill", str(exc)))
+            return 1
+
+    def igrill_reconnect(self, *, port: int, device_id: str | None = None) -> int:
+        """Force an immediate reconnect through the authoritative REST operation."""
+
+        client = self._mutation_client(port)
+        if client is None:
+            return 1
+        try:
+            devices = client.get("/api/v1/devices").data
+            if not isinstance(devices, list):
+                raise ApiError("The local service returned an invalid device list")
+            valid = [item for item in devices if isinstance(item, dict)]
+            if device_id is not None:
+                selected = next((item for item in valid if item.get("deviceId") == device_id), None)
+                if selected is None:
+                    raise ApiError("The requested registered thermometer was not found")
+            elif len(valid) == 1:
+                selected = valid[0]
+            elif not valid:
+                raise ApiError("No registered thermometer is available")
+            else:
+                labels = [
+                    safe_text(item.get("friendlyName") or item.get("name") or "thermometer")
+                    for item in valid
+                ]
+                selected = valid[self.terminal.choose("Select a thermometer", labels)]
+            return self._force_reconnect(client, selected)
+        except ApiError as exc:
+            self.terminal.result(CheckResult(ResultLevel.FAIL, "Force reconnect", str(exc)))
             return 1
 
     def mqtt(self, *, port: int) -> int:
@@ -415,13 +446,15 @@ class ConfigApplication:
         actions = [
             "Connect",
             "Disconnect",
-            "Reconnect",
+            "Force reconnect now",
             "Rename",
             "Change automatic reconnection",
         ]
         selected = self.terminal.choose("Device action", actions)
+        if selected == 2:
+            return self._force_reconnect(client, device)
         if selected < 3:
-            action = ("connect", "disconnect", "reconnect")[selected]
+            action = ("connect", "disconnect")[selected]
             operation = client.post(client.device_path(device_id, f"/{action}"), {}).data
             operation_id = operation.get("operationId") if isinstance(operation, dict) else None
             if not isinstance(operation_id, str):
@@ -445,6 +478,53 @@ class ConfigApplication:
             client.patch(client.device_path(device_id), {"automaticReconnection": enabled})
         self.terminal.result(CheckResult(ResultLevel.PASS, "iGrill", "device updated"))
         return 0
+
+    def _force_reconnect(self, client: ApiClient, device: dict[str, Any]) -> int:
+        device_id = device.get("deviceId")
+        if not isinstance(device_id, str):
+            raise ApiError("The selected device was invalid")
+        self.terminal.write(
+            "This requests an asynchronous reconnect and bypasses the normal recovery backoff."
+        )
+        if device.get("automaticReconnection") is True and device.get("observedState") in {
+            "degraded",
+            "backoff",
+        }:
+            self.terminal.write("Automatic recovery is active; this forces an immediate attempt.")
+        operation = client.post(client.device_path(device_id, "/reconnect"), {}).data
+        operation_id = operation.get("operationId") if isinstance(operation, dict) else None
+        if not isinstance(operation_id, str):
+            raise ApiError("The local service did not return a reconnect operation")
+        completed = client.wait_for_operation(operation_id, attempts=250).data
+        if not isinstance(completed, dict) or completed.get("status") != "succeeded":
+            error_code = completed.get("errorCode") if isinstance(completed, dict) else None
+            self.terminal.result(
+                CheckResult(
+                    ResultLevel.FAIL,
+                    "Force reconnect",
+                    f"operation failed ({safe_text(error_code or 'unknown error')})",
+                )
+            )
+            return 1
+        self.terminal.result(
+            CheckResult(ResultLevel.PASS, "Force reconnect", "operation succeeded")
+        )
+        refreshed = client.get(client.device_path(device_id)).data
+        if not isinstance(refreshed, dict):
+            raise ApiError("The local service returned an invalid device response")
+        results = self._device_results(client, [refreshed], include_count=False)
+        self.terminal.results(results)
+        heartbeat = refreshed.get("heartbeat")
+        confirmed = isinstance(heartbeat, dict) and heartbeat.get("status") == "healthy"
+        if not confirmed:
+            self.terminal.result(
+                CheckResult(
+                    ResultLevel.WARN,
+                    "Communication",
+                    "reconnect completed but recent thermometer communication was not confirmed",
+                )
+            )
+        return 0 if confirmed else 1
 
     def _ask_port(self, prompt: str, default: int) -> int:
         while True:
@@ -496,12 +576,18 @@ class ConfigApplication:
             ),
         ]
 
-    def _device_results(self, client: ApiClient, devices: Any) -> list[CheckResult]:
+    def _device_results(
+        self, client: ApiClient, devices: Any, *, include_count: bool = True
+    ) -> list[CheckResult]:
         if not isinstance(devices, list):
             return [CheckResult(ResultLevel.FAIL, "Devices", "invalid API response")]
         if not devices:
             return [CheckResult(ResultLevel.WARN, "Devices", "none registered")]
-        results = [CheckResult(ResultLevel.PASS, "Devices", f"{len(devices)} registered")]
+        results = (
+            [CheckResult(ResultLevel.PASS, "Devices", f"{len(devices)} registered")]
+            if include_count
+            else []
+        )
         for item in devices:
             if not isinstance(item, dict) or not isinstance(item.get("deviceId"), str):
                 results.append(CheckResult(ResultLevel.FAIL, "Device", "invalid API response"))
@@ -516,6 +602,50 @@ class ConfigApplication:
                     level, f"Device {safe_text(label)}", f"desired={desired}, observed={observed}"
                 )
             )
+            heartbeat = item.get("heartbeat")
+            if not isinstance(heartbeat, dict):
+                results.append(
+                    CheckResult(
+                        ResultLevel.WARN,
+                        f"Communication {safe_text(label)}",
+                        "heartbeat not reported by this service version",
+                    )
+                )
+            else:
+                heartbeat_status = safe_text(heartbeat.get("status", "unknown"))
+                successful_at = heartbeat.get("lastSuccessfulCommunicationAt")
+                age = self._age_text(successful_at)
+                if heartbeat_status == "healthy":
+                    heartbeat_level = ResultLevel.PASS
+                    detail = f"last succeeded {age}"
+                elif heartbeat_status == "stale":
+                    heartbeat_level = ResultLevel.FAIL
+                    detail = f"stale; last succeeded {age}"
+                elif heartbeat_status == "disconnected":
+                    heartbeat_level = ResultLevel.WARN
+                    detail = f"disconnected; last succeeded {age}"
+                else:
+                    heartbeat_level = ResultLevel.WARN
+                    detail = "not yet confirmed in this service session"
+                results.append(
+                    CheckResult(
+                        heartbeat_level,
+                        f"Communication {safe_text(label)}",
+                        detail,
+                    )
+                )
+                if (
+                    heartbeat_status == "stale"
+                    and item.get("automaticReconnection") is True
+                    and observed in {"degraded", "backoff", "connecting", "initialising"}
+                ):
+                    results.append(
+                        CheckResult(
+                            ResultLevel.WARN,
+                            f"Recovery {safe_text(label)}",
+                            "automatic recovery is active",
+                        )
+                    )
             probes = client.get(client.device_path(device_id, "/probes")).data
             fresh = (
                 sum(1 for probe in probes if isinstance(probe, dict) and probe.get("fresh") is True)
@@ -541,6 +671,19 @@ class ConfigApplication:
             )
         return results
 
+    @staticmethod
+    def _age_text(value: Any) -> str:
+        if not isinstance(value, str):
+            return "never"
+        try:
+            observed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+            if observed.tzinfo is None:
+                return "at an invalid time"
+            seconds = max(0, int((datetime.now(UTC) - observed.astimezone(UTC)).total_seconds()))
+        except (ValueError, OverflowError):
+            return "at an invalid time"
+        return f"{seconds} second{'s' if seconds != 1 else ''} ago"
+
     def _finish(self, results: Sequence[CheckResult]) -> int:
         self.terminal.heading("Summary")
         return 1 if self.terminal.results(results) is ResultLevel.FAIL else 0
@@ -558,7 +701,12 @@ def build_parser() -> argparse.ArgumentParser:
     subcommands = parser.add_subparsers(dest="command")
     subcommands.add_parser("check", help="run the canonical support and diagnostics checks")
     subcommands.add_parser("show", help="show the effective non-secret configuration")
-    subcommands.add_parser("igrill", help="scan, register and manage an iGrill")
+    igrill = subcommands.add_parser("igrill", help="scan, register and manage an iGrill")
+    igrill_actions = igrill.add_subparsers(dest="igrill_action")
+    reconnect = igrill_actions.add_parser(
+        "reconnect", help="force an immediate reconnect through the local API"
+    )
+    reconnect.add_argument("device_id", nargs="?", help="registered device identifier")
     subcommands.add_parser("mqtt", help="configure MQTT publishing")
     subcommands.add_parser("api", help="configure API binding and browser origins")
     subcommands.add_parser("restart", help="restart the service after confirmation")
@@ -576,6 +724,8 @@ def main(arguments: Sequence[str] | None = None) -> int:
         if args.command == "show":
             return application.show(port=args.port)
         if args.command == "igrill":
+            if args.igrill_action == "reconnect":
+                return application.igrill_reconnect(port=args.port, device_id=args.device_id)
             return application.igrill(port=args.port)
         if args.command == "mqtt":
             return application.mqtt(port=args.port)

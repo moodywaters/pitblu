@@ -5,6 +5,9 @@ releases are authoritative for published revisions.
 
 ## Unreleased
 
+- Added a session-scoped thermometer communication heartbeat across REST, SSE,
+  retained MQTT state, diagnostics, and local force-reconnect tooling without moving
+  automatic recovery out of the existing connection state machine.
 - Added guided, unprivileged `pitblu-core-install` and local-only `pitblu-core-config` terminal
   workflows for v1.0 preparation, including the canonical `pitblu-core-config check` support report.
 - Preserved the v0.9 runtime/security boundaries by reusing the native deployment script, REST

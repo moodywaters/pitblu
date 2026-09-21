@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Protocol
 
 from pitblu_core.models import DeviceSnapshot, DiscoveredDevice, TelemetrySource
@@ -32,7 +33,7 @@ class DeviceAdapter(Protocol):
 
     async def recover_registered(self, identity: str) -> bool: ...
 
-    async def connect(self, device: DiscoveredDevice) -> None: ...
+    async def connect(self, device: DiscoveredDevice) -> datetime | None: ...
 
     async def disconnect(self) -> None: ...
 

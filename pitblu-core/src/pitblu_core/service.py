@@ -107,6 +107,7 @@ class AdministrationService:
         self._discovery_task = asyncio.create_task(self._discovery_loop())
         for row in self.store.devices():
             device_id = str(row["device_id"])
+            await self._register_heartbeat(device_id, str(row["desired_state"]))
             self.store.update_device(device_id, {"observed_state": "disconnected"})
             if (
                 row["desired_state"] == "connected"
@@ -115,6 +116,11 @@ class AdministrationService:
             ):
                 self._owner = device_id
                 self._schedule_recovery(device_id, immediate=True)
+
+    async def _register_heartbeat(self, device_id: str, desired_state: str) -> None:
+        await self.telemetry.register_heartbeat(device_id, self.adapter.source)
+        if desired_state == "disconnected":
+            await self.telemetry.heartbeat_disconnected(device_id)
 
     async def _discovery_loop(self) -> None:
         while not self._closing:
@@ -263,16 +269,28 @@ class AdministrationService:
             "identity": candidate._identity,
         }
         self.store.save_device(row)
-        return _device_view(row)
+        self.telemetry.ensure_heartbeat(device_id, self.adapter.source)
+        self._schedule(self._register_heartbeat(device_id, "disconnected"))
+        return self._device_view(row)
 
     def devices(self) -> list[dict[str, object]]:
-        return [_device_view(row) for row in self.store.devices()]
+        return [self._device_view(row) for row in self.store.devices()]
 
     def device(self, device_id: str) -> dict[str, object]:
         row = self.store.device(device_id)
         if row is None:
             raise ResourceNotFoundError("device not found")
-        return _device_view(row)
+        return self._device_view(row)
+
+    def _device_view(self, row: dict[str, object]) -> dict[str, object]:
+        device_id = str(row["device_id"])
+        self.telemetry.ensure_heartbeat(device_id, self.adapter.source)
+        return _device_view(row) | {
+            "heartbeat": self.telemetry.heartbeat(
+                device_id,
+                desired_state=str(row["desired_state"]),
+            )
+        }
 
     def patch_device(
         self,
@@ -371,6 +389,7 @@ class AdministrationService:
                     self._connected_device = None
                     self._owner = None
                 await self.telemetry.connection(device_id, "disconnected")
+                await self.telemetry.heartbeat_disconnected(device_id)
                 self.store.update_device(
                     device_id,
                     {"desired_state": "disconnected", "observed_state": "disconnected"},
@@ -383,6 +402,7 @@ class AdministrationService:
                 ):
                     self._finish(operation)
                     return
+                await self.telemetry.heartbeat_expected(device_id)
                 if action == "reconnect":
                     await self._stop_polling(device_id)
                     async with self._io_lock:
@@ -425,9 +445,15 @@ class AdministrationService:
                     machine.request_connect(force=action == "reconnect")
                     machine.transition(ConnectionState.INITIALISING)
                     stage = "connect_initialise"
-                    await self.adapter.connect(candidate)
+                    initialised_at = await self.adapter.connect(candidate)
                     machine.transition(ConnectionState.CONNECTED)
                     machine.transition(ConnectionState.POLLING)
+                    if initialised_at is not None:
+                        await self.telemetry.communication_succeeded(
+                            device_id,
+                            initialised_at,
+                            self.adapter.source,
+                        )
                     stage = "initial_read"
                     snapshot = await self.adapter.read_snapshot()
                 stage = "record_snapshot"

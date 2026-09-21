@@ -57,6 +57,21 @@ Registrations store protected hardware identity separately from public fields.
 Automatic recovery never guesses identity from an advertised name. Registered
 desired state and automatic-reconnection preference determine startup recovery. The current service restores one adapter owner at a time.
 
+## Thermometer heartbeat
+
+Device list and detail representations include `heartbeat`. Its fields are `status`
+(`unknown`, `healthy`, `stale`, or `disconnected`), nullable UTC
+`lastSuccessfulCommunicationAt`, Boolean `fresh`, numeric `staleAfterSeconds`, positive
+session-scoped `sequence`, nullable `source` (`physical` or `simulated`), and `sessionId`.
+The timestamp advances only for validated initialisation, probe reads (including a valid
+not-inserted response), or battery reads. It resets to null after process restart; heartbeat
+state is not persisted. Age is derived by clients rather than serialized.
+
+Reconnect remains asynchronous. HTTP 202 confirms acceptance only: poll the returned operation,
+then refetch the device and inspect heartbeat. Reconnect uses the existing connection state
+machine and bypasses normal backoff. See [thermometer heartbeat](thermometer-heartbeat.md) for
+complete semantics and examples.
+
 `/health` is only liveness. With MQTT enabled, `/ready` returns 503 until the publisher connects.
 Diagnostics contain safe codes rather than exception messages, host settings or credentials.
 

@@ -1,5 +1,14 @@
 # Troubleshooting the current managed service
 
+## Thermometer communication
+
+| Symptom | Interpretation and action |
+|---|---|
+| Connection says polling but communication is stale | The BLE workflow is active but no recognised GATT exchange has succeeded recently. Wait for automatic recovery or use `pitblu-core-config igrill reconnect`. |
+| Heartbeat healthy but no temperatures | Check probe `present`, `available`, and `fresh` separately. No-probe responses and battery reads can prove thermometer communication. |
+| Heartbeat unknown after restart | Expected until the new service session completes initialisation or a validated read. Old session state is not reused. |
+| MQTT heartbeat is retained | Require current service availability, matching `sessionId`, and a recent timestamp before treating it as current. |
+
 Current release: v0.9.0. For plain-English help, start with the
 [cook's quick start](bbq-quick-start.md). These checks concern the installed service,
 not an old milestone proof process.

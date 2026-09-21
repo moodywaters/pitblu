@@ -45,6 +45,7 @@ class PollingConfig(_Section):
     probe_interval: float = Field(5, gt=0, le=300)
     battery_interval: float = Field(300, gt=0, le=3600)
     stale_after: float = Field(15, gt=0, le=3600)
+    thermometer_heartbeat_stale_after: float = Field(15, gt=0, le=3600)
     degraded_after_failures: int = Field(3, ge=1, le=100)
     forced_reconnect_after: float = Field(30, gt=0, le=3600)
     availability_heartbeat: float = Field(60, gt=0, le=3600)
@@ -107,6 +108,9 @@ _DESCRIPTIONS = {
     "polling.probe_interval": "Probe polling interval in seconds.",
     "polling.battery_interval": "Battery polling interval in seconds.",
     "polling.stale_after": "Reading stale threshold in seconds.",
+    "polling.thermometer_heartbeat_stale_after": (
+        "Thermometer communication heartbeat stale threshold in seconds."
+    ),
     "polling.degraded_after_failures": "Failed cycles before degraded state.",
     "polling.forced_reconnect_after": "Reconnect threshold without valid readings.",
     "polling.availability_heartbeat": "Availability heartbeat interval in seconds.",
@@ -137,6 +141,7 @@ _LIMITS: dict[str, tuple[float | int | None, float | int | None]] = {
     "polling.probe_interval": (0, 300),
     "polling.battery_interval": (0, 3600),
     "polling.stale_after": (0, 3600),
+    "polling.thermometer_heartbeat_stale_after": (0, 3600),
     "polling.degraded_after_failures": (1, 100),
     "polling.forced_reconnect_after": (0, 3600),
     "polling.availability_heartbeat": (0, 3600),

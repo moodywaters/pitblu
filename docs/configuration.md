@@ -27,9 +27,15 @@ it never generates an initial token in service logs. See [installation](installa
 - `auth`: disabled or bearer-token mode;
 - `security`: authentication/mutation admission, body size and simultaneous SSE limits;
 - `bluetooth`: scan, connection, initialisation and read timings;
-- `polling`: probe, battery, stale, degraded, reconnect, heartbeat and stable timings;
+- `polling`: probe, battery, probe-stale, thermometer-heartbeat-stale, degraded,
+  reconnect, transport heartbeat and stable timings;
 - `mqtt`: enabled state, broker host and port, TLS, username, base topic and fixed QoS 1;
 - `simulation`: disabled-by-default mode and one to four probes.
+
+`polling.thermometer_heartbeat_stale_after` defaults to 15 seconds and controls only
+thermometer communication ageing. `polling.availability_heartbeat` controls idle SSE comments
+and MQTT service availability; it does not prove thermometer communication. Both are positive
+seconds with a maximum of 3600.
 
 Each setting response contains its effective value, source, type, description, default, minimum,
 maximum, allowed values, editability, sensitivity and restart requirement. Secret values are never

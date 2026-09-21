@@ -1,5 +1,16 @@
 # pitblu-app API and integration guide
 
+## Core thermometer heartbeat boundary
+
+pitblu-core device responses carry the session-scoped `heartbeat` object and emit
+`thermometer.heartbeat`. The core client may use this to distinguish a reachable gateway from a
+responding thermometer. It must preserve the meanings documented in
+[thermometer heartbeat](thermometer-heartbeat.md): service availability, device connection,
+communication heartbeat, and probe freshness are separate. After a core SSE reconnect, reconcile
+device state through core REST before applying current-session heartbeat events. The application
+must never initiate recovery merely because the heartbeat is stale; operator reconnect continues
+through the core REST operation.
+
 `pitblu-app` is Pitblu's API-first cook service. The official operator, display
 and follower screens use this same `/api/v1` contract. A browser is not required
 for telemetry recording, alert evaluation or cook lifecycle state.
