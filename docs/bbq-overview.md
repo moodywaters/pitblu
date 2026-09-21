@@ -1,5 +1,10 @@
 # Pitblu, in plain English
 
+The support check distinguishes a running helper from a thermometer that is actually answering.
+A thermometer can be connected with no probes inserted and still communicate normally. If it
+stops answering, automatic recovery remains responsible for retries; an operator can also choose
+**Force reconnect now**.
+
 ## What is it?
 
 Think of `pitblu-core` as a helper sitting beside your barbecue. It runs on a

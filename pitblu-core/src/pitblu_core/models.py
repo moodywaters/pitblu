@@ -61,6 +61,7 @@ class DeviceSnapshot:
     sequence: int
     source: TelemetrySource
     battery_observed_at: datetime | None = None
+    successful_communication_at: datetime | None = None
 
     def __post_init__(self) -> None:
         numbers = [probe.number for probe in self.probes]
@@ -76,3 +77,8 @@ class DeviceSnapshot:
             raise ValueError("a battery value requires battery availability")
         if self.battery_observed_at is not None and self.battery_observed_at.tzinfo is None:
             raise ValueError("battery observation time must be timezone-aware")
+        if (
+            self.successful_communication_at is not None
+            and self.successful_communication_at.tzinfo is None
+        ):
+            raise ValueError("successful communication time must be timezone-aware")

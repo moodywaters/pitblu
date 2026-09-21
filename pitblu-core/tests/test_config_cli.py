@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from io import StringIO
 from typing import Any
 
@@ -110,6 +111,10 @@ def test_check_reports_runtime_devices_and_readings(monkeypatch: Any) -> None:
                     "friendlyName": None,
                     "desiredState": "connected",
                     "observedState": "polling",
+                    "heartbeat": {
+                        "status": "healthy",
+                        "lastSuccessfulCommunicationAt": datetime.now(UTC).isoformat(),
+                    },
                 }
             ],
             "/api/v1/devices/igrill-one/probes": [{"fresh": True}, {"fresh": True}],
@@ -118,11 +123,119 @@ def test_check_reports_runtime_devices_and_readings(monkeypatch: Any) -> None:
     )
 
     assert app.check(port=8080) == 0
+    assert "Communication iGrill" in output.getvalue()
+    assert "last succeeded" in output.getvalue()
     report = output.getvalue()
     assert "PASS  Runtime: version 1.0.0; status ok" in report
     assert "PASS  Probes iGrill?: 2 fresh reading(s)" in report
     assert "PASS  Battery iGrill?: 40%" in report
     assert "token" not in report
+
+
+def test_force_reconnect_waits_and_refreshes_heartbeat() -> None:
+    now = datetime.now(UTC).isoformat()
+    device = {
+        "deviceId": "igrill-one",
+        "name": "Patio",
+        "desiredState": "connected",
+        "observedState": "backoff",
+        "automaticReconnection": True,
+        "heartbeat": {
+            "status": "healthy",
+            "lastSuccessfulCommunicationAt": now,
+        },
+    }
+    client = RecordingClient(
+        {
+            "/api/v1/devices": [device],
+            "/api/v1/devices/igrill-one/reconnect": {"operationId": "reconnect-1"},
+            "/api/v1/devices/igrill-one": device,
+            "/api/v1/devices/igrill-one/probes": [{"fresh": True}],
+            "/api/v1/devices/igrill-one/battery": {"fresh": True, "percentage": 40},
+        }
+    )
+    app, output, _runner = _interactive_application(client, [])
+
+    assert app.igrill_reconnect(port=8080) == 0
+    assert ("WAIT", "reconnect-1", None, None) in client.calls
+    assert "bypasses the normal recovery backoff" in output.getvalue()
+    assert "Automatic recovery is active" in output.getvalue()
+    assert "operation succeeded" in output.getvalue()
+
+
+def test_force_reconnect_does_not_treat_acceptance_as_success() -> None:
+    class FailedClient(RecordingClient):
+        def wait_for_operation(self, operation_id: str, *, attempts: int = 30) -> ApiResponse:
+            self.calls.append(("WAIT", operation_id, None, None))
+            return ApiResponse(200, {"status": "failed", "errorCode": "device_operation_failed"})
+
+    device = {"deviceId": "igrill-one", "name": "Patio"}
+    client = FailedClient(
+        {
+            "/api/v1/devices": [device],
+            "/api/v1/devices/igrill-one/reconnect": {"operationId": "reconnect-1"},
+        }
+    )
+    app, output, _runner = _interactive_application(client, [])
+
+    assert app.igrill_reconnect(port=8080) == 1
+    assert "operation failed" in output.getvalue()
+
+
+def test_igrill_reconnect_parser_accepts_optional_safe_device_id() -> None:
+    parsed = build_parser().parse_args(["igrill", "reconnect", "igrill-one"])
+    assert parsed.command == "igrill"
+    assert parsed.igrill_action == "reconnect"
+    assert parsed.device_id == "igrill-one"
+
+
+def test_heartbeat_diagnostics_distinguish_stale_disconnected_and_unknown() -> None:
+    devices = []
+    for suffix, status, timestamp, observed in (
+        ("stale", "stale", datetime.now(UTC).isoformat(), "backoff"),
+        ("off", "disconnected", datetime.now(UTC).isoformat(), "disconnected"),
+        ("new", "unknown", None, "connecting"),
+    ):
+        devices.append(
+            {
+                "deviceId": suffix,
+                "name": suffix,
+                "desiredState": "connected",
+                "observedState": observed,
+                "automaticReconnection": True,
+                "heartbeat": {
+                    "status": status,
+                    "lastSuccessfulCommunicationAt": timestamp,
+                },
+            }
+        )
+    responses: dict[str, Any] = {"/api/v1/devices": devices}
+    for device in devices:
+        device_id = device["deviceId"]
+        responses[f"/api/v1/devices/{device_id}/probes"] = []
+        responses[f"/api/v1/devices/{device_id}/battery"] = None
+    client = FakeClient(responses)
+    output = TtyBuffer()
+    app = ConfigApplication(terminal=Terminal(input_stream=output, output_stream=output))
+
+    results = app._device_results(client, devices)  # type: ignore[arg-type]
+    rendered = " ".join(f"{result.name} {result.detail}" for result in results)
+    assert "stale; last succeeded" in rendered
+    assert "automatic recovery is active" in rendered
+    assert "disconnected; last succeeded" in rendered
+    assert "not yet confirmed" in rendered
+    assert app._age_text(None) == "never"
+    assert app._age_text("not-a-time") == "at an invalid time"
+    assert app._age_text("2026-01-01T00:00:00") == "at an invalid time"
+
+
+def test_force_reconnect_rejects_missing_device_without_posting() -> None:
+    client = RecordingClient({"/api/v1/devices": []})
+    app, output, _runner = _interactive_application(client, [])
+
+    assert app.igrill_reconnect(port=8080) == 1
+    assert "No registered thermometer" in output.getvalue()
+    assert client.calls == []
 
 
 def test_check_reports_authentication_failure(monkeypatch: Any) -> None:

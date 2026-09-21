@@ -1,5 +1,10 @@
 # Physical acceptance and remaining release gates
 
+Physical thermometer-heartbeat validation is pending. Automated implementation tests do not
+prove real V202 initialisation/read evidence, no-probe behaviour, communication loss ageing,
+forced reconnect during backoff, restart sessions, or retained MQTT interpretation on the Pi.
+This remains v1.0.0 work and is not marked passed here.
+
 The v0.9.0 runtime baseline was accepted as v0.9.0rc1 at revision f3bc114. The
 final v0.9.0 preparation changes metadata and documentation only. The full v1.0.0
 physical suite and minimum 16-hour soak are **not complete**.

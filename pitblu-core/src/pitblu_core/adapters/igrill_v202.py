@@ -122,9 +122,9 @@ class BleakIGrillV202Adapter:
 
         return await release_registered_connection(identity)
 
-    async def connect(self, device: DiscoveredDevice) -> None:
+    async def connect(self, device: DiscoveredDevice) -> datetime | None:
         if self.is_connected:
-            return
+            return None
         native = self._native_by_id.get(device.discovery_id)
         if native is None or device.model != "igrill-v202":
             raise UnsupportedDeviceError("device is not a current supported discovery result")
@@ -154,6 +154,7 @@ class BleakIGrillV202Adapter:
         self._battery_due = self._clock()
         self._battery_percent = None
         self._battery_observed_at = None
+        return utc_now()
 
     async def disconnect(self) -> None:
         client, self._client = self._client, None
@@ -168,6 +169,7 @@ class BleakIGrillV202Adapter:
 
         self._sequence += 1
         observed_at = utc_now()
+        successful_communication_at: datetime | None = None
         if self._battery_percent is None or self._clock() >= self._battery_due:
             try:
                 battery_payload = bytes(
@@ -178,6 +180,7 @@ class BleakIGrillV202Adapter:
                     )
                 )
                 self._battery_percent = decode_battery_percent(battery_payload)
+                successful_communication_at = utc_now()
             except Exception:
                 self._battery_percent = None
             self._battery_observed_at = utc_now()
@@ -208,6 +211,7 @@ class BleakIGrillV202Adapter:
                     )
                 )
             else:
+                successful_communication_at = utc_now()
                 probes.append(
                     ProbeReading(
                         number=number,
@@ -229,6 +233,7 @@ class BleakIGrillV202Adapter:
             observed_at=observed_at,
             sequence=self._sequence,
             source=self.source,
+            successful_communication_at=successful_communication_at,
         )
 
     async def _authenticate(self, client: Any) -> None:
