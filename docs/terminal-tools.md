@@ -1,5 +1,18 @@
 # Guided terminal tools
 
+## Thermometer heartbeat and force reconnect
+
+`pitblu-core-config check` reports device connection, recent thermometer communication, probe
+freshness and battery independently. Healthy output gives the age of the last validated exchange;
+stale communication is a failure and active automatic recovery is shown as a warning. A connected
+thermometer with no probes can still have a healthy heartbeat.
+
+Use `pitblu-core-config igrill reconnect [device-id]` to force an immediate attempt. It explains
+that backoff is bypassed, submits the existing REST operation, polls it to a terminal state, and
+refreshes heartbeat and telemetry. HTTP acceptance is never printed as success. The interactive
+iGrill menu exposes the same action as **Force reconnect now**. Explicit disconnect continues to
+cancel automatic recovery. See [thermometer heartbeat](thermometer-heartbeat.md).
+
 The v1.0 terminal workflow is **install → configure → verify**. It is designed for a person using
 the Raspberry Pi console or an interactive SSH session. Neither tool needs to run as root; each
 privileged action is shown and delegated to `sudo` as a fixed command.

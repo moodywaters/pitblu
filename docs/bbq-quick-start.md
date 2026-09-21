@@ -1,5 +1,11 @@
 # Quick start for a cook
 
+Run `pitblu-core-config check` when diagnosing a cook. The **Communication** line says when the
+iGrill last answered successfully; it is different from service health and individual probe
+freshness. If it is stale, normally wait for automatic recovery. To request an immediate attempt,
+run `pitblu-core-config igrill reconnect`; the command waits for the operation and verifies the
+refreshed thermometer state.
+
 This guide is for v0.9.0. There is no phone-friendly dashboard
 yet. Start with [the plain-English overview](bbq-overview.md) if you are new to the
 project.

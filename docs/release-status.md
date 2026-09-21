@@ -1,5 +1,9 @@
 # v0.9.0 release status
 
+The v1.0.0 thermometer-heartbeat workstream does not change the v0.9.0 tag or historical
+acceptance. Real Pi/iGrill heartbeat, four-probe and soak gates remain pending until explicitly
+executed against the final candidate.
+
 The v0.9.0 beta source is prepared from the runtime accepted as v0.9.0rc1 at exact
 commit `f3bc11488e72b966676c0f3a1844ea218259ab90`. Release preparation changes only
 metadata and documentation; gateway runtime code is unchanged from that physically

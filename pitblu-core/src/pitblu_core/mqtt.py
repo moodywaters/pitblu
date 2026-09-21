@@ -37,6 +37,7 @@ class MqttSettings:
 _TOPIC_PARTS = {
     EventType.DEVICE_AVAILABILITY: "availability",
     EventType.DEVICE_CONNECTION: "connection",
+    EventType.THERMOMETER_HEARTBEAT: "heartbeat",
     EventType.BATTERY: "battery",
 }
 
