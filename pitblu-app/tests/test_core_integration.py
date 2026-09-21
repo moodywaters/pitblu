@@ -91,10 +91,21 @@ class AdministrativeGateway(ReconciledGateway):
         return {"operationId": "scan-1", "status": "running"}
 
     async def scan_result(self, scan_id: str) -> dict[str, Any]:
-        return {"operationId": scan_id, "status": "succeeded", "devices": [{"discoveryId": "found-1", "name": "iGrill_V202-TEST", "model": "igrill-v202"}]}
+        return {
+            "operationId": scan_id,
+            "status": "succeeded",
+            "devices": [
+                {"discoveryId": "found-1", "name": "iGrill_V202-TEST", "model": "igrill-v202"}
+            ],
+        }
 
-    async def register_device(self, discovery_id: str, friendly_name: str | None = None) -> dict[str, Any]:
-        return {"device": {"deviceId": "registered", "friendlyName": friendly_name}, "operation": {"operationId": "connect-1", "status": "running"}}
+    async def register_device(
+        self, discovery_id: str, friendly_name: str | None = None
+    ) -> dict[str, Any]:
+        return {
+            "device": {"deviceId": "registered", "friendlyName": friendly_name},
+            "operation": {"operationId": "connect-1", "status": "running"},
+        }
 
     async def reconnect_device(self, device_id: str) -> dict[str, Any]:
         return {"operationId": f"reconnect-{device_id}", "status": "running"}
@@ -188,20 +199,33 @@ def test_core_disconnect_records_a_gap_then_reconciles_after_reconnect():
 
 def test_thermometer_management_proxies_existing_core_capabilities():
     store = Store(":memory:")
-    with TestClient(create_app(store=store, core=AdministrativeGateway(), access=AccessControl.disabled())) as client:
+    with TestClient(
+        create_app(store=store, core=AdministrativeGateway(), access=AccessControl.disabled())
+    ) as client:
         deadline = time.monotonic() + 1
-        while time.monotonic() < deadline and not client.get("/api/v1/thermometer").json()["core"]["available"]:
+        while (
+            time.monotonic() < deadline
+            and not client.get("/api/v1/thermometer").json()["core"]["available"]
+        ):
             time.sleep(0.01)
         state = client.get("/api/v1/thermometer").json()
         assert state["core"]["available"] is True
         assert len(state["devices"]) == 2
         assert client.post("/api/v1/thermometer/scans").json()["operationId"] == "scan-1"
-        assert client.get("/api/v1/thermometer/scans/scan-1").json()["devices"][0]["name"] == "iGrill_V202-TEST"
-        registered = client.post("/api/v1/thermometer/devices", json={"discoveryId": "found-1", "friendlyName": "Garden"})
+        assert (
+            client.get("/api/v1/thermometer/scans/scan-1").json()["devices"][0]["name"]
+            == "iGrill_V202-TEST"
+        )
+        registered = client.post(
+            "/api/v1/thermometer/devices", json={"discoveryId": "found-1", "friendlyName": "Garden"}
+        )
         assert registered.status_code == 201
         assert registered.json()["device"]["friendlyName"] == "Garden"
         assert client.post("/api/v1/thermometer/devices/device-a/reconnect").status_code == 202
-        assert client.get("/api/v1/thermometer/operations/reconnect-device-a").json()["status"] == "succeeded"
+        assert (
+            client.get("/api/v1/thermometer/operations/reconnect-device-a").json()["status"]
+            == "succeeded"
+        )
     store.close()
 
 
