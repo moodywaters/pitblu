@@ -75,12 +75,13 @@ class SimulatedIGrillAdapter:
     async def recover_registered(self, identity: str) -> bool:
         return False
 
-    async def connect(self, device: DiscoveredDevice) -> None:
+    async def connect(self, device: DiscoveredDevice) -> datetime | None:
         if device.discovery_id != self._candidate.discovery_id:
             raise UnsupportedDeviceError("unknown simulated device")
         if not self._connection_available:
             raise AdapterDisconnectedError("simulated connection loss is active")
         self._connected = True
+        return self._clock() if self._clock is not None else self._time
 
     async def disconnect(self) -> None:
         self._connected = False
@@ -118,6 +119,7 @@ class SimulatedIGrillAdapter:
             observed_at=self._time,
             sequence=self._sequence,
             source=self.source,
+            successful_communication_at=self._time,
         )
         self._last_snapshot = snapshot
         return snapshot

@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from pitblu_core.events import EventBus, EventType, TelemetryEvent
-from pitblu_core.models import DeviceSnapshot, utc_now
+from pitblu_core.models import DeviceSnapshot, TelemetrySource, utc_now
 
 
 @dataclass(slots=True)
@@ -16,14 +16,32 @@ class _CurrentSnapshot:
     stale: bool = False
 
 
+@dataclass(slots=True)
+class _HeartbeatState:
+    adapter_source: TelemetrySource
+    status: str = "unknown"
+    last_successful_communication_at: datetime | None = None
+    successful_source: TelemetrySource | None = None
+    sequence: int = 0
+
+
 class TelemetryState:
-    def __init__(self, events: EventBus, *, stale_after: float = 15) -> None:
-        if stale_after <= 0:
-            raise ValueError("stale threshold must be positive")
+    def __init__(
+        self,
+        events: EventBus,
+        *,
+        stale_after: float = 15,
+        heartbeat_stale_after: float = 15,
+    ) -> None:
+        if min(stale_after, heartbeat_stale_after) <= 0:
+            raise ValueError("stale thresholds must be positive")
         self.events = events
         self.stale_after = timedelta(seconds=stale_after)
+        self.heartbeat_stale_after = timedelta(seconds=heartbeat_stale_after)
         self._current: dict[str, _CurrentSnapshot] = {}
         self._stale_tasks: dict[str, asyncio.Task[None]] = {}
+        self._heartbeats: dict[str, _HeartbeatState] = {}
+        self._heartbeat_stale_tasks: dict[str, asyncio.Task[None]] = {}
         self._event_sequences: dict[tuple[str, EventType, int | None], int] = {}
 
     def _sequence(
@@ -43,6 +61,12 @@ class TelemetryState:
         if current is not None and snapshot.observed_at <= current.snapshot.observed_at:
             await self.mark_stale()
             return
+        if snapshot.successful_communication_at is not None:
+            await self.communication_succeeded(
+                device_id,
+                snapshot.successful_communication_at,
+                snapshot.source,
+            )
         self._current[device_id] = _CurrentSnapshot(snapshot)
         previous = self._stale_tasks.pop(device_id, None)
         if previous is not None:
@@ -211,20 +235,155 @@ class TelemetryState:
                 )
             )
 
+    def ensure_heartbeat(self, device_id: str, source: TelemetrySource) -> None:
+        self._heartbeats.setdefault(device_id, _HeartbeatState(adapter_source=source))
+
+    async def register_heartbeat(self, device_id: str, source: TelemetrySource) -> None:
+        self.ensure_heartbeat(device_id, source)
+        heartbeat = self._heartbeats[device_id]
+        if heartbeat.sequence == 0:
+            await self._publish_heartbeat(device_id, heartbeat, observed_at=utc_now())
+
+    async def communication_succeeded(
+        self,
+        device_id: str,
+        observed_at: datetime,
+        source: TelemetrySource,
+    ) -> None:
+        if observed_at.tzinfo is None:
+            raise ValueError("successful communication time must be timezone-aware")
+        self.ensure_heartbeat(device_id, source)
+        heartbeat = self._heartbeats[device_id]
+        previous = heartbeat.last_successful_communication_at
+        if previous is not None and observed_at <= previous:
+            return
+        heartbeat.status = "healthy"
+        heartbeat.last_successful_communication_at = observed_at
+        heartbeat.successful_source = source
+        task = self._heartbeat_stale_tasks.pop(device_id, None)
+        if task is not None:
+            task.cancel()
+        await self._publish_heartbeat(device_id, heartbeat, observed_at=observed_at)
+        self._heartbeat_stale_tasks[device_id] = asyncio.create_task(
+            self._mark_heartbeat_stale_after_deadline(device_id, observed_at)
+        )
+
+    async def heartbeat_disconnected(self, device_id: str) -> None:
+        heartbeat = self._heartbeats.get(device_id)
+        if heartbeat is None:
+            return
+        task = self._heartbeat_stale_tasks.pop(device_id, None)
+        if task is not None:
+            task.cancel()
+        if heartbeat.status != "disconnected":
+            heartbeat.status = "disconnected"
+            await self._publish_heartbeat(device_id, heartbeat, observed_at=utc_now())
+
+    async def heartbeat_expected(self, device_id: str) -> None:
+        heartbeat = self._heartbeats.get(device_id)
+        if heartbeat is None or heartbeat.status != "disconnected":
+            return
+        heartbeat.status = (
+            "unknown" if heartbeat.last_successful_communication_at is None else "stale"
+        )
+        await self._publish_heartbeat(device_id, heartbeat, observed_at=utc_now())
+
+    async def _mark_heartbeat_stale_after_deadline(
+        self, device_id: str, successful_at: datetime
+    ) -> None:
+        delay = max(
+            0.0,
+            (successful_at + self.heartbeat_stale_after - utc_now()).total_seconds(),
+        )
+        await asyncio.sleep(delay)
+        heartbeat = self._heartbeats.get(device_id)
+        if (
+            heartbeat is not None
+            and heartbeat.status == "healthy"
+            and heartbeat.last_successful_communication_at == successful_at
+        ):
+            heartbeat.status = "stale"
+            await self._publish_heartbeat(device_id, heartbeat, observed_at=utc_now())
+
+    async def _publish_heartbeat(
+        self,
+        device_id: str,
+        heartbeat: _HeartbeatState,
+        *,
+        observed_at: datetime,
+    ) -> None:
+        heartbeat.sequence = self._sequence(
+            device_id,
+            EventType.THERMOMETER_HEARTBEAT,
+            None,
+            heartbeat.sequence + 1,
+        )
+        await self.events.publish(
+            TelemetryEvent(
+                type=EventType.THERMOMETER_HEARTBEAT,
+                sequence=heartbeat.sequence,
+                source=heartbeat.adapter_source,
+                device_id=device_id,
+                observed_at=observed_at,
+                data=self._heartbeat_data(heartbeat),
+            )
+        )
+
+    def _heartbeat_data(self, heartbeat: _HeartbeatState) -> dict[str, object]:
+        return {
+            "status": heartbeat.status,
+            "lastSuccessfulCommunicationAt": (
+                heartbeat.last_successful_communication_at.isoformat()
+                if heartbeat.last_successful_communication_at is not None
+                else None
+            ),
+            "fresh": heartbeat.status == "healthy",
+            "staleAfterSeconds": self.heartbeat_stale_after.total_seconds(),
+        }
+
+    def heartbeat(self, device_id: str, *, desired_state: str) -> dict[str, object]:
+        heartbeat = self._heartbeats.get(device_id)
+        if heartbeat is None:
+            raise KeyError(device_id)
+        data = self._heartbeat_data(heartbeat)
+        if desired_state == "disconnected":
+            data["status"] = "disconnected"
+            data["fresh"] = False
+        elif heartbeat.status == "disconnected":
+            data["status"] = (
+                "unknown" if heartbeat.last_successful_communication_at is None else "stale"
+            )
+            data["fresh"] = False
+        return data | {
+            "sequence": max(1, heartbeat.sequence),
+            "source": (
+                heartbeat.successful_source.value
+                if heartbeat.successful_source is not None
+                else None
+            ),
+            "sessionId": self.events.session_id,
+        }
+
     async def remove(self, device_id: str) -> None:
         await self.connection(device_id, "disconnected")
+        await self.heartbeat_disconnected(device_id)
         task = self._stale_tasks.pop(device_id, None)
         if task is not None:
             task.cancel()
+        heartbeat_task = self._heartbeat_stale_tasks.pop(device_id, None)
+        if heartbeat_task is not None:
+            heartbeat_task.cancel()
         self._current.pop(device_id, None)
+        self._heartbeats.pop(device_id, None)
         self.events.forget_device(device_id)
         self._event_sequences = {
             key: value for key, value in self._event_sequences.items() if key[0] != device_id
         }
 
     async def close(self) -> None:
-        tasks = tuple(self._stale_tasks.values())
+        tasks = (*self._stale_tasks.values(), *self._heartbeat_stale_tasks.values())
         self._stale_tasks.clear()
+        self._heartbeat_stale_tasks.clear()
         for task in tasks:
             task.cancel()
         if tasks:

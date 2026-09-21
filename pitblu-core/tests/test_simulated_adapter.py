@@ -62,6 +62,7 @@ def test_simulator_supports_patterns_presence_battery_stale_and_recovery() -> No
 
     first = run(adapter.read_snapshot())
     assert first.source is TelemetrySource.SIMULATED
+    assert first.successful_communication_at == first.observed_at
     assert [item.temperature_c for item in first.probes] == [22.0, 20.0, None, 23.0]
     assert first.battery_percent == 73
 
